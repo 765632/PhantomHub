@@ -1,0 +1,20 @@
+{
+  "PH-M798M-WTNSP-DLRKR": {
+    "duration": "lifetime",
+    "label": "Lifetime",
+    "createdAt": 1792336333216,
+    "createdBy": "1532174717124087905",
+    "redeemedBy": "1532174717124087905",
+    "redeemedAt": 1792336389213,
+    "expiresAt": "never",
+    "expired": false
+  },
+  "PH-4CTFT-SRJZL-8WU8Y": {
+    "duration": "lifetime",
+    "label": "Lifetime",
+    "createdAt": 1729450000000,
+    "createdBy": "system",
+    "expiresAt": "never",
+    "expired": false
+  }
+}
