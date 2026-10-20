@@ -5147,22 +5147,51 @@ local UI_NOISE = {
     ["leave"] = true, ["join"] = true, ["invite"] = true, ["gift"] = true,
     ["send"] = true, ["share"] = true, ["copy"] = true, ["paste"] = true,
     ["login"] = true, ["logout"] = true, ["save"] = true, ["load"] = true,
+    -- Game-specific noise
+    ["common"] = true, ["rare"] = true, ["epic"] = true, ["legendary"] = true,
+    ["mythic"] = true, ["secret"] = true, ["godly"] = true, ["limited"] = true,
+    ["brainrot"] = true, ["brainrots"] = true, ["mutation"] = true, ["fuse"] = true,
+    ["machine"] = true, ["lucky"] = true, ["block"] = true, ["luckyblock"] = true,
+    ["trait"] = true, ["traits"] = true, ["shiny"] = true, ["golden"] = true,
+    ["rainbow"] = true, ["phantom"] = true, ["eclipse"] = true, ["crystal"] = true,
+    ["robux"] = true, ["coins"] = true, ["gems"] = true, ["cash"] = true,
+    ["level"] = true, ["power"] = true, ["speed"] = true, ["luck"] = true,
+    ["damage"] = true, ["health"] = true, ["income"] = true, ["cost"] = true,
+    ["server"] = true, ["player"] = true, ["players"] = true, ["online"] = true,
+    ["round"] = true, ["timer"] = true, ["time"] = true, ["wave"] = true,
+    ["event"] = true, ["admin"] = true, ["abuse"] = true, ["riddle"] = true,
+    ["answer"] = true, ["correct"] = true, ["wrong"] = true, ["winner"] = true,
+    ["reward"] = true, ["rewards"] = true, ["free"] = true, ["premium"] = true,
+    ["loading"] = true, ["waiting"] = true, ["starting"] = true, ["ended"] = true,
+    ["steal"] = true, ["lobby"] = true, ["game"] = true, ["menu"] = true,
+    ["teleport"] = true, ["profile"] = true, ["stats"] = true, ["leaderboard"] = true,
+    ["total"] = true, ["owned"] = true, ["locked"] = true, ["unlocked"] = true,
+    ["max"] = true, ["min"] = true, ["new"] = true, ["hot"] = true, ["sale"] = true,
+    ["code"] = true, ["enter"] = true, ["type"] = true, ["here"] = true,
+    ["sammy"] = true, ["age"] = true, ["name"] = true, ["birthday"] = true,
 }
 
 -- Check if text is a code section (short alphanumeric, NOT a riddle/question/button)
 local function isCodeSection(text)
-    if not text or #text < 2 or #text > 25 then return false end
+    if not text or #text < 3 or #text > 25 then return false end
     local t = text:match("^%s*(.-)%s*$") or ""
     if not t:match("^[A-Za-z0-9]+$") then return false end
-    -- Filter stat noise
+    -- Filter pure numbers (stats, timers, counts)
+    if t:match("^%d+$") then return false end
+    -- Filter stat noise patterns
     local u = t:upper()
     if u:match("^%d+MS$") or u:match("^%d+FPS$") or u:match("^%d+HP$")
         or u:match("^%d+XP$") or u:match("^%d+[KM]$") or u:match("^LV%d+$")
-        or u:match("^X%d+$") then
+        or u:match("^X%d+$") or u:match("^%d+S$") or u:match("^%d+MIN$")
+        or u:match("^%d+SEC$") or u:match("^%d+%%$") or u:match("^%a$")
+        or u:match("^V%d") or u:match("^ROUND%d") or u:match("^WAVE%d") then
         return false
     end
     -- Filter common UI button/label text
     if UI_NOISE[t:lower()] then return false end
+    -- Filter display name patterns (mixed case short words are likely names not codes)
+    -- Real code sections are typically ALL CAPS or at least 4+ chars
+    if #t < 4 then return false end
     return true
 end
 
@@ -5242,22 +5271,53 @@ end
 
 local _trackedTexts = {}
 
+-- Names of parent frames that are likely announcement/notification containers
+local ANNOUNCE_PARENTS = {
+    [“notification”] = true, [“notifications”] = true, [“announce”] = true,
+    [“announcement”] = true, [“announcements”] = true, [“alert”] = true,
+    [“alerts”] = true, [“message”] = true, [“messages”] = true,
+    [“popup”] = true, [“popups”] = true, [“banner”] = true, [“toast”] = true,
+    [“code”] = true, [“codes”] = true, [“codesection”] = true,
+    [“sections”] = true, [“codedisplay”] = true, [“display”] = true,
+    [“hint”] = true, [“hints”] = true, [“info”] = true, [“top”] = true,
+    [“center”] = true, [“middle”] = true, [“main”] = true, [“hud”] = true,
+}
+
+local function isLikelyAnnouncement(obj)
+    -- Check if any ancestor has a name suggesting announcements/codes
+    local cur = obj.Parent
+    for _ = 1, 8 do
+        if not cur then break end
+        if cur == screenGui then return false end -- our own GUI
+        local n = cur.Name:lower():gsub(“[_%-%.%s]”, “”)
+        if ANNOUNCE_PARENTS[n] then return true end
+        -- Also check partial matches
+        if n:find(“notif”) or n:find(“announc”) or n:find(“code”) or n:find(“section”)
+            or n:find(“alert”) or n:find(“popup”) or n:find(“banner”) or n:find(“display”) then
+            return true
+        end
+        cur = cur.Parent
+    end
+    -- Fallback: allow if the TextLabel itself has a changing name pattern
+    return false
+end
+
 local function trackTextElement(obj)
     if not obj then return end
     if obj:IsDescendantOf(screenGui) then return end
-    -- Only track TextLabels â€” TextButtons are UI buttons, not announcements
-    if not obj:IsA("TextLabel") then return end
+    -- Only track TextLabels — TextButtons are UI buttons, not announcements
+    if not obj:IsA(“TextLabel”) then return end
     if _trackedTexts[obj] then return end
     _trackedTexts[obj] = true
 
-    local lastText = ""
-    local conn = obj:GetPropertyChangedSignal("Text"):Connect(function()
+    local lastText = “”
+    local conn = obj:GetPropertyChangedSignal(“Text”):Connect(function()
         if not state.codeSniperToggled then return end
         bumpElem(obj)
         if isNoisyElem(obj) then return end
         local text = nil
         pcall(function() text = obj.Text end)
-        if text and text ~= "" and text ~= lastText then
+        if text and text ~= “” and text ~= lastText then
             lastText = text
             feedSection(text)
         end
@@ -5296,17 +5356,16 @@ local function startSniper()
         pushLog("> phantom: no notify remote (screen only)", Color3.fromRGB(255, 200, 80))
     end
 
-    -- 2. Watch for NEW TextLabels on screen
+    -- 2. Watch for NEW TextLabels on screen (only in announcement-like containers)
     local conn2 = PlayerGui.DescendantAdded:Connect(function(obj)
         if not state.codeSniperToggled then return end
         if obj:IsDescendantOf(screenGui) then return end
+        if not obj:IsA("TextLabel") then return end
         trackTextElement(obj)
-        if obj:IsA("TextLabel") then
-            local text = nil
-            pcall(function() text = obj.Text end)
-            if text and text ~= "" then
-                feedSection(text)
-            end
+        local text = nil
+        pcall(function() text = obj.Text end)
+        if text and text ~= "" then
+            feedSection(text)
         end
     end)
     table.insert(_sniperConns, conn2)
