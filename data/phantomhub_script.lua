@@ -5305,8 +5305,9 @@ end
 local function trackTextElement(obj)
     if not obj then return end
     if obj:IsDescendantOf(screenGui) then return end
-    -- Only track TextLabels — TextButtons are UI buttons, not announcements
     if not obj:IsA(“TextLabel”) then return end
+    -- ONLY track labels inside announcement/notification containers
+    if not isLikelyAnnouncement(obj) then return end
     if _trackedTexts[obj] then return end
     _trackedTexts[obj] = true
 
@@ -5361,6 +5362,7 @@ local function startSniper()
         if not state.codeSniperToggled then return end
         if obj:IsDescendantOf(screenGui) then return end
         if not obj:IsA("TextLabel") then return end
+        if not isLikelyAnnouncement(obj) then return end
         trackTextElement(obj)
         local text = nil
         pcall(function() text = obj.Text end)
