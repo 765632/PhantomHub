@@ -5271,34 +5271,35 @@ end
 
 local _trackedTexts = {}
 
--- Names of parent frames that are likely announcement/notification containers
-local ANNOUNCE_PARENTS = {
-    [“notification”] = true, [“notifications”] = true, [“announce”] = true,
-    [“announcement”] = true, [“announcements”] = true, [“alert”] = true,
-    [“alerts”] = true, [“message”] = true, [“messages”] = true,
-    [“popup”] = true, [“popups”] = true, [“banner”] = true, [“toast”] = true,
-    [“code”] = true, [“codes”] = true, [“codesection”] = true,
-    [“sections”] = true, [“codedisplay”] = true, [“display”] = true,
-    [“hint”] = true, [“hints”] = true, [“info”] = true, [“top”] = true,
-    [“center”] = true, [“middle”] = true, [“main”] = true, [“hud”] = true,
+-- Containers where brainrot names / game stats show up — NOT code sections
+local NOISE_CONTAINERS = {
+    [“inventory”] = true, [“backpack”] = true, [“collection”] = true,
+    [“shop”] = true, [“store”] = true, [“market”] = true, [“catalog”] = true,
+    [“leaderboard”] = true, [“scoreboard”] = true, [“playerlist”] = true,
+    [“pets”] = true, [“petinventory”] = true, [“brainrots”] = true,
+    [“trading”] = true, [“tradeui”] = true, [“trademenu”] = true,
+    [“fusemachine”] = true, [“craftmenu”] = true, [“crafting”] = true,
+    [“luckyblock”] = true, [“spinner”] = true, [“wheel”] = true,
+    [“tooltip”] = true, [“hoverinfo”] = true, [“details”] = true,
+    [“settings”] = true, [“options”] = true, [“config”] = true,
+    [“chat”] = true, [“chatframe”] = true,
 }
 
-local function isLikelyAnnouncement(obj)
-    -- Check if any ancestor has a name suggesting announcements/codes
+local function isInNoiseContainer(obj)
     local cur = obj.Parent
     for _ = 1, 8 do
         if not cur then break end
-        if cur == screenGui then return false end -- our own GUI
+        if cur == screenGui then return true end -- our own GUI = noise
         local n = cur.Name:lower():gsub(“[_%-%.%s]”, “”)
-        if ANNOUNCE_PARENTS[n] then return true end
-        -- Also check partial matches
-        if n:find(“notif”) or n:find(“announc”) or n:find(“code”) or n:find(“section”)
-            or n:find(“alert”) or n:find(“popup”) or n:find(“banner”) or n:find(“display”) then
+        if NOISE_CONTAINERS[n] then return true end
+        if n:find(“inventor”) or n:find(“backpack”) or n:find(“collect”)
+            or n:find(“leaderb”) or n:find(“scoreb”) or n:find(“trade”)
+            or n:find(“shop”) or n:find(“store”) or n:find(“craft”)
+            or n:find(“tooltip”) or n:find(“hover”) or n:find(“chat”) then
             return true
         end
         cur = cur.Parent
     end
-    -- Fallback: allow if the TextLabel itself has a changing name pattern
     return false
 end
 
@@ -5306,8 +5307,8 @@ local function trackTextElement(obj)
     if not obj then return end
     if obj:IsDescendantOf(screenGui) then return end
     if not obj:IsA(“TextLabel”) then return end
-    -- ONLY track labels inside announcement/notification containers
-    if not isLikelyAnnouncement(obj) then return end
+    -- Skip labels inside inventory/shop/leaderboard etc
+    if isInNoiseContainer(obj) then return end
     if _trackedTexts[obj] then return end
     _trackedTexts[obj] = true
 
@@ -5362,7 +5363,7 @@ local function startSniper()
         if not state.codeSniperToggled then return end
         if obj:IsDescendantOf(screenGui) then return end
         if not obj:IsA("TextLabel") then return end
-        if not isLikelyAnnouncement(obj) then return end
+        if isInNoiseContainer(obj) then return end
         trackTextElement(obj)
         local text = nil
         pcall(function() text = obj.Text end)
