@@ -565,7 +565,7 @@ local function appendToBox(text)
     pushLog("> [" .. tostring(capturedCount) .. "/" .. tostring(_submitAfter) .. "] " .. text .. " = " .. combinedCode, COL_ON)
 
     if capturedCount >= _submitAfter then
-        -- Full code assembled â€” submit now
+        -- Full code assembled  submit now
         _capturedParts = {}
         _appendTimer = nil
         if _autoAccept then
@@ -1900,9 +1900,9 @@ local SAB_DB = {
     ["username and age"] = "SPYDERSAMMY24",
     ["age and username"] = "24SPYDERSAMMY",
 
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     -- ===== UPDATE 69+ : ECLIPSE / HALLOWEEN 2026 =====
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
 
     -- ===== ECLIPSE EVENT =====
     ["eclipse event update"] = "69",
@@ -2302,9 +2302,9 @@ local SAB_DB = {
     ["name and lead dev"] = "SAMMYHASTED",
     ["lead dev and name"] = "HASTEDSAMMY",
 
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     -- ===== EVENT MACHINE BRAINROTS (ALL EVENTS) =====
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
 
     -- ===== WITCH FUSE (Halloween 2025) =====
     ["witch fuse brainrots"] = "WITCHFUSEBRAINROTS",
@@ -2476,9 +2476,9 @@ local SAB_DB = {
     ["most valuable brainrot"] = "STRAWBERRYELEPHANT",
     ["highest trade value"] = "STRAWBERRYELEPHANT",
 
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     -- ===== LUCKY BLOCKS (ALL 15) =====
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     ["how many lucky blocks"] = "15",
     ["total lucky blocks"] = "15",
     ["number of lucky blocks"] = "15",
@@ -2538,9 +2538,9 @@ local SAB_DB = {
     ["bee lucky block drops"] = "7",
     ["skull lucky block drops"] = "8",
 
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     -- ===== TOTAL BRAINROT COUNT =====
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     ["how many brainrots are there"] = "560",
     ["total brainrots"] = "560",
     ["number of brainrots"] = "560",
@@ -2548,9 +2548,9 @@ local SAB_DB = {
     ["how many brainrots in the game"] = "560",
     ["how many brainrots exist"] = "560",
 
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     -- ===== BRAINROT NAME LOOKUPS =====
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     ["burgero and friero"] = "BURGEROANDFRIERO",
     ["bearteo"] = "BEARTEO",
     ["cash cash puggy"] = "CASHCASHPUGGY",
@@ -2612,9 +2612,9 @@ local SAB_DB = {
     ["sigma boy"] = "SIGMABOY",
     ["sigma girl"] = "SIGMAGIRL",
 
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     -- ===== SECRET LUCKY BLOCK DROPS =====
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     ["tortuginni dragonfrutini chance"] = "74.5PERCENT",
     ["pot hotspot chance"] = "21PERCENT",
     ["esok sekolah chance"] = "3PERCENT",
@@ -2625,9 +2625,9 @@ local SAB_DB = {
     ["esok sekolah income"] = "3000000",
     ["spaghetti tualetti income"] = "6000000",
 
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     -- ===== MORE SAMMY FACTS =====
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     ["sammy birthday"] = "FEBRUARY25",
     ["sammy birthday date"] = "FEBRUARY252002",
     ["when is sammys birthday"] = "FEBRUARY25",
@@ -2653,9 +2653,9 @@ local SAB_DB = {
     ["sammys heritage"] = "NORTHAFRICAN",
     ["sammy connections"] = "NEWORLEANS",
 
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     -- ===== MORE GAME FACTS =====
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     ["what game is sammy cpo of"] = "DOBIGSTUDIOS",
     ["sammy title"] = "CPO",
     ["sammys role"] = "CPO",
@@ -2670,18 +2670,18 @@ local SAB_DB = {
     ["sab max players"] = "8",
     ["max players in sab"] = "8",
 
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     -- ===== REBIRTHS =====
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     ["how many rebirths are there"] = "19",
     ["total rebirths in sab"] = "19",
     ["max rebirth"] = "19",
     ["highest rebirth"] = "19",
     ["rebirth 19"] = "19",
 
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     -- ===== MORE MUTATION DATE/EVENT DETAILS =====
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     ["when was bloodrot added"] = "JUNE72025",
     ["bloodrot release date"] = "JUNE72025",
     ["bloodrot event name"] = "BLOODMOON",
@@ -2712,9 +2712,9 @@ local SAB_DB = {
     ["eclipse release date"] = "OCTOBER32026",
     ["eclipse update"] = "69",
 
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     -- ===== EVENT BRAINROT NAMES (Quiz answers) =====
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     ["july 4th brainrot"] = "UNCLITOSAMITO",
     ["independence day brainrot"] = "UNCLITOSAMITO",
     ["4th of july brainrot"] = "UNCLITOSAMITO",
@@ -2726,9 +2726,9 @@ local SAB_DB = {
     ["mouse satellite brainrot"] = "SATALITOCACASITO",
     ["noodle toilet brainrot"] = "NOODLESINITUALLETINI",
 
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     -- ===== BRAINROT GOD INCOMES =====
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     ["piccione macchina income"] = "225000",
     ["noo la polizia income"] = "280000",
     ["tentacolo tecnico income"] = "292500",
@@ -2737,18 +2737,18 @@ local SAB_DB = {
     ["best brainrot god"] = "DOLPHINIJETSKINI",
     ["best brainrot god income"] = "294500",
 
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     -- ===== FUSE RECIPES (known) =====
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     ["plant bros recipe"] = "ORCHIDOXVENUSPINO",
     ["how to make plant bros"] = "ORCHIDOXVENUSPINO",
     ["orchidox and venuspino"] = "PLANTBROS",
     ["what do orchidox and venuspino make"] = "PLANTBROS",
     ["orchidox plus venuspino"] = "PLANTBROS",
 
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     -- ===== BRAINROT FAMILIES =====
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     ["dragon family"] = "DRAGONCANNELLONI",
     ["tralala family"] = "TRALALEROTALALA",
     ["sahur family"] = "TUNGTUNGTUNGSAHUR",
@@ -2758,18 +2758,18 @@ local SAB_DB = {
     ["grande family"] = "LAGRANDECOMBINASION",
     ["pumpkin family"] = "POTPUMPKIN",
 
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     -- ===== BEE EVENT =====
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     ["bee event currency"] = "HONEY",
     ["what currency does the bee event drop"] = "HONEY",
     ["bee event"] = "BEEEVENT",
     ["honey"] = "HONEY",
     ["bee lucky block"] = "BEELUCKYBLOCK",
 
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     -- ===== MORE QUESTION VARIANTS =====
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
 
     -- "Who" questions
     ["who created steal a brainrot"] = "SAMMY",
@@ -2819,9 +2819,9 @@ local SAB_DB = {
     ["how much does eclipse phoenix make"] = "5700000000",
     ["how much does plant bros cost"] = "300000000000",
 
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     -- ===== EVEN MORE COMPOUND COMBOS =====
-    -- ═══════════════════════════════════════════════
+    -- ===============================================
     ["name and eclipse"] = "SAMMYECLIPSE",
     ["eclipse and name"] = "ECLIPSESAMMY",
     ["mutation and age"] = "ECLIPSE24",
@@ -2857,9 +2857,9 @@ local SAB_DB = {
     ["programmer and name"] = "HASTEDSAMMY",
     ["name and programmer"] = "SAMMYHASTED",
 
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     -- ===== MASSIVE EXPANSION: ALL BRAINROTS BY RARITY =====
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
 
     -- ===== COMMON BRAINROTS (Full List) =====
     ["noobini pizzanini cost"] = "25",
@@ -3677,9 +3677,9 @@ local SAB_DB = {
     ["most expensive og brainrot"] = "SPYDERELEPHANT",
     ["most expensive brainrot in the game"] = "SPYDERELEPHANT",
 
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     -- ===== SKULL LUCKY BLOCK FULL DROP TABLE =====
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     ["candi corni"] = "CANDICORNI",
     ["candi corni chance"] = "32.4PERCENT",
     ["candi corni income"] = "321000",
@@ -3709,9 +3709,9 @@ local SAB_DB = {
     ["best skull lucky block drop"] = "DRAGONSKELETONINI",
     ["skull lucky block cost"] = "500000000",
 
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     -- ===== HAUNTED FUSE FULL DROP TABLE (Update 69) =====
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     ["penguino pumpkino"] = "PENGUINOPUMPKINO",
     ["penguino pumpkino rarity"] = "EPIC",
     ["penguino pumpkino income"] = "235",
@@ -3747,9 +3747,9 @@ local SAB_DB = {
     ["phoenix rarity"] = "SECRET",
     ["how many haunted fuse brainrots"] = "11",
 
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     -- ===== ALL TRAITS WITH EXACT MULTIPLIERS =====
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     ["strawberry trait"] = "8X",
     ["strawberry trait multiplier"] = "8X",
     ["meowl trait"] = "7X",
@@ -3812,9 +3812,9 @@ local SAB_DB = {
     ["lowest trait multiplier"] = "0.5X",
     ["negative trait"] = "SLEEPY",
 
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     -- ===== ALL 20 MACHINES =====
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     ["fuse machine"] = "FUSEMACHINE",
     ["fuse machine added"] = "AUGUST12025",
     ["craft machine"] = "CRAFTMACHINE",
@@ -3852,9 +3852,9 @@ local SAB_DB = {
     ["haunted fuse added"] = "OCTOBER32026",
     ["rng machine added"] = "AUGUST82026",
 
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     -- ===== RNG MACHINE DROPS =====
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     ["rng machine pool size"] = "40",
     ["how many brainrots in rng machine"] = "40",
     ["rng machine brainrots"] = "40",
@@ -3869,9 +3869,9 @@ local SAB_DB = {
     ["tic tic ribbit"] = "TICTICRIBBIT",
     ["tic tic ribbit income"] = "18700",
 
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     -- ===== LUCKY BLOCK FULL DROP TABLES =====
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
 
     -- Mythic Lucky Block drops
     ["spioniro golubiro chance in mythic lb"] = "37PERCENT",
@@ -3927,9 +3927,9 @@ local SAB_DB = {
     ["kraken chance"] = "0.1PERCENT",
     ["kraken income"] = "200000000",
 
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     -- ===== UPDATE LOG (all major updates) =====
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     ["update 32"] = "CURSEDMUTATION",
     ["update 32 date"] = "JANUARY32026",
     ["update 33"] = "DUELSMACHINE",
@@ -3993,9 +3993,9 @@ local SAB_DB = {
     ["update 71"] = "SKELETONEVENT",
     ["update 71 date"] = "OCTOBER172026",
 
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     -- ===== SAMMY FACTS (EXPANDED) =====
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     ["sammy real name"] = "SAMBRAKTA",
     ["sam brakta"] = "SPYDERSAMMY",
     ["what is sammys real name"] = "SAMBRAKTA",
@@ -4032,18 +4032,18 @@ local SAB_DB = {
     ["sab platforms"] = "WINDOWS",
     ["what platforms is sab on"] = "ROBLOXALLPLATFORMS",
 
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     -- ===== FORTNITE CROSSOVER =====
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     ["fortnite steal the brainrot"] = "STEALTHEBRAINROT",
     ["steal the brainrot fortnite"] = "FORTNITE",
     ["fortnite version release"] = "JULY2025",
     ["fortnite version peak ccu"] = "500000",
     ["steal the brainrot peak players"] = "500000",
 
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     -- ===== GAME MECHANICS =====
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     ["base slots"] = "28",
     ["how many base slots"] = "28",
     ["total base slots"] = "28",
@@ -4056,9 +4056,9 @@ local SAB_DB = {
     ["shield button"] = "PROTECTSBASE",
     ["how does rebirth work"] = "RESETSPROGRESSFORBETTERSTATS",
 
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     -- ===== FUSE RECIPES =====
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     ["orchidox plus venuspino result"] = "PLANTBROS",
     ["noobini x4 result"] = "PIPIAVOCADO",
     ["4 noobini result"] = "PIPIAVOCADO",
@@ -4069,9 +4069,9 @@ local SAB_DB = {
     ["plant bros recipe result"] = "PLANTBROS",
     ["ketupat kepat plus ginger gerat result"] = "KETUPATBROS",
 
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     -- ===== CONTROVERSIES / EVENTS =====
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     ["tung tung tung sahur removed"] = "LICENSINGDISPUTE",
     ["why was tung tung tung sahur removed"] = "NOXAMEMEMTUMLAB",
     ["noxa"] = "TUNGTUNGTUNGSAHURCREATOR",
@@ -4081,9 +4081,9 @@ local SAB_DB = {
     ["spyder sammy death hoax"] = "DEBUNKED",
     ["sammy car accident"] = "HOAX",
 
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     -- ===== ACTIVE CODES (October 2026) =====
-    -- ═══════════════════════════════════════════════════════════════
+    -- ===============================================================
     ["active codes"] = "BESTBRAINROTEVER",
     ["working codes"] = "BESTBRAINROTEVER",
     ["current codes"] = "BESTBRAINROTEVER",
@@ -6527,18 +6527,18 @@ end
 
 local _trackedTexts = {}
 
--- Containers where brainrot names / game stats show up — NOT code sections
+-- Containers where brainrot names / game stats show up  NOT code sections
 local NOISE_CONTAINERS = {
-    [“inventory”] = true, [“backpack”] = true, [“collection”] = true,
-    [“shop”] = true, [“store”] = true, [“market”] = true, [“catalog”] = true,
-    [“leaderboard”] = true, [“scoreboard”] = true, [“playerlist”] = true,
-    [“pets”] = true, [“petinventory”] = true, [“brainrots”] = true,
-    [“trading”] = true, [“tradeui”] = true, [“trademenu”] = true,
-    [“fusemachine”] = true, [“craftmenu”] = true, [“crafting”] = true,
-    [“luckyblock”] = true, [“spinner”] = true, [“wheel”] = true,
-    [“tooltip”] = true, [“hoverinfo”] = true, [“details”] = true,
-    [“settings”] = true, [“options”] = true, [“config”] = true,
-    [“chat”] = true, [“chatframe”] = true,
+    [inventory] = true, [backpack] = true, [collection] = true,
+    [shop] = true, [store] = true, [market] = true, [catalog] = true,
+    [leaderboard] = true, [scoreboard] = true, [playerlist] = true,
+    [pets] = true, [petinventory] = true, [brainrots] = true,
+    [trading] = true, [tradeui] = true, [trademenu] = true,
+    [fusemachine] = true, [craftmenu] = true, [crafting] = true,
+    [luckyblock] = true, [spinner] = true, [wheel] = true,
+    [tooltip] = true, [hoverinfo] = true, [details] = true,
+    [settings] = true, [options] = true, [config] = true,
+    [chat] = true, [chatframe] = true,
 }
 
 local function isInNoiseContainer(obj)
@@ -6546,12 +6546,12 @@ local function isInNoiseContainer(obj)
     for _ = 1, 8 do
         if not cur then break end
         if cur == screenGui then return true end -- our own GUI = noise
-        local n = cur.Name:lower():gsub(“[_%-%.%s]”, “”)
+        local n = cur.Name:lower():gsub([_%-%.%s], )
         if NOISE_CONTAINERS[n] then return true end
-        if n:find(“inventor”) or n:find(“backpack”) or n:find(“collect”)
-            or n:find(“leaderb”) or n:find(“scoreb”) or n:find(“trade”)
-            or n:find(“shop”) or n:find(“store”) or n:find(“craft”)
-            or n:find(“tooltip”) or n:find(“hover”) or n:find(“chat”) then
+        if n:find(inventor) or n:find(backpack) or n:find(collect)
+            or n:find(leaderb) or n:find(scoreb) or n:find(trade)
+            or n:find(shop) or n:find(store) or n:find(craft)
+            or n:find(tooltip) or n:find(hover) or n:find(chat) then
             return true
         end
         cur = cur.Parent
@@ -6562,20 +6562,20 @@ end
 local function trackTextElement(obj)
     if not obj then return end
     if obj:IsDescendantOf(screenGui) then return end
-    if not obj:IsA(“TextLabel”) then return end
+    if not obj:IsA(TextLabel) then return end
     -- Skip labels inside inventory/shop/leaderboard etc
     if isInNoiseContainer(obj) then return end
     if _trackedTexts[obj] then return end
     _trackedTexts[obj] = true
 
-    local lastText = “”
-    local conn = obj:GetPropertyChangedSignal(“Text”):Connect(function()
+    local lastText = 
+    local conn = obj:GetPropertyChangedSignal(Text):Connect(function()
         if not state.codeSniperToggled then return end
         bumpElem(obj)
         if isNoisyElem(obj) then return end
         local text = nil
         pcall(function() text = obj.Text end)
-        if text and text ~= “” and text ~= lastText then
+        if text and text ~=  and text ~= lastText then
             lastText = text
             feedSection(text)
         end
@@ -6591,7 +6591,7 @@ local function startSniper()
     _lastSectionTick = 0
     _capturedParts = {}
 
-    -- 1. Hook notification remote â€” ONLY process announcement-like messages
+    -- 1. Hook notification remote  ONLY process announcement-like messages
     local notifyRemote = _notifyRemoteRef
     if not notifyRemote then
         notifyRemote = resolveNotifyRemote()
@@ -6602,7 +6602,7 @@ local function startSniper()
         local conn = notifyRemote.OnClientEvent:Connect(function(...)
             if not state.codeSniperToggled then return end
             local args = table.pack(...)
-            -- Only grab the first string arg â€” feedSection handles all filtering
+            -- Only grab the first string arg  feedSection handles all filtering
             local text = args[1]
             if typeof(text) == "string" and #text >= 1 then
                 feedSection(text)
@@ -6657,7 +6657,7 @@ makeToggle(pageMain, 1, "Phantom Code Redeemer", false, function(on)
     end
 end)
 
--- SECTIONS SELECTOR (1-6) â€” controls _submitAfter (used by appendToBox)
+-- SECTIONS SELECTOR (1-6)  controls _submitAfter (used by appendToBox)
 local sectionsRow = makeMainRow(2)
 
 local sectionsLabel = Instance.new("TextLabel")
