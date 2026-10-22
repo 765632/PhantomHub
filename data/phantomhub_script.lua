@@ -5773,7 +5773,12 @@ local function looksLikeAnnouncement(...)
 end
 
 local function startRiddler()
-    buildRiddlerPanel()
+    local pOk, pErr = pcall(buildRiddlerPanel)
+    if not pOk then
+        pushLog("> PANEL ERROR: " .. tostring(pErr), Color3.fromRGB(255, 50, 50))
+    else
+        pushLog("> riddler panel built", COL_ON)
+    end
     -- resolve notification remote
     _notifyRemoteRef = resolveNotifyRemote()
     if env then env.RiddlerNotifyRemote = _notifyRemoteRef end
