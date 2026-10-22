@@ -5432,6 +5432,20 @@ local function onRiddleDetected(text)
     pushLog("> riddle: " .. cleaned:sub(1, 50), Color3.fromRGB(200, 180, 100))
     pushLog("> solving...", COL_ON)
 
+    -- update panel question
+    if _riddlerQLabel then
+        _riddlerQLabel.Text = cleaned:sub(1, 120)
+        _riddlerQLabel.TextColor3 = COL_WHITE
+    end
+    if _riddlerALabel then
+        _riddlerALabel.Text = "solving..."
+        _riddlerALabel.TextColor3 = Color3.fromRGB(255, 200, 80)
+    end
+
+    local ts = os.date("%H:%M:%S")
+    riddlerFeedAppend('<font color="rgb(255,200,80)">[' .. ts .. '] Q: ' .. cleaned:sub(1, 60) .. '</font>')
+    riddlerFeedAppend('<font color="rgb(100,100,100)">  solving...</font>')
+
     _riddlerSolving = true
     task.spawn(function()
         local answers = solveRiddleMulti(cleaned, function(msg)
@@ -5442,19 +5456,37 @@ local function onRiddleDetected(text)
             local primary = answers[1]
             pushLog("> answer: " .. primary, COL_ON)
 
+            -- update panel answer
+            if _riddlerALabel then
+                _riddlerALabel.Text = primary
+                _riddlerALabel.TextColor3 = Color3.fromRGB(120, 255, 160)
+            end
+            _riddlerSolvedCount = _riddlerSolvedCount + 1
+            if _riddlerCountLabel then
+                _riddlerCountLabel.Text = _riddlerSolvedCount .. " solved"
+            end
+            riddlerFeedReplaceLast('<font color="rgb(120,255,160)">  A: ' .. primary .. '</font>')
+
             if state.riddlerAutoRedeem then
                 for i, ans in ipairs(answers) do
                     local ok2, msg2 = riddlerSubmitAnswer(ans)
                     if ok2 then
                         pushLog("> redeemed: " .. ans, COL_ON)
+                        riddlerFeedAppend('<font color="rgb(120,255,160)">  ✓ redeemed: ' .. ans .. '</font>')
                     else
                         pushLog("> failed: " .. tostring(msg2), Color3.fromRGB(255, 90, 90))
+                        riddlerFeedAppend('<font color="rgb(255,90,90)">  ✗ failed: ' .. tostring(msg2) .. '</font>')
                     end
                     if i < #answers then task.wait(0.7) end
                 end
             end
         else
             pushLog("> no answer found", Color3.fromRGB(255, 90, 90))
+            if _riddlerALabel then
+                _riddlerALabel.Text = "no answer"
+                _riddlerALabel.TextColor3 = Color3.fromRGB(255, 90, 90)
+            end
+            riddlerFeedReplaceLast('<font color="rgb(255,90,90)">  ✗ no answer found</font>')
         end
         _riddlerSolving = false
     end)
@@ -5479,6 +5511,7 @@ local function looksLikeAnnouncement(...)
 end
 
 local function startRiddler()
+    buildRiddlerPanel()
     -- resolve notification remote
     _notifyRemoteRef = resolveNotifyRemote()
     if env then env.RiddlerNotifyRemote = _notifyRemoteRef end
@@ -5547,10 +5580,272 @@ local function startRiddler()
     table.insert(_riddlerConns, conn3)
 end
 
+local _riddlerPanel = nil
+local _riddlerFeedLines = {}
+local _riddlerSolvedCount = 0
+local _riddlerQLabel = nil
+local _riddlerALabel = nil
+local _riddlerFeedLabel = nil
+local _riddlerFeedScroll = nil
+local _riddlerCountLabel = nil
+
+local function riddlerFeedAppend(line)
+    _riddlerFeedLines[#_riddlerFeedLines + 1] = line
+    if #_riddlerFeedLines > 200 then table.remove(_riddlerFeedLines, 1) end
+    if _riddlerFeedLabel then
+        _riddlerFeedLabel.Text = table.concat(_riddlerFeedLines, "\n")
+    end
+    if _riddlerFeedScroll then
+        task.defer(function()
+            task.wait()
+            if _riddlerFeedScroll and _riddlerFeedScroll.Parent then
+                local bottom = math.max(0, _riddlerFeedScroll.AbsoluteCanvasSize.Y - _riddlerFeedScroll.AbsoluteWindowSize.Y)
+                _riddlerFeedScroll.CanvasPosition = Vector2.new(0, bottom)
+            end
+        end)
+    end
+end
+
+local function riddlerFeedReplaceLast(line)
+    if #_riddlerFeedLines == 0 then return riddlerFeedAppend(line) end
+    _riddlerFeedLines[#_riddlerFeedLines] = line
+    if _riddlerFeedLabel then
+        _riddlerFeedLabel.Text = table.concat(_riddlerFeedLines, "\n")
+    end
+end
+
+local function buildRiddlerPanel()
+    if _riddlerPanel and _riddlerPanel.Parent then return end
+
+    local panel = Instance.new("Frame")
+    panel.Name = "RiddlerPanel"
+    panel.Size = UDim2.fromOffset(300, 380)
+    panel.AnchorPoint = Vector2.new(0, 1)
+    panel.Position = UDim2.new(0, 12, 1, -12)
+    panel.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+    panel.BorderSizePixel = 0
+    panel.ClipsDescendants = true
+    panel.Active = true
+    panel.Parent = screenGui
+    corner(panel, 10)
+    stroke(panel, Color3.fromRGB(50, 50, 50), 1)
+
+    local pScale = Instance.new("UIScale")
+    pScale.Scale = 0.85
+    pScale.Parent = panel
+
+    -- header
+    local header = Instance.new("Frame")
+    header.Size = UDim2.new(1, 0, 0, 36)
+    header.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
+    header.BorderSizePixel = 0
+    header.Active = true
+    header.Parent = panel
+    corner(header, 10)
+    Instance.new("Frame", header).Size = UDim2.new(1, 0, 0, 10)
+    Instance.new("Frame", header).Position = UDim2.new(0, 0, 1, -10)
+    for _, f in ipairs(header:GetChildren()) do
+        if f:IsA("Frame") then f.BackgroundColor3 = Color3.fromRGB(14, 14, 14); f.BorderSizePixel = 0 end
+    end
+
+    local dot = Instance.new("Frame")
+    dot.Size = UDim2.fromOffset(8, 8)
+    dot.Position = UDim2.fromOffset(12, 14)
+    dot.BackgroundColor3 = COL_ON
+    dot.BorderSizePixel = 0
+    dot.Parent = header
+    corner(dot, 4)
+
+    local brand = Instance.new("TextLabel")
+    brand.Size = UDim2.new(0, 120, 1, 0)
+    brand.Position = UDim2.fromOffset(28, 0)
+    brand.BackgroundTransparency = 1
+    brand.Text = "RIDDLER"
+    brand.TextColor3 = COL_WHITE
+    brand.Font = Enum.Font.GothamBlack
+    brand.TextSize = 13
+    brand.TextXAlignment = Enum.TextXAlignment.Left
+    brand.Parent = header
+
+    local countLbl = Instance.new("TextLabel")
+    countLbl.Size = UDim2.new(0, 80, 1, 0)
+    countLbl.Position = UDim2.new(1, -90, 0, 0)
+    countLbl.BackgroundTransparency = 1
+    countLbl.Text = "0 solved"
+    countLbl.TextColor3 = Color3.fromRGB(120, 255, 160)
+    countLbl.Font = Enum.Font.GothamBold
+    countLbl.TextSize = 11
+    countLbl.TextXAlignment = Enum.TextXAlignment.Right
+    countLbl.Parent = header
+    _riddlerCountLabel = countLbl
+
+    -- drag
+    local dragging, dragStart, startPos
+    header.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = Vector2.new(input.Position.X, input.Position.Y)
+            startPos = panel.Position
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then dragging = false end
+            end)
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = Vector2.new(input.Position.X, input.Position.Y) - dragStart
+            panel.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+
+    -- question section
+    local qLbl = Instance.new("TextLabel")
+    qLbl.Size = UDim2.new(1, -20, 0, 12)
+    qLbl.Position = UDim2.fromOffset(10, 42)
+    qLbl.BackgroundTransparency = 1
+    qLbl.Text = "QUESTION"
+    qLbl.TextColor3 = Color3.fromRGB(120, 255, 160)
+    qLbl.Font = Enum.Font.GothamBlack
+    qLbl.TextSize = 9
+    qLbl.TextXAlignment = Enum.TextXAlignment.Left
+    qLbl.Parent = panel
+
+    local qBox = Instance.new("Frame")
+    qBox.Size = UDim2.new(1, -20, 0, 36)
+    qBox.Position = UDim2.fromOffset(10, 56)
+    qBox.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+    qBox.BorderSizePixel = 0
+    qBox.Parent = panel
+    corner(qBox, 6)
+    stroke(qBox, Color3.fromRGB(40, 40, 40), 1)
+
+    local qText = Instance.new("TextLabel")
+    qText.Size = UDim2.new(1, -12, 1, 0)
+    qText.Position = UDim2.fromOffset(6, 0)
+    qText.BackgroundTransparency = 1
+    qText.Text = "waiting for riddle..."
+    qText.TextColor3 = Color3.fromRGB(100, 100, 100)
+    qText.Font = Enum.Font.GothamMedium
+    qText.TextSize = 11
+    qText.TextXAlignment = Enum.TextXAlignment.Left
+    qText.TextWrapped = true
+    qText.Parent = qBox
+    _riddlerQLabel = qText
+
+    -- answer section
+    local aLbl = Instance.new("TextLabel")
+    aLbl.Size = UDim2.new(1, -20, 0, 12)
+    aLbl.Position = UDim2.fromOffset(10, 98)
+    aLbl.BackgroundTransparency = 1
+    aLbl.Text = "ANSWER"
+    aLbl.TextColor3 = Color3.fromRGB(120, 255, 160)
+    aLbl.Font = Enum.Font.GothamBlack
+    aLbl.TextSize = 9
+    aLbl.TextXAlignment = Enum.TextXAlignment.Left
+    aLbl.Parent = panel
+
+    local aBox = Instance.new("Frame")
+    aBox.Size = UDim2.new(1, -20, 0, 32)
+    aBox.Position = UDim2.fromOffset(10, 112)
+    aBox.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+    aBox.BorderSizePixel = 0
+    aBox.Parent = panel
+    corner(aBox, 6)
+    stroke(aBox, Color3.fromRGB(40, 40, 40), 1)
+
+    local aText = Instance.new("TextLabel")
+    aText.Size = UDim2.new(1, -12, 1, 0)
+    aText.Position = UDim2.fromOffset(6, 0)
+    aText.BackgroundTransparency = 1
+    aText.Text = ""
+    aText.TextColor3 = COL_WHITE
+    aText.Font = Enum.Font.GothamBold
+    aText.TextSize = 13
+    aText.TextXAlignment = Enum.TextXAlignment.Left
+    aText.Parent = aBox
+    _riddlerALabel = aText
+
+    -- feed section
+    local fLbl = Instance.new("TextLabel")
+    fLbl.Size = UDim2.new(1, -20, 0, 12)
+    fLbl.Position = UDim2.fromOffset(10, 152)
+    fLbl.BackgroundTransparency = 1
+    fLbl.Text = "LIVE FEED"
+    fLbl.TextColor3 = Color3.fromRGB(120, 255, 160)
+    fLbl.Font = Enum.Font.GothamBlack
+    fLbl.TextSize = 9
+    fLbl.TextXAlignment = Enum.TextXAlignment.Left
+    fLbl.Parent = panel
+
+    local feedBox = Instance.new("Frame")
+    feedBox.Size = UDim2.new(1, -20, 1, -172)
+    feedBox.Position = UDim2.fromOffset(10, 166)
+    feedBox.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
+    feedBox.BorderSizePixel = 0
+    feedBox.ClipsDescendants = true
+    feedBox.Parent = panel
+    corner(feedBox, 6)
+    stroke(feedBox, Color3.fromRGB(35, 35, 35), 1)
+
+    local feedScroll = Instance.new("ScrollingFrame")
+    feedScroll.Size = UDim2.new(1, -8, 1, -8)
+    feedScroll.Position = UDim2.fromOffset(4, 4)
+    feedScroll.BackgroundTransparency = 1
+    feedScroll.BorderSizePixel = 0
+    feedScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    feedScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    feedScroll.ScrollBarThickness = 3
+    feedScroll.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+    feedScroll.ScrollBarImageTransparency = 0.4
+    feedScroll.ScrollingDirection = Enum.ScrollingDirection.Y
+    feedScroll.Parent = feedBox
+    _riddlerFeedScroll = feedScroll
+
+    local feedOutput = Instance.new("TextLabel")
+    feedOutput.Size = UDim2.new(1, -4, 0, 0)
+    feedOutput.AutomaticSize = Enum.AutomaticSize.Y
+    feedOutput.BackgroundTransparency = 1
+    feedOutput.RichText = true
+    feedOutput.Text = '<font color="rgb(80,80,80)">waiting for riddles...</font>'
+    feedOutput.TextSize = 10
+    feedOutput.Font = Enum.Font.Code
+    feedOutput.TextColor3 = COL_WHITE
+    feedOutput.TextXAlignment = Enum.TextXAlignment.Left
+    feedOutput.TextYAlignment = Enum.TextYAlignment.Top
+    feedOutput.TextWrapped = true
+    feedOutput.Parent = feedScroll
+    _riddlerFeedLabel = feedOutput
+
+    -- slide in
+    panel.Position = UDim2.new(0, -320, 1, -12)
+    TweenService:Create(panel, TweenMed, { Position = UDim2.new(0, 12, 1, -12) }):Play()
+
+    _riddlerPanel = panel
+    _riddlerFeedLines = {}
+    _riddlerSolvedCount = 0
+    riddlerFeedAppend('<font color="rgb(80,80,80)">[boot] riddler active</font>')
+end
+
+local function destroyRiddlerPanel()
+    if _riddlerPanel and _riddlerPanel.Parent then
+        TweenService:Create(_riddlerPanel, TweenFast, { Position = UDim2.new(0, -320, 1, -12) }):Play()
+        task.delay(0.2, function()
+            if _riddlerPanel then pcall(function() _riddlerPanel:Destroy() end) end
+            _riddlerPanel = nil
+        end)
+    end
+    _riddlerQLabel = nil
+    _riddlerALabel = nil
+    _riddlerFeedLabel = nil
+    _riddlerFeedScroll = nil
+    _riddlerCountLabel = nil
+end
+
 local function stopRiddler()
     for _, c in ipairs(_riddlerConns) do pcall(function() c:Disconnect() end) end
     _riddlerConns = {}
     _riddlerSolving = false
+    destroyRiddlerPanel()
 end
 
 -- ======================== MAIN PAGE ========================
