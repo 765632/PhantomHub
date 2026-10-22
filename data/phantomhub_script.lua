@@ -5460,7 +5460,7 @@ end
 -- helper: panel toggle row
 local function riddlerToggleRow(parent, yPos, label, default)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, -20, 0, 30)
+    row.Size = UDim2.new(1, -20, 0, 34)
     row.Position = UDim2.fromOffset(10, yPos)
     row.BackgroundTransparency = 1
     row.BorderSizePixel = 0
@@ -5472,21 +5472,21 @@ local function riddlerToggleRow(parent, yPos, label, default)
     lbl.Text = label
     lbl.TextColor3 = COL_WHITE
     lbl.Font = Enum.Font.GothamBold
-    lbl.TextSize = 11
+    lbl.TextSize = 13
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.Parent = row
 
     local togBg = Instance.new("Frame")
-    togBg.Size = UDim2.fromOffset(36, 18)
-    togBg.Position = UDim2.new(1, -36, 0.5, -9)
-    togBg.BackgroundColor3 = default and COL_ON or Color3.fromRGB(50, 50, 50)
+    togBg.Size = UDim2.fromOffset(40, 20)
+    togBg.Position = UDim2.new(1, -40, 0.5, -10)
+    togBg.BackgroundColor3 = default and COL_WHITE or Color3.fromRGB(50, 50, 50)
     togBg.BorderSizePixel = 0
     togBg.Parent = row
     corner(togBg, 9)
 
     local togDot = Instance.new("Frame")
-    togDot.Size = UDim2.fromOffset(14, 14)
-    togDot.Position = default and UDim2.fromOffset(20, 2) or UDim2.fromOffset(2, 2)
+    togDot.Size = UDim2.fromOffset(16, 16)
+    togDot.Position = default and UDim2.fromOffset(22, 2) or UDim2.fromOffset(2, 2)
     togDot.BackgroundColor3 = COL_WHITE
     togDot.BorderSizePixel = 0
     togDot.Parent = togBg
@@ -5500,8 +5500,8 @@ local function riddlerToggleRow(parent, yPos, label, default)
     togBtn.Parent = togBg
     togBtn.MouseButton1Click:Connect(function()
         isOn = not isOn
-        TweenService:Create(togBg, TweenFast, { BackgroundColor3 = isOn and COL_ON or Color3.fromRGB(50, 50, 50) }):Play()
-        TweenService:Create(togDot, TweenFast, { Position = isOn and UDim2.fromOffset(20, 2) or UDim2.fromOffset(2, 2) }):Play()
+        TweenService:Create(togBg, TweenFast, { BackgroundColor3 = isOn and COL_WHITE or Color3.fromRGB(50, 50, 50) }):Play()
+        TweenService:Create(togDot, TweenFast, { Position = isOn and UDim2.fromOffset(22, 2) or UDim2.fromOffset(2, 2) }):Play()
     end)
 
     return function() return isOn end
@@ -5511,7 +5511,7 @@ end
 local function riddlerFeedAddEntry(question, answer, timeStr)
     if not _riddlerFeedScroll then return end
     local entry = Instance.new("Frame")
-    entry.Size = UDim2.new(1, -6, 0, 62)
+    entry.Size = UDim2.new(1, -6, 0, 72)
     entry.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
     entry.BorderSizePixel = 0
     entry.Parent = _riddlerFeedScroll
@@ -5545,34 +5545,34 @@ local function riddlerFeedAddEntry(question, answer, timeStr)
     aTxt.Position = UDim2.fromOffset(6, 30)
     aTxt.BackgroundTransparency = 1
     aTxt.Text = answer
-    aTxt.TextColor3 = COL_ON
+    aTxt.TextColor3 = COL_WHITE
     aTxt.Font = Enum.Font.GothamBlack
-    aTxt.TextSize = 11
+    aTxt.TextSize = 13
     aTxt.TextXAlignment = Enum.TextXAlignment.Left
     aTxt.Parent = entry
 
     local cpBtn = Instance.new("TextButton")
-    cpBtn.Size = UDim2.fromOffset(40, 14)
-    cpBtn.Position = UDim2.fromOffset(6, 45)
+    cpBtn.Size = UDim2.fromOffset(48, 18)
+    cpBtn.Position = UDim2.fromOffset(6, 50)
     cpBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     cpBtn.BorderSizePixel = 0
     cpBtn.Text = "COPY"
     cpBtn.TextColor3 = COL_WHITE
     cpBtn.Font = Enum.Font.GothamBold
-    cpBtn.TextSize = 8
+    cpBtn.TextSize = 10
     cpBtn.Parent = entry
     corner(cpBtn, 4)
     cpBtn.MouseButton1Click:Connect(function() pcall(function() setclipboard(answer) end) end)
 
     local rdBtn = Instance.new("TextButton")
-    rdBtn.Size = UDim2.fromOffset(52, 14)
-    rdBtn.Position = UDim2.fromOffset(50, 45)
-    rdBtn.BackgroundColor3 = COL_ON
+    rdBtn.Size = UDim2.fromOffset(60, 18)
+    rdBtn.Position = UDim2.fromOffset(58, 50)
+    rdBtn.BackgroundColor3 = COL_WHITE
     rdBtn.BorderSizePixel = 0
     rdBtn.Text = "REDEEM"
     rdBtn.TextColor3 = Color3.fromRGB(8, 8, 8)
     rdBtn.Font = Enum.Font.GothamBlack
-    rdBtn.TextSize = 8
+    rdBtn.TextSize = 10
     rdBtn.Parent = entry
     corner(rdBtn, 4)
     rdBtn.MouseButton1Click:Connect(function() pcall(riddlerSubmitAnswer, answer) end)
@@ -5607,7 +5607,7 @@ end
 local function buildRiddlerPanel()
     if _riddlerPanel and _riddlerPanel.Parent then return end
 
-    local W, H = 310, 520
+    local W, H = 360, 580
     local panel = Instance.new("Frame")
     panel.Name = "RiddlerPanel"
     panel.Size = UDim2.fromOffset(W, H)
@@ -5623,7 +5623,7 @@ local function buildRiddlerPanel()
 
     -- ═══ HEADER BAR ═══
     local header = Instance.new("Frame")
-    header.Size = UDim2.new(1, 0, 0, 38)
+    header.Size = UDim2.new(1, 0, 0, 46)
     header.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
     header.BorderSizePixel = 0
     header.ZIndex = 11
@@ -5641,9 +5641,9 @@ local function buildRiddlerPanel()
 
     -- logo circle
     local logo = Instance.new("Frame")
-    logo.Size = UDim2.fromOffset(24, 24)
-    logo.Position = UDim2.fromOffset(8, 7)
-    logo.BackgroundColor3 = COL_ON
+    logo.Size = UDim2.fromOffset(30, 30)
+    logo.Position = UDim2.fromOffset(10, 8)
+    logo.BackgroundColor3 = COL_WHITE
     logo.BorderSizePixel = 0
     logo.ZIndex = 12
     logo.Parent = header
@@ -5654,28 +5654,28 @@ local function buildRiddlerPanel()
     logoT.Text = "P"
     logoT.TextColor3 = Color3.fromRGB(8, 8, 8)
     logoT.Font = Enum.Font.GothamBlack
-    logoT.TextSize = 13
+    logoT.TextSize = 16
     logoT.ZIndex = 13
     logoT.Parent = logo
 
     -- brand
     local brand = Instance.new("TextLabel")
     brand.Size = UDim2.new(0, 75, 1, 0)
-    brand.Position = UDim2.fromOffset(36, 0)
+    brand.Position = UDim2.fromOffset(46, 0)
     brand.BackgroundTransparency = 1
     brand.Text = "RIDDLER"
     brand.TextColor3 = COL_WHITE
     brand.Font = Enum.Font.GothamBlack
-    brand.TextSize = 14
+    brand.TextSize = 17
     brand.TextXAlignment = Enum.TextXAlignment.Left
     brand.ZIndex = 12
     brand.Parent = header
 
     -- green dot
     local dot = Instance.new("Frame")
-    dot.Size = UDim2.fromOffset(7, 7)
-    dot.Position = UDim2.fromOffset(113, 16)
-    dot.BackgroundColor3 = COL_ON
+    dot.Size = UDim2.fromOffset(9, 9)
+    dot.Position = UDim2.fromOffset(128, 19)
+    dot.BackgroundColor3 = COL_WHITE
     dot.BorderSizePixel = 0
     dot.ZIndex = 12
     dot.Parent = header
@@ -5683,22 +5683,22 @@ local function buildRiddlerPanel()
 
     -- ═══ TAB BUTTONS (Rag / Test / Feed / Settings) ═══
     local tabNames = {"Rag", "Test", "Feed", "Settings"}
-    local tabX = 126
+    local tabX = 144
     for _, tName in ipairs(tabNames) do
-        local tw = tName == "Settings" and 52 or 34
+        local tw = tName == "Settings" and 62 or 42
         local tb = Instance.new("TextButton")
-        tb.Size = UDim2.fromOffset(tw, 24)
-        tb.Position = UDim2.fromOffset(tabX, 7)
+        tb.Size = UDim2.fromOffset(tw, 30)
+        tb.Position = UDim2.fromOffset(tabX, 8)
         tb.BackgroundTransparency = 1
         tb.Text = tName
         tb.TextColor3 = tName == "Rag" and COL_WHITE or Color3.fromRGB(90, 90, 90)
         tb.Font = Enum.Font.GothamBold
-        tb.TextSize = 12
+        tb.TextSize = 14
         tb.ZIndex = 12
         tb.Parent = header
         tb.MouseButton1Click:Connect(function() riddlerSwitchTab(tName) end)
         _riddlerTabBtns[tName] = tb
-        tabX = tabX + tw + 2
+        tabX = tabX + tw + 4
     end
 
     -- minimize
@@ -5715,13 +5715,13 @@ local function buildRiddlerPanel()
     local minimized = false
     minBtn.MouseButton1Click:Connect(function()
         minimized = not minimized
-        TweenService:Create(panel, TweenMed, { Size = minimized and UDim2.fromOffset(W, 38) or UDim2.fromOffset(W, H) }):Play()
+        TweenService:Create(panel, TweenMed, { Size = minimized and UDim2.fromOffset(W, 46) or UDim2.fromOffset(W, H) }):Play()
     end)
 
     riddlerMakeDraggable(header, panel)
 
     -- ═══ PAGE CONTAINER (below header) ═══
-    local pageY = 40
+    local pageY = 48
 
     -- ────────── RAG PAGE (main riddler view) ──────────
     local ragPage = Instance.new("Frame")
@@ -5740,10 +5740,10 @@ local function buildRiddlerPanel()
     statusLbl.Position = UDim2.fromOffset(10, ry)
     statusLbl.BackgroundTransparency = 1
     statusLbl.RichText = true
-    statusLbl.Text = '<font color="rgb(120,255,160)">●</font> ready - listening...'
+    statusLbl.Text = '<font color="rgb(245,245,245)">●</font> ready - listening...'
     statusLbl.TextColor3 = Color3.fromRGB(160, 160, 160)
     statusLbl.Font = Enum.Font.GothamMedium
-    statusLbl.TextSize = 10
+    statusLbl.TextSize = 12
     statusLbl.TextXAlignment = Enum.TextXAlignment.Left
     statusLbl.Parent = ragPage
     _riddlerStatusLabel = statusLbl
@@ -5751,7 +5751,7 @@ local function buildRiddlerPanel()
 
     -- AI box
     local aiBox = Instance.new("Frame")
-    aiBox.Size = UDim2.new(1, -20, 0, 32)
+    aiBox.Size = UDim2.new(1, -20, 0, 38)
     aiBox.Position = UDim2.fromOffset(10, ry)
     aiBox.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
     aiBox.BorderSizePixel = 0
@@ -5765,14 +5765,14 @@ local function buildRiddlerPanel()
     aiLbl.Text = "AI - ON"
     aiLbl.TextColor3 = COL_WHITE
     aiLbl.Font = Enum.Font.GothamBlack
-    aiLbl.TextSize = 11
+    aiLbl.TextSize = 13
     aiLbl.TextXAlignment = Enum.TextXAlignment.Left
     aiLbl.Parent = aiBox
-    ry = ry + 38
+    ry = ry + 44
 
     -- LISTEN box
     local lisBox = Instance.new("Frame")
-    lisBox.Size = UDim2.new(1, -20, 0, 32)
+    lisBox.Size = UDim2.new(1, -20, 0, 38)
     lisBox.Position = UDim2.fromOffset(10, ry)
     lisBox.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
     lisBox.BorderSizePixel = 0
@@ -5786,53 +5786,53 @@ local function buildRiddlerPanel()
     lisLbl.Text = "LISTEN - ON"
     lisLbl.TextColor3 = COL_WHITE
     lisLbl.Font = Enum.Font.GothamBlack
-    lisLbl.TextSize = 11
+    lisLbl.TextSize = 13
     lisLbl.TextXAlignment = Enum.TextXAlignment.Left
     lisLbl.Parent = lisBox
-    ry = ry + 38
+    ry = ry + 44
 
     -- QUESTION
     local qH = Instance.new("TextLabel")
-    qH.Size = UDim2.new(1, -20, 0, 12)
+    qH.Size = UDim2.new(1, -20, 0, 16)
     qH.Position = UDim2.fromOffset(10, ry)
     qH.BackgroundTransparency = 1
     qH.Text = "QUESTION"
-    qH.TextColor3 = COL_ON
+    qH.TextColor3 = COL_WHITE
     qH.Font = Enum.Font.GothamBlack
-    qH.TextSize = 9
+    qH.TextSize = 12
     qH.TextXAlignment = Enum.TextXAlignment.Left
     qH.Parent = ragPage
-    ry = ry + 13
+    ry = ry + 18
 
     local qText = Instance.new("TextLabel")
-    qText.Size = UDim2.new(1, -20, 0, 28)
+    qText.Size = UDim2.new(1, -20, 0, 34)
     qText.Position = UDim2.fromOffset(10, ry)
     qText.BackgroundTransparency = 1
     qText.Text = "waiting..."
     qText.TextColor3 = Color3.fromRGB(120, 120, 120)
     qText.Font = Enum.Font.GothamMedium
-    qText.TextSize = 10
+    qText.TextSize = 12
     qText.TextXAlignment = Enum.TextXAlignment.Left
     qText.TextWrapped = true
     qText.Parent = ragPage
     _riddlerQLabel = qText
-    ry = ry + 30
+    ry = ry + 36
 
     -- ANSWER (CODE)
     local aH = Instance.new("TextLabel")
-    aH.Size = UDim2.new(1, -20, 0, 12)
+    aH.Size = UDim2.new(1, -20, 0, 16)
     aH.Position = UDim2.fromOffset(10, ry)
     aH.BackgroundTransparency = 1
     aH.Text = "ANSWER (CODE)"
-    aH.TextColor3 = COL_ON
+    aH.TextColor3 = COL_WHITE
     aH.Font = Enum.Font.GothamBlack
-    aH.TextSize = 9
+    aH.TextSize = 12
     aH.TextXAlignment = Enum.TextXAlignment.Left
     aH.Parent = ragPage
-    ry = ry + 13
+    ry = ry + 18
 
     local aBox = Instance.new("Frame")
-    aBox.Size = UDim2.new(1, -20, 0, 34)
+    aBox.Size = UDim2.new(1, -20, 0, 40)
     aBox.Position = UDim2.fromOffset(10, ry)
     aBox.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
     aBox.BorderSizePixel = 0
@@ -5844,56 +5844,56 @@ local function buildRiddlerPanel()
     aText.Position = UDim2.fromOffset(6, 0)
     aText.BackgroundTransparency = 1
     aText.Text = ""
-    aText.TextColor3 = COL_ON
+    aText.TextColor3 = COL_WHITE
     aText.Font = Enum.Font.GothamBlack
-    aText.TextSize = 15
+    aText.TextSize = 18
     aText.TextXAlignment = Enum.TextXAlignment.Left
     aText.Parent = aBox
     _riddlerALabel = aText
-    ry = ry + 40
+    ry = ry + 46
 
     -- COPY / CLEAR / REDEEM
     local bRow = Instance.new("Frame")
-    bRow.Size = UDim2.new(1, -20, 0, 26)
+    bRow.Size = UDim2.new(1, -20, 0, 32)
     bRow.Position = UDim2.fromOffset(10, ry)
     bRow.BackgroundTransparency = 1
     bRow.Parent = ragPage
 
     local function makeBtn(x, w, txt, col, dark, cb)
         local b = Instance.new("TextButton")
-        b.Size = UDim2.fromOffset(w, 26)
+        b.Size = UDim2.fromOffset(w, 32)
         b.Position = UDim2.fromOffset(x, 0)
         b.BackgroundColor3 = col
         b.BorderSizePixel = 0
         b.Text = txt
         b.TextColor3 = dark and Color3.fromRGB(8,8,8) or COL_WHITE
         b.Font = Enum.Font.GothamBlack
-        b.TextSize = 10
+        b.TextSize = 12
         b.AutoButtonColor = true
         b.Parent = bRow
         corner(b, 6)
         b.MouseButton1Click:Connect(cb or function() end)
     end
-    makeBtn(0, 72, "COPY", Color3.fromRGB(30,30,30), false, function()
+    makeBtn(0, 84, "COPY", Color3.fromRGB(30,30,30), false, function()
         if _riddlerALabel and _riddlerALabel.Text ~= "" then pcall(function() setclipboard(_riddlerALabel.Text) end) end
     end)
-    makeBtn(76, 72, "CLEAR", Color3.fromRGB(30,30,30), false, function()
+    makeBtn(88, 84, "CLEAR", Color3.fromRGB(30,30,30), false, function()
         if _riddlerALabel then _riddlerALabel.Text = "" end
         if _riddlerQLabel then _riddlerQLabel.Text = "waiting..."; _riddlerQLabel.TextColor3 = Color3.fromRGB(120,120,120) end
-        if _riddlerStatusLabel then _riddlerStatusLabel.Text = '<font color="rgb(120,255,160)">●</font> ready - listening...' end
+        if _riddlerStatusLabel then _riddlerStatusLabel.Text = '<font color="rgb(245,245,245)">●</font> ready - listening...' end
     end)
-    makeBtn(152, 106, "REDEEM", COL_ON, true, function()
+    makeBtn(176, 120, "REDEEM", COL_WHITE, true, function()
         if _riddlerALabel and _riddlerALabel.Text ~= "" then pcall(riddlerSubmitAnswer, _riddlerALabel.Text) end
     end)
-    ry = ry + 32
+    ry = ry + 38
 
     -- toggles
     riddlerToggleRow(ragPage, ry, "AUTO REDEEM ANSWER", state.riddlerAutoRedeem or false)
-    ry = ry + 32
-    riddlerToggleRow(ragPage, ry, "AUTO COPY ANSWER", false)
-    ry = ry + 32
-    riddlerToggleRow(ragPage, ry, "OPEN FEED ON HIT", true)
     ry = ry + 36
+    riddlerToggleRow(ragPage, ry, "AUTO COPY ANSWER", false)
+    ry = ry + 36
+    riddlerToggleRow(ragPage, ry, "OPEN FEED ON HIT", true)
+    ry = ry + 40
 
     -- solved count
     local solvedLbl = Instance.new("TextLabel")
@@ -5902,7 +5902,7 @@ local function buildRiddlerPanel()
     solvedLbl.Position = UDim2.fromOffset(10, ry)
     solvedLbl.BackgroundTransparency = 1
     solvedLbl.Text = "0 solved"
-    solvedLbl.TextColor3 = COL_ON
+    solvedLbl.TextColor3 = COL_WHITE
     solvedLbl.Font = Enum.Font.GothamBold
     solvedLbl.TextSize = 10
     solvedLbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -5922,9 +5922,9 @@ local function buildRiddlerPanel()
     testLbl.Position = UDim2.fromOffset(10, 8)
     testLbl.BackgroundTransparency = 1
     testLbl.Text = "TEST RIDDLE"
-    testLbl.TextColor3 = COL_ON
+    testLbl.TextColor3 = COL_WHITE
     testLbl.Font = Enum.Font.GothamBlack
-    testLbl.TextSize = 10
+    testLbl.TextSize = 13
     testLbl.TextXAlignment = Enum.TextXAlignment.Left
     testLbl.Parent = testPage
 
@@ -5938,7 +5938,7 @@ local function buildRiddlerPanel()
     testBox.PlaceholderColor3 = Color3.fromRGB(80, 80, 80)
     testBox.TextColor3 = COL_WHITE
     testBox.Font = Enum.Font.GothamMedium
-    testBox.TextSize = 11
+    testBox.TextSize = 13
     testBox.TextWrapped = true
     testBox.TextXAlignment = Enum.TextXAlignment.Left
     testBox.TextYAlignment = Enum.TextYAlignment.Top
@@ -5952,9 +5952,9 @@ local function buildRiddlerPanel()
     testResultLbl.Position = UDim2.fromOffset(10, 94)
     testResultLbl.BackgroundTransparency = 1
     testResultLbl.Text = "RESULT"
-    testResultLbl.TextColor3 = COL_ON
+    testResultLbl.TextColor3 = COL_WHITE
     testResultLbl.Font = Enum.Font.GothamBlack
-    testResultLbl.TextSize = 10
+    testResultLbl.TextSize = 13
     testResultLbl.TextXAlignment = Enum.TextXAlignment.Left
     testResultLbl.Parent = testPage
 
@@ -5963,9 +5963,9 @@ local function buildRiddlerPanel()
     testResult.Position = UDim2.fromOffset(10, 110)
     testResult.BackgroundTransparency = 1
     testResult.Text = ""
-    testResult.TextColor3 = COL_ON
+    testResult.TextColor3 = COL_WHITE
     testResult.Font = Enum.Font.GothamBlack
-    testResult.TextSize = 14
+    testResult.TextSize = 16
     testResult.TextXAlignment = Enum.TextXAlignment.Left
     testResult.TextWrapped = true
     testResult.Parent = testPage
@@ -5973,12 +5973,12 @@ local function buildRiddlerPanel()
     local testBtn = Instance.new("TextButton")
     testBtn.Size = UDim2.new(1, -20, 0, 28)
     testBtn.Position = UDim2.fromOffset(10, 148)
-    testBtn.BackgroundColor3 = COL_ON
+    testBtn.BackgroundColor3 = COL_WHITE
     testBtn.BorderSizePixel = 0
     testBtn.Text = "SOLVE"
     testBtn.TextColor3 = Color3.fromRGB(8, 8, 8)
     testBtn.Font = Enum.Font.GothamBlack
-    testBtn.TextSize = 12
+    testBtn.TextSize = 14
     testBtn.Parent = testPage
     corner(testBtn, 6)
     testBtn.MouseButton1Click:Connect(function()
@@ -5990,7 +5990,7 @@ local function buildRiddlerPanel()
             local answers = solveRiddleMulti(q, function() end)
             if answers and #answers > 0 then
                 testResult.Text = answers[1]
-                testResult.TextColor3 = COL_ON
+                testResult.TextColor3 = COL_WHITE
             else
                 testResult.Text = "no answer found"
                 testResult.TextColor3 = Color3.fromRGB(255, 90, 90)
@@ -6019,7 +6019,7 @@ local function buildRiddlerPanel()
     feedTitle.Text = "SOLVE LOG"
     feedTitle.TextColor3 = COL_WHITE
     feedTitle.Font = Enum.Font.GothamBlack
-    feedTitle.TextSize = 10
+    feedTitle.TextSize = 13
     feedTitle.TextXAlignment = Enum.TextXAlignment.Left
     feedTitle.Parent = feedHdr
 
@@ -6029,7 +6029,7 @@ local function buildRiddlerPanel()
     feedCount.Position = UDim2.fromOffset(82, 0)
     feedCount.BackgroundTransparency = 1
     feedCount.Text = "0 solved"
-    feedCount.TextColor3 = COL_ON
+    feedCount.TextColor3 = COL_WHITE
     feedCount.Font = Enum.Font.GothamBold
     feedCount.TextSize = 9
     feedCount.TextXAlignment = Enum.TextXAlignment.Left
@@ -6164,10 +6164,10 @@ local function onRiddleDetected(text)
             -- update riddler panel
             if _riddlerALabel then
                 _riddlerALabel.Text = primary
-                _riddlerALabel.TextColor3 = COL_ON
+                _riddlerALabel.TextColor3 = COL_WHITE
             end
             if _riddlerStatusLabel then
-                _riddlerStatusLabel.Text = '<font color="rgb(120,255,160)">●</font> sent: ' .. primary
+                _riddlerStatusLabel.Text = '<font color="rgb(245,245,245)">●</font> sent: ' .. primary
             end
             _riddlerSolvedCount = _riddlerSolvedCount + 1
             if _riddlerCountLabel then
@@ -6763,54 +6763,8 @@ makeToggle(pageMain, 7, "Anti Kick", false, function(on)
     pushLog("> anti kick: " .. (on and "ON" or "OFF"), on and COL_ON or Color3.fromRGB(140, 140, 150))
 end)
 
--- SPEED CONTROL
-local speedRow = makeMainRow(8)
-
-local speedLabel = Instance.new("TextLabel")
-speedLabel.Size = UDim2.new(0.4, 0, 1, 0)
-speedLabel.Position = UDim2.new(0, 14, 0, 0)
-speedLabel.BackgroundTransparency = 1
-speedLabel.Font = Enum.Font.GothamBold
-speedLabel.TextSize = 12
-speedLabel.TextColor3 = Theme.text
-speedLabel.TextXAlignment = Enum.TextXAlignment.Left
-speedLabel.Text = "Speed"
-speedLabel.ZIndex = 4
-speedLabel.Parent = speedRow
-
-local _redeemSpeed = "MAX"
-local speedOptions = {"MAX", "FAST", "SAFE"}
-local speedBtnX = 0
-for i, opt in ipairs(speedOptions) do
-    local sb = Instance.new("TextButton")
-    sb.Size = UDim2.fromOffset(opt == "SAFE" and 38 or 34, 22)
-    sb.Position = UDim2.new(1, -120 + speedBtnX, 0.5, -11)
-    sb.BackgroundColor3 = i == 1 and COL_ON or Color3.fromRGB(30, 30, 30)
-    sb.BorderSizePixel = 0
-    sb.Text = opt
-    sb.TextColor3 = i == 1 and Color3.fromRGB(8, 8, 8) or COL_WHITE
-    sb.Font = Enum.Font.GothamBlack
-    sb.TextSize = 9
-    sb.ZIndex = 4
-    sb.AutoButtonColor = true
-    sb.Parent = speedRow
-    corner(sb, 5)
-    sb.MouseButton1Click:Connect(function()
-        _redeemSpeed = opt
-        for _, ch in ipairs(speedRow:GetChildren()) do
-            if ch:IsA("TextButton") then
-                local active = ch.Text == opt
-                ch.BackgroundColor3 = active and COL_ON or Color3.fromRGB(30, 30, 30)
-                ch.TextColor3 = active and Color3.fromRGB(8, 8, 8) or COL_WHITE
-            end
-        end
-        pushLog("> speed: " .. opt, COL_ON)
-    end)
-    speedBtnX = speedBtnX + (opt == "SAFE" and 42 or 38)
-end
-
 -- EVENTS BLOCK
-makeToggle(pageMain, 9, "Block Events", false, function(on)
+makeToggle(pageMain, 8, "Block Events", false, function(on)
     state.blockEvents = on
     pushLog("> block events: " .. (on and "ON" or "OFF"), on and COL_ON or Color3.fromRGB(140, 140, 150))
 end)
