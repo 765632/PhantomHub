@@ -5607,7 +5607,7 @@ end
 local function buildRiddlerPanel()
     if _riddlerPanel and _riddlerPanel.Parent then return end
 
-    local W, H = 280, 500
+    local W, H = 310, 520
     local panel = Instance.new("Frame")
     panel.Name = "RiddlerPanel"
     panel.Size = UDim2.fromOffset(W, H)
@@ -5623,7 +5623,7 @@ local function buildRiddlerPanel()
 
     -- ═══ HEADER BAR ═══
     local header = Instance.new("Frame")
-    header.Size = UDim2.new(1, 0, 0, 32)
+    header.Size = UDim2.new(1, 0, 0, 38)
     header.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
     header.BorderSizePixel = 0
     header.ZIndex = 11
@@ -5641,86 +5641,87 @@ local function buildRiddlerPanel()
 
     -- logo circle
     local logo = Instance.new("Frame")
-    logo.Size = UDim2.fromOffset(20, 20)
-    logo.Position = UDim2.fromOffset(8, 6)
+    logo.Size = UDim2.fromOffset(24, 24)
+    logo.Position = UDim2.fromOffset(8, 7)
     logo.BackgroundColor3 = COL_ON
     logo.BorderSizePixel = 0
     logo.ZIndex = 12
     logo.Parent = header
-    corner(logo, 10)
+    corner(logo, 12)
     local logoT = Instance.new("TextLabel")
     logoT.Size = UDim2.new(1, 0, 1, 0)
     logoT.BackgroundTransparency = 1
     logoT.Text = "P"
     logoT.TextColor3 = Color3.fromRGB(8, 8, 8)
     logoT.Font = Enum.Font.GothamBlack
-    logoT.TextSize = 11
+    logoT.TextSize = 13
     logoT.ZIndex = 13
     logoT.Parent = logo
 
     -- brand
     local brand = Instance.new("TextLabel")
-    brand.Size = UDim2.new(0, 65, 1, 0)
-    brand.Position = UDim2.fromOffset(32, 0)
+    brand.Size = UDim2.new(0, 75, 1, 0)
+    brand.Position = UDim2.fromOffset(36, 0)
     brand.BackgroundTransparency = 1
     brand.Text = "RIDDLER"
     brand.TextColor3 = COL_WHITE
     brand.Font = Enum.Font.GothamBlack
-    brand.TextSize = 12
+    brand.TextSize = 14
     brand.TextXAlignment = Enum.TextXAlignment.Left
     brand.ZIndex = 12
     brand.Parent = header
 
     -- green dot
     local dot = Instance.new("Frame")
-    dot.Size = UDim2.fromOffset(6, 6)
-    dot.Position = UDim2.fromOffset(99, 13)
+    dot.Size = UDim2.fromOffset(7, 7)
+    dot.Position = UDim2.fromOffset(113, 16)
     dot.BackgroundColor3 = COL_ON
     dot.BorderSizePixel = 0
     dot.ZIndex = 12
     dot.Parent = header
-    corner(dot, 3)
+    corner(dot, 4)
 
     -- ═══ TAB BUTTONS (Rag / Test / Feed / Settings) ═══
     local tabNames = {"Rag", "Test", "Feed", "Settings"}
-    local tabX = 112
+    local tabX = 126
     for _, tName in ipairs(tabNames) do
+        local tw = tName == "Settings" and 52 or 34
         local tb = Instance.new("TextButton")
-        tb.Size = UDim2.fromOffset(tName == "Settings" and 46 or 30, 20)
-        tb.Position = UDim2.fromOffset(tabX, 6)
+        tb.Size = UDim2.fromOffset(tw, 24)
+        tb.Position = UDim2.fromOffset(tabX, 7)
         tb.BackgroundTransparency = 1
         tb.Text = tName
         tb.TextColor3 = tName == "Rag" and COL_WHITE or Color3.fromRGB(90, 90, 90)
         tb.Font = Enum.Font.GothamBold
-        tb.TextSize = 10
+        tb.TextSize = 12
         tb.ZIndex = 12
         tb.Parent = header
         tb.MouseButton1Click:Connect(function() riddlerSwitchTab(tName) end)
         _riddlerTabBtns[tName] = tb
-        tabX = tabX + (tName == "Settings" and 50 or 34)
+        tabX = tabX + tw + 2
     end
 
     -- minimize
     local minBtn = Instance.new("TextButton")
-    minBtn.Size = UDim2.fromOffset(18, 18)
-    minBtn.Position = UDim2.new(1, -22, 0, 7)
+    minBtn.Size = UDim2.fromOffset(20, 20)
+    minBtn.Position = UDim2.new(1, -24, 0, 9)
     minBtn.BackgroundTransparency = 1
     minBtn.Text = "—"
     minBtn.TextColor3 = Color3.fromRGB(120, 120, 120)
     minBtn.Font = Enum.Font.GothamBold
-    minBtn.TextSize = 12
+    minBtn.TextSize = 14
     minBtn.ZIndex = 12
     minBtn.Parent = header
     local minimized = false
     minBtn.MouseButton1Click:Connect(function()
         minimized = not minimized
-        TweenService:Create(panel, TweenMed, { Size = minimized and UDim2.fromOffset(W, 32) or UDim2.fromOffset(W, H) }):Play()
+        TweenService:Create(panel, TweenMed, { Size = minimized and UDim2.fromOffset(W, 38) or UDim2.fromOffset(W, H) }):Play()
     end)
 
     riddlerMakeDraggable(header, panel)
 
     -- ═══ PAGE CONTAINER (below header) ═══
-    local pageY = 34
+    local pageY = 40
 
     -- ────────── RAG PAGE (main riddler view) ──────────
     local ragPage = Instance.new("Frame")
@@ -6730,6 +6731,88 @@ end)
 makeToggle(pageMain, 5, "Riddle Auto Redeem", true, function(on)
     state.riddlerAutoRedeem = on
     pushLog("> riddle auto redeem: " .. (on and "ON" or "OFF"), on and COL_ON or Color3.fromRGB(140, 140, 150))
+end)
+
+-- AUTO TYPE
+makeToggle(pageMain, 6, "Auto Type", true, function(on)
+    state.autoType = on
+    pushLog("> auto type: " .. (on and "ON" or "OFF"), on and COL_ON or Color3.fromRGB(140, 140, 150))
+end)
+state.autoType = true
+
+-- ANTI KICK
+makeToggle(pageMain, 7, "Anti Kick", false, function(on)
+    state.antiKick = on
+    if on then
+        pcall(function()
+            local mt = getrawmetatable(game)
+            if mt then
+                local oldNC = mt.__namecall
+                setreadonly(mt, false)
+                mt.__namecall = newcclosure(function(self, ...)
+                    local method = getnamecallmethod()
+                    if method == "Kick" or method == "kick" then
+                        return nil
+                    end
+                    return oldNC(self, ...)
+                end)
+                setreadonly(mt, true)
+            end
+        end)
+    end
+    pushLog("> anti kick: " .. (on and "ON" or "OFF"), on and COL_ON or Color3.fromRGB(140, 140, 150))
+end)
+
+-- SPEED CONTROL
+local speedRow = makeMainRow(8)
+
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(0.4, 0, 1, 0)
+speedLabel.Position = UDim2.new(0, 14, 0, 0)
+speedLabel.BackgroundTransparency = 1
+speedLabel.Font = Enum.Font.GothamBold
+speedLabel.TextSize = 12
+speedLabel.TextColor3 = Theme.text
+speedLabel.TextXAlignment = Enum.TextXAlignment.Left
+speedLabel.Text = "Speed"
+speedLabel.ZIndex = 4
+speedLabel.Parent = speedRow
+
+local _redeemSpeed = "MAX"
+local speedOptions = {"MAX", "FAST", "SAFE"}
+local speedBtnX = 0
+for i, opt in ipairs(speedOptions) do
+    local sb = Instance.new("TextButton")
+    sb.Size = UDim2.fromOffset(opt == "SAFE" and 38 or 34, 22)
+    sb.Position = UDim2.new(1, -120 + speedBtnX, 0.5, -11)
+    sb.BackgroundColor3 = i == 1 and COL_ON or Color3.fromRGB(30, 30, 30)
+    sb.BorderSizePixel = 0
+    sb.Text = opt
+    sb.TextColor3 = i == 1 and Color3.fromRGB(8, 8, 8) or COL_WHITE
+    sb.Font = Enum.Font.GothamBlack
+    sb.TextSize = 9
+    sb.ZIndex = 4
+    sb.AutoButtonColor = true
+    sb.Parent = speedRow
+    corner(sb, 5)
+    sb.MouseButton1Click:Connect(function()
+        _redeemSpeed = opt
+        for _, ch in ipairs(speedRow:GetChildren()) do
+            if ch:IsA("TextButton") then
+                local active = ch.Text == opt
+                ch.BackgroundColor3 = active and COL_ON or Color3.fromRGB(30, 30, 30)
+                ch.TextColor3 = active and Color3.fromRGB(8, 8, 8) or COL_WHITE
+            end
+        end
+        pushLog("> speed: " .. opt, COL_ON)
+    end)
+    speedBtnX = speedBtnX + (opt == "SAFE" and 42 or 38)
+end
+
+-- EVENTS BLOCK
+makeToggle(pageMain, 9, "Block Events", false, function(on)
+    state.blockEvents = on
+    pushLog("> block events: " .. (on and "ON" or "OFF"), on and COL_ON or Color3.fromRGB(140, 140, 150))
 end)
 
 -- ======================== LOGS PAGE ========================
