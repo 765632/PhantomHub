@@ -1106,6 +1106,7 @@ local function appendToBox(text)
                 local ok, statusMsg = typeAndSubmitCode(combinedCode)
                 if ok then
                     pushLog("> REDEEMED: " .. combinedCode, Color3.fromRGB(120, 255, 160))
+                    state._redeemCount = (state._redeemCount or 0) + 1
                 else
                     pushLog("> failed: " .. tostring(statusMsg), Color3.fromRGB(255, 90, 90))
                 end
@@ -6160,6 +6161,7 @@ local function onRiddleDetected(text)
         if answers and #answers > 0 then
             local primary = answers[1]
             pushLog("> answer: " .. primary, COL_ON)
+            state._riddleCount = (state._riddleCount or 0) + 1
 
             -- update riddler panel
             if _riddlerALabel then
@@ -6199,6 +6201,7 @@ local function onRiddleDetected(text)
                     local ok2, msg2 = riddlerSubmitAnswer(ans)
                     if ok2 then
                         pushLog("> redeemed: " .. ans, COL_ON)
+                        state._redeemCount = (state._redeemCount or 0) + 1
                     else
                         pushLog("> failed: " .. tostring(msg2), Color3.fromRGB(255, 90, 90))
                     end
@@ -6767,6 +6770,148 @@ end)
 makeToggle(pageMain, 8, "Block Events", false, function(on)
     state.blockEvents = on
     pushLog("> block events: " .. (on and "ON" or "OFF"), on and COL_ON or Color3.fromRGB(140, 140, 150))
+end)
+
+-- ═══ MANUAL REDEEM ═══
+local manualRow = makeMainRow(9)
+
+local manualLabel = Instance.new("TextLabel")
+manualLabel.Size = UDim2.new(0.3, 0, 1, 0)
+manualLabel.Position = UDim2.new(0, 14, 0, 0)
+manualLabel.BackgroundTransparency = 1
+manualLabel.Font = Enum.Font.GothamBold
+manualLabel.TextSize = 12
+manualLabel.TextColor3 = Theme.text
+manualLabel.TextXAlignment = Enum.TextXAlignment.Left
+manualLabel.Text = "Redeem"
+manualLabel.ZIndex = 4
+manualLabel.Parent = manualRow
+
+local manualBox = Instance.new("TextBox")
+manualBox.Size = UDim2.new(0, 110, 0, 26)
+manualBox.Position = UDim2.new(1, -180, 0.5, -13)
+manualBox.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+manualBox.BorderSizePixel = 0
+manualBox.Text = ""
+manualBox.PlaceholderText = "code..."
+manualBox.PlaceholderColor3 = Color3.fromRGB(70, 70, 70)
+manualBox.TextColor3 = COL_WHITE
+manualBox.Font = Enum.Font.Code
+manualBox.TextSize = 11
+manualBox.ClearTextOnFocus = false
+manualBox.ZIndex = 4
+manualBox.Parent = manualRow
+corner(manualBox, 6)
+stroke(manualBox, Color3.fromRGB(50, 50, 50), 1)
+
+local manualBtn = Instance.new("TextButton")
+manualBtn.Size = UDim2.fromOffset(56, 26)
+manualBtn.Position = UDim2.new(1, -64, 0.5, -13)
+manualBtn.BackgroundColor3 = Theme.accent
+manualBtn.BorderSizePixel = 0
+manualBtn.Text = "GO"
+manualBtn.TextColor3 = Theme.bg
+manualBtn.Font = Enum.Font.GothamBlack
+manualBtn.TextSize = 12
+manualBtn.ZIndex = 4
+manualBtn.AutoButtonColor = true
+manualBtn.Parent = manualRow
+corner(manualBtn, 6)
+manualBtn.MouseButton1Click:Connect(function()
+    local code = manualBox.Text:gsub("%s+", "")
+    if code == "" then return end
+    pushLog("> manual redeem: " .. code, COL_ON)
+    task.spawn(function()
+        riddlerSubmitAnswer(code)
+    end)
+    manualBox.Text = ""
+end)
+
+-- ═══ SERVER HOP ═══
+local hopRow = makeMainRow(10)
+
+local hopLabel = Instance.new("TextLabel")
+hopLabel.Size = UDim2.new(0.5, 0, 1, 0)
+hopLabel.Position = UDim2.new(0, 14, 0, 0)
+hopLabel.BackgroundTransparency = 1
+hopLabel.Font = Enum.Font.GothamBold
+hopLabel.TextSize = 12
+hopLabel.TextColor3 = Theme.text
+hopLabel.TextXAlignment = Enum.TextXAlignment.Left
+hopLabel.Text = "Server Hop"
+hopLabel.ZIndex = 4
+hopLabel.Parent = hopRow
+
+local hopBtn = Instance.new("TextButton")
+hopBtn.Size = UDim2.fromOffset(56, 26)
+hopBtn.Position = UDim2.new(1, -64, 0.5, -13)
+hopBtn.BackgroundColor3 = Theme.accent
+hopBtn.BorderSizePixel = 0
+hopBtn.Text = "HOP"
+hopBtn.TextColor3 = Theme.bg
+hopBtn.Font = Enum.Font.GothamBlack
+hopBtn.TextSize = 12
+hopBtn.ZIndex = 4
+hopBtn.AutoButtonColor = true
+hopBtn.Parent = hopRow
+corner(hopBtn, 6)
+hopBtn.MouseButton1Click:Connect(function()
+    pushLog("> hopping server...", COL_ON)
+    task.spawn(function()
+        local TPS = game:GetService("TeleportService")
+        local Http = game:GetService("HttpService")
+        local placeId = game.PlaceId
+        local currentJobId = game.JobId
+        local ok, servers = pcall(function()
+            local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100"
+            return Http:JSONDecode(game:HttpGet(url))
+        end)
+        if ok and servers and servers.data then
+            for _, srv in ipairs(servers.data) do
+                if srv.id ~= currentJobId and srv.playing and srv.maxPlayers and srv.playing < srv.maxPlayers then
+                    pushLog("> joining server " .. srv.id:sub(1, 8) .. "...", COL_ON)
+                    pcall(function() TPS:TeleportToPlaceInstance(placeId, srv.id) end)
+                    return
+                end
+            end
+            pushLog("> no open servers found, rejoining...", Color3.fromRGB(255, 200, 80))
+            pcall(function() TPS:Teleport(placeId) end)
+        else
+            pushLog("> server list failed, rejoining...", Color3.fromRGB(255, 200, 80))
+            pcall(function() TPS:Teleport(placeId) end)
+        end
+    end)
+end)
+
+-- ═══ STATS ROW ═══
+local statsRow = makeMainRow(11)
+statsRow.BackgroundTransparency = 0.3
+
+local _statsLabel = Instance.new("TextLabel")
+_statsLabel.Size = UDim2.new(1, -28, 1, 0)
+_statsLabel.Position = UDim2.new(0, 14, 0, 0)
+_statsLabel.BackgroundTransparency = 1
+_statsLabel.Font = Enum.Font.GothamMedium
+_statsLabel.TextSize = 11
+_statsLabel.TextColor3 = Color3.fromRGB(160, 160, 160)
+_statsLabel.TextXAlignment = Enum.TextXAlignment.Left
+_statsLabel.Text = "Redeemed: 0  |  Riddles: 0  |  Uptime: 0m"
+_statsLabel.ZIndex = 4
+_statsLabel.Parent = statsRow
+
+state._redeemCount = state._redeemCount or 0
+state._riddleCount = state._riddleCount or 0
+local _startTime = tick()
+
+task.spawn(function()
+    while task.wait(5) do
+        if _statsLabel and _statsLabel.Parent then
+            local mins = math.floor((tick() - _startTime) / 60)
+            _statsLabel.Text = "Redeemed: " .. tostring(state._redeemCount or 0) .. "  |  Riddles: " .. tostring(state._riddleCount or 0) .. "  |  Uptime: " .. mins .. "m"
+        else
+            break
+        end
+    end
 end)
 
 -- ======================== LOGS PAGE ========================
