@@ -5423,163 +5423,7 @@ local function riddlerSubmitAnswer(answer)
     return true, submitted and "submitted" or "typed only"
 end
 
-local function onRiddleDetected(text)
-    if not state.riddlerToggled or _riddlerSolving then return end
-    local cleaned = stripRich(tostring(text or ""))
-    cleaned = trim(cleaned)
-    if cleaned == "" or #cleaned < 3 then return end
-
-    pushLog("> riddle: " .. cleaned:sub(1, 50), Color3.fromRGB(200, 180, 100))
-    pushLog("> solving...", COL_ON)
-
-    -- update panel question
-    if _riddlerQLabel then
-        _riddlerQLabel.Text = cleaned:sub(1, 120)
-        _riddlerQLabel.TextColor3 = COL_WHITE
-    end
-    if _riddlerALabel then
-        _riddlerALabel.Text = "solving..."
-        _riddlerALabel.TextColor3 = Color3.fromRGB(255, 200, 80)
-    end
-
-    local ts = os.date("%H:%M:%S")
-    riddlerFeedAppend('<font color="rgb(255,200,80)">[' .. ts .. '] Q: ' .. cleaned:sub(1, 60) .. '</font>')
-    riddlerFeedAppend('<font color="rgb(100,100,100)">  solving...</font>')
-
-    _riddlerSolving = true
-    task.spawn(function()
-        local answers = solveRiddleMulti(cleaned, function(msg)
-            pushLog("> " .. tostring(msg), Color3.fromRGB(140, 140, 150))
-        end)
-
-        if answers and #answers > 0 then
-            local primary = answers[1]
-            pushLog("> answer: " .. primary, COL_ON)
-
-            -- update panel answer
-            if _riddlerALabel then
-                _riddlerALabel.Text = primary
-                _riddlerALabel.TextColor3 = Color3.fromRGB(120, 255, 160)
-            end
-            _riddlerSolvedCount = _riddlerSolvedCount + 1
-            if _riddlerCountLabel then
-                _riddlerCountLabel.Text = _riddlerSolvedCount .. " solved"
-            end
-            riddlerFeedReplaceLast('<font color="rgb(120,255,160)">  A: ' .. primary .. '</font>')
-
-            if state.riddlerAutoRedeem then
-                for i, ans in ipairs(answers) do
-                    local ok2, msg2 = riddlerSubmitAnswer(ans)
-                    if ok2 then
-                        pushLog("> redeemed: " .. ans, COL_ON)
-                        riddlerFeedAppend('<font color="rgb(120,255,160)">  ✓ redeemed: ' .. ans .. '</font>')
-                    else
-                        pushLog("> failed: " .. tostring(msg2), Color3.fromRGB(255, 90, 90))
-                        riddlerFeedAppend('<font color="rgb(255,90,90)">  ✗ failed: ' .. tostring(msg2) .. '</font>')
-                    end
-                    if i < #answers then task.wait(0.7) end
-                end
-            end
-        else
-            pushLog("> no answer found", Color3.fromRGB(255, 90, 90))
-            if _riddlerALabel then
-                _riddlerALabel.Text = "no answer"
-                _riddlerALabel.TextColor3 = Color3.fromRGB(255, 90, 90)
-            end
-            riddlerFeedReplaceLast('<font color="rgb(255,90,90)">  ✗ no answer found</font>')
-        end
-        _riddlerSolving = false
-    end)
-end
-
-local POSITIONS_RIDDLER = {
-    Top = true, Bottom = true, Center = true, Middle = true,
-    Left = true, Right = true, TopRight = true, TopLeft = true,
-    BottomRight = true, BottomLeft = true,
-}
-
-local function looksLikeAnnouncement(...)
-    local args = table.pack(...)
-    if args.n == 0 or typeof(args[1]) ~= "string" then return false end
-    for i = 2, args.n do
-        local v = args[i]
-        if typeof(v) == "string" and (v:find("Sounds%.") or v:find("rbxassetid") or POSITIONS_RIDDLER[v]) then
-            return true
-        end
-    end
-    return false
-end
-
-local function startRiddler()
-    buildRiddlerPanel()
-    -- resolve notification remote
-    _notifyRemoteRef = resolveNotifyRemote()
-    if env then env.RiddlerNotifyRemote = _notifyRemoteRef end
-
-    if _notifyRemoteRef and (_notifyRemoteRef:IsA("RemoteEvent") or _notifyRemoteRef:IsA("UnreliableRemoteEvent")) then
-        local conn = _notifyRemoteRef.OnClientEvent:Connect(function(...)
-            if not state.riddlerToggled then return end
-            local firstArg = tostring((...) or "")
-            local raw = stripRich(firstArg)
-            local lower = raw:lower()
-            -- Accept if it looks like an announcement OR if the text itself looks like a riddle
-            local isAnnounce = looksLikeAnnouncement(...)
-            local isRiddle = lower:find("riddle", 1, true) or lower:find("?")
-                or lower:find("what") or lower:find("who") or lower:find("where")
-                or lower:find("how") or lower:find("when") or lower:find("name")
-                or lower:find("favorite") or lower:find("colour") or lower:find("color")
-            if (isAnnounce or isRiddle) and #raw > 5 then
-                pcall(onRiddleDetected, firstArg)
-            end
-        end)
-        table.insert(_riddlerConns, conn)
-        pushLog("> riddler: notify mapped", COL_ON)
-    else
-        pushLog("> riddler: no notify remote", Color3.fromRGB(255, 90, 90))
-    end
-
-    -- also listen to chat for riddle-like messages
-    pcall(function()
-        local tcs = game:GetService("TextChatService")
-        if tcs and tcs:FindFirstChild("TextChannels") then
-            for _, channel in ipairs(tcs.TextChannels:GetChildren()) do
-                if channel:IsA("TextChannel") then
-                    local conn2 = channel.MessageReceived:Connect(function(msg)
-                        if not state.riddlerToggled then return end
-                        pcall(function()
-                            local text = stripRich(msg.Text or "")
-                            local lower = text:lower()
-                            if lower:find("riddle", 1, true) or lower:find("?") then
-                                onRiddleDetected(text)
-                            end
-                        end)
-                    end)
-                    table.insert(_riddlerConns, conn2)
-                end
-            end
-        end
-    end)
-
-    -- watch screen announcements too (DescendantAdded)
-    local conn3 = PlayerGui.DescendantAdded:Connect(function(obj)
-        if not state.riddlerToggled then return end
-        if obj:IsDescendantOf(screenGui) then return end
-        if not (obj:IsA("TextLabel") or obj:IsA("TextButton")) then return end
-        task.wait(0.05)
-        local text = nil
-        pcall(function() text = obj.Text end)
-        if text and text ~= "" and #text > 5 then
-            local lower = text:lower()
-            if lower:find("?") or lower:find("riddle") or lower:find("what")
-                or lower:find("who") or lower:find("where") or lower:find("how")
-                or lower:find("when") or lower:find("name") or lower:find("favorite") then
-                onRiddleDetected(text)
-            end
-        end
-    end)
-    table.insert(_riddlerConns, conn3)
-end
-
+-- ═══ RIDDLER PANEL ═══
 local _riddlerPanel = nil
 local _riddlerFeedLines = {}
 local _riddlerSolvedCount = 0
@@ -5839,6 +5683,163 @@ local function destroyRiddlerPanel()
     _riddlerFeedLabel = nil
     _riddlerFeedScroll = nil
     _riddlerCountLabel = nil
+end
+
+local function onRiddleDetected(text)
+    if not state.riddlerToggled or _riddlerSolving then return end
+    local cleaned = stripRich(tostring(text or ""))
+    cleaned = trim(cleaned)
+    if cleaned == "" or #cleaned < 3 then return end
+
+    pushLog("> riddle: " .. cleaned:sub(1, 50), Color3.fromRGB(200, 180, 100))
+    pushLog("> solving...", COL_ON)
+
+    -- update panel question
+    if _riddlerQLabel then
+        _riddlerQLabel.Text = cleaned:sub(1, 120)
+        _riddlerQLabel.TextColor3 = COL_WHITE
+    end
+    if _riddlerALabel then
+        _riddlerALabel.Text = "solving..."
+        _riddlerALabel.TextColor3 = Color3.fromRGB(255, 200, 80)
+    end
+
+    local ts = os.date("%H:%M:%S")
+    riddlerFeedAppend('<font color="rgb(255,200,80)">[' .. ts .. '] Q: ' .. cleaned:sub(1, 60) .. '</font>')
+    riddlerFeedAppend('<font color="rgb(100,100,100)">  solving...</font>')
+
+    _riddlerSolving = true
+    task.spawn(function()
+        local answers = solveRiddleMulti(cleaned, function(msg)
+            pushLog("> " .. tostring(msg), Color3.fromRGB(140, 140, 150))
+        end)
+
+        if answers and #answers > 0 then
+            local primary = answers[1]
+            pushLog("> answer: " .. primary, COL_ON)
+
+            -- update panel answer
+            if _riddlerALabel then
+                _riddlerALabel.Text = primary
+                _riddlerALabel.TextColor3 = Color3.fromRGB(120, 255, 160)
+            end
+            _riddlerSolvedCount = _riddlerSolvedCount + 1
+            if _riddlerCountLabel then
+                _riddlerCountLabel.Text = _riddlerSolvedCount .. " solved"
+            end
+            riddlerFeedReplaceLast('<font color="rgb(120,255,160)">  A: ' .. primary .. '</font>')
+
+            if state.riddlerAutoRedeem then
+                for i, ans in ipairs(answers) do
+                    local ok2, msg2 = riddlerSubmitAnswer(ans)
+                    if ok2 then
+                        pushLog("> redeemed: " .. ans, COL_ON)
+                        riddlerFeedAppend('<font color="rgb(120,255,160)">  ✓ redeemed: ' .. ans .. '</font>')
+                    else
+                        pushLog("> failed: " .. tostring(msg2), Color3.fromRGB(255, 90, 90))
+                        riddlerFeedAppend('<font color="rgb(255,90,90)">  ✗ failed: ' .. tostring(msg2) .. '</font>')
+                    end
+                    if i < #answers then task.wait(0.7) end
+                end
+            end
+        else
+            pushLog("> no answer found", Color3.fromRGB(255, 90, 90))
+            if _riddlerALabel then
+                _riddlerALabel.Text = "no answer"
+                _riddlerALabel.TextColor3 = Color3.fromRGB(255, 90, 90)
+            end
+            riddlerFeedReplaceLast('<font color="rgb(255,90,90)">  ✗ no answer found</font>')
+        end
+        _riddlerSolving = false
+    end)
+end
+
+local POSITIONS_RIDDLER = {
+    Top = true, Bottom = true, Center = true, Middle = true,
+    Left = true, Right = true, TopRight = true, TopLeft = true,
+    BottomRight = true, BottomLeft = true,
+}
+
+local function looksLikeAnnouncement(...)
+    local args = table.pack(...)
+    if args.n == 0 or typeof(args[1]) ~= "string" then return false end
+    for i = 2, args.n do
+        local v = args[i]
+        if typeof(v) == "string" and (v:find("Sounds%.") or v:find("rbxassetid") or POSITIONS_RIDDLER[v]) then
+            return true
+        end
+    end
+    return false
+end
+
+local function startRiddler()
+    buildRiddlerPanel()
+    -- resolve notification remote
+    _notifyRemoteRef = resolveNotifyRemote()
+    if env then env.RiddlerNotifyRemote = _notifyRemoteRef end
+
+    if _notifyRemoteRef and (_notifyRemoteRef:IsA("RemoteEvent") or _notifyRemoteRef:IsA("UnreliableRemoteEvent")) then
+        local conn = _notifyRemoteRef.OnClientEvent:Connect(function(...)
+            if not state.riddlerToggled then return end
+            local firstArg = tostring((...) or "")
+            local raw = stripRich(firstArg)
+            local lower = raw:lower()
+            -- Accept if it looks like an announcement OR if the text itself looks like a riddle
+            local isAnnounce = looksLikeAnnouncement(...)
+            local isRiddle = lower:find("riddle", 1, true) or lower:find("?")
+                or lower:find("what") or lower:find("who") or lower:find("where")
+                or lower:find("how") or lower:find("when") or lower:find("name")
+                or lower:find("favorite") or lower:find("colour") or lower:find("color")
+            if (isAnnounce or isRiddle) and #raw > 5 then
+                pcall(onRiddleDetected, firstArg)
+            end
+        end)
+        table.insert(_riddlerConns, conn)
+        pushLog("> riddler: notify mapped", COL_ON)
+    else
+        pushLog("> riddler: no notify remote", Color3.fromRGB(255, 90, 90))
+    end
+
+    -- also listen to chat for riddle-like messages
+    pcall(function()
+        local tcs = game:GetService("TextChatService")
+        if tcs and tcs:FindFirstChild("TextChannels") then
+            for _, channel in ipairs(tcs.TextChannels:GetChildren()) do
+                if channel:IsA("TextChannel") then
+                    local conn2 = channel.MessageReceived:Connect(function(msg)
+                        if not state.riddlerToggled then return end
+                        pcall(function()
+                            local text = stripRich(msg.Text or "")
+                            local lower = text:lower()
+                            if lower:find("riddle", 1, true) or lower:find("?") then
+                                onRiddleDetected(text)
+                            end
+                        end)
+                    end)
+                    table.insert(_riddlerConns, conn2)
+                end
+            end
+        end
+    end)
+
+    -- watch screen announcements too (DescendantAdded)
+    local conn3 = PlayerGui.DescendantAdded:Connect(function(obj)
+        if not state.riddlerToggled then return end
+        if obj:IsDescendantOf(screenGui) then return end
+        if not (obj:IsA("TextLabel") or obj:IsA("TextButton")) then return end
+        task.wait(0.05)
+        local text = nil
+        pcall(function() text = obj.Text end)
+        if text and text ~= "" and #text > 5 then
+            local lower = text:lower()
+            if lower:find("?") or lower:find("riddle") or lower:find("what")
+                or lower:find("who") or lower:find("where") or lower:find("how")
+                or lower:find("when") or lower:find("name") or lower:find("favorite") then
+                onRiddleDetected(text)
+            end
+        end
+    end)
+    table.insert(_riddlerConns, conn3)
 end
 
 local function stopRiddler()

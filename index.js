@@ -155,26 +155,7 @@ app.get("/api/validate", (req, res) => {
     return res.json(result);
 });
 
-// Serve the actual script — only if key+HWID is valid
-app.get("/api/script", (req, res) => {
-    const { key, hwid } = req.query;
-    if (!key || !hwid) return res.status(400).send("-- PhantomHub: Missing key or HWID");
-
-    const result = validateKeyHWID(key.toUpperCase(), hwid);
-    if (!result.valid) {
-        console.log(`[API] Script denied: ${key} | ${result.reason}`);
-        return res.status(403).send(`-- PhantomHub: Access Denied\\n-- ${result.reason}\\n-- Get a key at discord.gg/YOUR_INVITE`);
-    }
-
-    // Serve the script
-    const scriptPath = path.join(__dirname, "data", "phantomhub_script.lua");
-    if (!fs.existsSync(scriptPath)) {
-        return res.status(404).send("-- PhantomHub: Script not found on server");
-    }
-
-    console.log(`[API] Script served to: ${key}`);
-    res.type("text/plain").send(fs.readFileSync(scriptPath, "utf-8"));
-});
+// /api/script removed — source code is protected, delivered only through the loader
 
 // Key info endpoint (for script to check expiry etc.)
 app.get("/api/keyinfo", (req, res) => {
@@ -199,26 +180,7 @@ app.get("/loader.lua", (req, res) => {
     res.type("text/plain").send(fs.readFileSync(loaderPath, "utf-8"));
 });
 
-// Direct load endpoint — validates key+HWID and returns script in one call
-// Usage: loadstring(game:HttpGet("https://phantomhub.xyz/load?key=PH-XXXX&hwid=XXXX"))()
-app.get("/load", (req, res) => {
-    const { key, hwid } = req.query;
-    if (!key || !hwid) return res.status(400).send("-- PhantomHub: Missing key or HWID");
-
-    const result = validateKeyHWID(key.toUpperCase(), hwid);
-    if (!result.valid) {
-        console.log(`[LOAD] Denied: ${key} | ${result.reason}`);
-        return res.status(403).send(`-- PhantomHub: Access Denied\n-- ${result.reason}\n-- Get a key at discord.gg/phantomhub`);
-    }
-
-    const scriptPath = path.join(__dirname, "data", "phantomhub_script.lua");
-    if (!fs.existsSync(scriptPath)) {
-        return res.status(404).send("-- PhantomHub: Script not found on server");
-    }
-
-    console.log(`[LOAD] Script served to: ${key}`);
-    res.type("text/plain").send(fs.readFileSync(scriptPath, "utf-8"));
-});
+// /load removed — source code is protected, delivered only through the loader
 
 // Start Express
 app.listen(PORT, () => {
@@ -286,6 +248,11 @@ slashCommands.push(new SlashCommandBuilder().setName("ticket-panel").setDescript
 
 slashCommands.push(new SlashCommandBuilder().setName("close").setDescription("Close this ticket"));
 
+slashCommands.push(new SlashCommandBuilder().setName("check-purchase").setDescription("Verify if a user bought the PhantomHub gamepass (admin)")
+    .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator)
+    .addUserOption(o => o.setName("member").setDescription("Discord member to check").setRequired(true))
+    .addStringOption(o => o.setName("roblox_user").setDescription("Their Roblox username").setRequired(true)));
+
 slashCommands.push(new SlashCommandBuilder().setName("ticket-setup").setDescription("Create the ticket category + panel channel (admin)")
     .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator));
 
@@ -293,7 +260,12 @@ slashCommands.push(new SlashCommandBuilder().setName("ticket-setup").setDescript
 // ── COMMAND HANDLERS                            ──
 // ══════════════════════════════════════════════════
 
+function hasStaffRole(interaction) {
+    return interaction.member.roles.cache.some(r => r.name === "+");
+}
+
 async function handleCreateKey(interaction) {
+    if (interaction.user.id !== interaction.guild.ownerId) return interaction.reply({ embeds: [embed("🔒 No Access", "Only the server owner can generate keys.", CLR.error)], ephemeral: true });
     const duration = interaction.options.getString("duration");
     const amount = interaction.options.getInteger("amount") || 1;
     const durInfo = DURATIONS[duration];
@@ -338,6 +310,7 @@ async function handleRedeem(interaction) {
 }
 
 async function handleKeyInfo(interaction) {
+    if (!hasStaffRole(interaction)) return interaction.reply({ embeds: [embed("🔒 No Access", "You need the **+** role.", CLR.error)], ephemeral: true });
     const inputKey = interaction.options.getString("key").trim().toUpperCase();
     const data = keys[inputKey];
     if (!data) return interaction.reply({ embeds: [embed("❌ Not Found", "Key doesn't exist.", CLR.error)], ephemeral: true });
@@ -358,6 +331,7 @@ async function handleKeyInfo(interaction) {
 }
 
 async function handleKeyList(interaction) {
+    if (!hasStaffRole(interaction)) return interaction.reply({ embeds: [embed("🔒 No Access", "You need the **+** role.", CLR.error)], ephemeral: true });
     const filter = interaction.options.getString("filter") || "all";
     let filtered = Object.entries(keys);
     if (filter === "unused") filtered = filtered.filter(([, d]) => !d.redeemedBy && !d.expired);
@@ -375,6 +349,7 @@ async function handleKeyList(interaction) {
 }
 
 async function handleRevoke(interaction) {
+    if (!hasStaffRole(interaction)) return interaction.reply({ embeds: [embed("🔒 No Access", "You need the **+** role.", CLR.error)], ephemeral: true });
     const inputKey = interaction.options.getString("key").trim().toUpperCase();
     const data = keys[inputKey];
     if (!data) return interaction.reply({ embeds: [embed("❌ Not Found", "Key doesn't exist.", CLR.error)], ephemeral: true });
@@ -432,12 +407,80 @@ async function handlePhantom(interaction) {
         )] });
     }
     if (sub === "help") {
-        return interaction.reply({ embeds: [embed("👻 PhantomHub Commands", null, CLR.accent).addFields(
+        const isAdmin = interaction.member.permissions.has(PermissionsBitField.Flags.Administrator);
+        const fields = [
             { name: "🔐 Key System", value: "`/redeem <key>` — Redeem a key\nOr use the buttons in #code-sniper" },
-            { name: "🔐 Admin", value: "`/create-key` · `/key-info` · `/key-list` · `/revoke-key`" },
             { name: "🧠 Brainrots", value: "`/brainrot info` · `/brainrot event` · `/brainrot rarity`" },
+            { name: "🎫 Support", value: "Open a ticket from the #help channel" },
             { name: "⚙️ Bot", value: "`/phantom stats` · `/phantom help`" },
-        )] });
+        ];
+        if (isAdmin) {
+            fields.push({ name: "🔒 Admin", value: "`/create-key` · `/key-info` · `/key-list` · `/revoke-key`\n`/check-purchase` · `/ticket-setup` · `/ticket-panel`" });
+        }
+        return interaction.reply({ embeds: [embed("👻 PhantomHub Commands", null, CLR.accent).addFields(...fields)] });
+    }
+}
+
+// ══════════════════════════════════════════════════
+// ── PURCHASE VERIFICATION (Roblox Gamepass)     ──
+// ══════════════════════════════════════════════════
+
+const GAMEPASS_ID = "2037905491";
+
+async function handleCheckPurchase(interaction) {
+    if (!hasStaffRole(interaction)) return interaction.reply({ embeds: [embed("🔒 No Access", "You need the **+** role.", CLR.error)], ephemeral: true });
+    const member = interaction.options.getMember("member");
+    const robloxUser = interaction.options.getString("roblox_user").trim();
+
+    await interaction.deferReply();
+
+    try {
+        // Step 1: Get Roblox user ID from username
+        const userResp = await fetch("https://users.roblox.com/v1/usernames/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ usernames: [robloxUser], excludeBannedUsers: false })
+        });
+        const userData = await userResp.json();
+        const robloxInfo = userData.data?.[0];
+
+        if (!robloxInfo) {
+            return interaction.editReply({ embeds: [embed("❌ User Not Found", `Roblox user **${robloxUser}** doesn't exist.`, CLR.error)] });
+        }
+
+        const robloxId = robloxInfo.id;
+        const displayName = robloxInfo.displayName || robloxUser;
+
+        // Step 2: Check if they own the gamepass
+        const gpResp = await fetch(`https://inventory.roblox.com/v1/users/${robloxId}/items/GamePass/${GAMEPASS_ID}`);
+        const gpData = await gpResp.json();
+
+        const owns = gpData.data && gpData.data.length > 0;
+
+        if (owns) {
+            // They bought it — verified
+            return interaction.editReply({ embeds: [embed("✅ Purchase Verified", [
+                `**Discord:** ${member}`,
+                `**Roblox:** ${displayName} (\`${robloxUser}\` — ID: ${robloxId})`,
+                `**Gamepass:** PHANTOMHUB ✅ Owned`,
+                "",
+                "Purchase confirmed. You can generate their key with `/create-key`."
+            ].join("\n"), CLR.success)] });
+        } else {
+            // They don't own it — fake purchase
+            return interaction.editReply({ embeds: [embed("🚫 Purchase NOT Verified — FAKE", [
+                `**Discord:** ${member}`,
+                `**Roblox:** ${displayName} (\`${robloxUser}\` — ID: ${robloxId})`,
+                `**Gamepass:** PHANTOMHUB ❌ NOT Owned`,
+                "",
+                "⚠️ This user does **NOT** own the gamepass. They lied about purchasing.",
+                "",
+                "React with 🔨 to ban them, or handle manually."
+            ].join("\n"), CLR.error)] });
+        }
+    } catch (e) {
+        console.error("[CHECK-PURCHASE]", e.message);
+        return interaction.editReply({ embeds: [embed("❌ Error", `Couldn't verify: ${e.message}`, CLR.error)] });
     }
 }
 
@@ -450,24 +493,67 @@ const TICKET_LOG_CHANNEL = "ticket-logs";
 const TICKET_PREFIX = "ticket-";
 
 // PhantomHub support knowledge for AI responses
-const SUPPORT_KNOWLEDGE = `You are PhantomHub Support Bot. You help users with the PhantomHub Steal a Brainrot script.
-Keep responses SHORT (1-3 sentences max). Be friendly but direct. Use emojis sparingly.
+const SUPPORT_KNOWLEDGE = `You are PhantomHub's AI Support Bot. You talk to customers about PhantomHub — what it is, how it works, whether it's safe, troubleshooting, etc. You're chill, friendly, and helpful. Keep responses short (2-4 sentences). Don't be robotic.
 
-KEY FACTS:
-- PhantomHub is a script for the Roblox game "Steal a Brainrot" that runs on Potassium executor
-- Features: Auto Riddler (3,200+ answers), Code Redeemer, Anti-Lag, clean GUI
-- The loadstring is: script_key="YOUR_KEY"; loadstring(game:HttpGet("https://raw.githubusercontent.com/765632/PhantomHub/master/loader.lua"))()
-- Keys are generated by admins using /create-key, users redeem with /redeem or the Redeem Key button
-- Keys come in durations: 5h, 12h, 24h, 3d, 7d, 30d, lifetime
-- HWID locks on first use — if they switch devices they need /reset-hwid or an admin to reset it
-- If script doesn't load: check if key is valid, make sure Potassium is updated, check internet
-- If riddler misses answers: the AI fallback uses Groq, it should still catch most questions
-- To get a key: purchase one from the server (ask an admin) or win a giveaway
-- Common issues: "nothing happens" = check key is correct and Potassium HTTP requests are enabled
-- "Access denied" = key expired or HWID mismatch, try /reset-hwid
-- The script works on Potassium executor for Windows
-- If they ask about pricing, tell them to check #pricing or ask an admin
-- If you don't know something, say "An admin will help you shortly" — don't make stuff up`;
+WHAT IS PHANTOMHUB:
+- PhantomHub is a premium script/hub for the Roblox game "Steal a Brainrot"
+- It works with any Roblox script executor that supports loadstring and HttpGet (Potassium, Solara, Wave, Synapse, etc.)
+- It gives you a huge advantage in the game with automated features
+
+FEATURES:
+- Auto Riddler: Has 3,200+ riddle answers built in. During Admin Abuse events it instantly solves riddles so you get all the rewards. If it doesn't know an answer it falls back to AI (Groq llama-3.3) to figure it out
+- Auto Code Redeemer: Automatically redeems all active game codes when you join
+- Anti-Lag: Reduces lag by removing unnecessary visual effects in-game
+- Clean dark-themed GUI with toggle switches for each feature
+- Auto Riddler works for both single and compound riddles (like "name and age" = "SAMMY24")
+
+IS IT SAFE:
+- Yes, PhantomHub is safe to use. It runs locally on your PC through your executor
+- Your key is HWID-locked meaning nobody else can use it even if they get your key
+- The script is loaded from our secure GitHub, verified before execution
+- We don't collect any personal data — just your HWID for key verification
+- Thousands of users run it daily during Admin Abuse events with no issues
+- As with any executor script, use at your own discretion — but PhantomHub itself contains no malware, no rats, no data stealing
+
+HOW TO USE:
+1. Get a key from this server (purchase or giveaway)
+2. Redeem it with /redeem or the Redeem Key button
+3. Open your executor (any that supports loadstring)
+4. Join Steal a Brainrot on Roblox
+5. Paste this into your executor: script_key="YOUR_KEY"; loadstring(game:HttpGet("https://raw.githubusercontent.com/765632/PhantomHub/master/loader.lua"))()
+6. The GUI appears — toggle on what you want
+
+KEY SYSTEM:
+- Keys come in: 5h, 12h, 24h, 3 days, 7 days, 30 days, or lifetime
+- HWID locks on first use — one key = one device
+- If you switch PCs, use the Reset HWID button or ask an admin
+- Check your key status with the Key Info button
+
+COMMON ISSUES:
+- "Nothing happens when I execute" = Make sure your key is correct, your executor is updated, and HTTP requests are enabled in your executor's settings
+- "Access Denied" = Key expired or HWID mismatch. Try resetting HWID
+- "Riddler missed a question" = The AI fallback should catch it. If it keeps missing, let us know and we'll add it to the database
+- "GUI doesn't show" = Re-execute the script, make sure you're in a Steal a Brainrot server
+- "Lag" = Toggle on Anti-Lag in the GUI
+
+BUYING / PRICING:
+- We accept two forms of payment: **Robux** (via gamepass) and **Brainrots** (in-game trade)
+- For Robux: the buyer purchases this gamepass → https://www.roblox.com/game-pass/2037905491/PHANTOMHUB
+- After buying the gamepass, they need to show proof (screenshot) and give their Roblox username so staff can verify
+- Staff will run /check-purchase to confirm the gamepass was actually bought
+- For Brainrots: the buyer trades brainrots to staff in-game. Which brainrots and how many depends on the key duration — staff will discuss that with the buyer
+- Once payment is confirmed, staff generates a key and gives it to them
+- Do NOT make up specific prices — just explain the two payment methods (robux gamepass or brainrots) and that staff handles the rest
+- If someone says they want to buy, walk them through it: ask if they wanna pay with Robux or Brainrots, then explain the steps
+- We occasionally do giveaways and trial keys in announcements
+- IMPORTANT: If someone claims they bought the gamepass, tell them to share their Roblox username so staff can verify with /check-purchase. Do NOT just take their word for it
+
+IMPORTANT RULES FOR YOU:
+- Never make up information that isn't in this knowledge base
+- Never invent pricing, features, or systems that don't exist
+- If you don't know something, say "I'm not sure about that — let me grab a staff member to help you out"
+- Keep responses chill and friendly, not corporate`;
+
 
 async function queryTicketAI(userMessage, conversationHistory) {
     const messages = [
@@ -477,23 +563,26 @@ async function queryTicketAI(userMessage, conversationHistory) {
     ];
 
     try {
+        console.log("[TICKET AI] Calling Groq for:", userMessage.substring(0, 50));
         const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
             method: "POST",
             headers: {
-                "Authorization": "Bearer gsk_AQ8Ab8RN6IBkoyj5cUpARxa9x8oD0Q9kdbJNOgpTdQDwaoul_ajqQ",
+                "Authorization": "Bearer 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",
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "llama-3.3-70b-versatile",
+                model: "openai/gpt-oss-120b",
                 messages,
                 max_tokens: 300,
                 temperature: 0.5,
             })
         });
         const data = await resp.json();
+        console.log("[TICKET AI] Response status:", resp.status, "has choices:", !!data.choices);
+        if (data.error) console.error("[TICKET AI] API error:", data.error.message || JSON.stringify(data.error));
         return data.choices?.[0]?.message?.content || "An admin will help you shortly.";
     } catch (e) {
-        console.error("[TICKET AI]", e.message);
+        console.error("[TICKET AI] Exception:", e.message);
         return "I'm having trouble connecting right now. An admin will be with you shortly.";
     }
 }
@@ -555,15 +644,18 @@ async function handleTicketPanel(interaction) {
     return interaction.reply({ content: "Panel sent.", ephemeral: true });
 }
 
-async function openTicket(interaction) {
+async function openTicket(interaction, issue) {
     const guild = interaction.guild;
     const user = interaction.user;
+    console.log(`[TICKET] ${user.tag} opening ticket...`);
 
     // Check if user already has an open ticket
-    const existing = guild.channels.cache.find(c => c.name === `${TICKET_PREFIX}${user.username.toLowerCase().replace(/[^a-z0-9]/g, "")}` && c.parentId);
+    const existing = guild.channels.cache.find(c => c.name.startsWith(TICKET_PREFIX) && c.topic === user.id);
     if (existing) {
         return interaction.reply({ embeds: [embed("❌ Already Open", `You already have a ticket: ${existing}`, CLR.error)], ephemeral: true });
     }
+
+    await interaction.deferReply({ ephemeral: true });
 
     // Find ticket category
     let category = guild.channels.cache.find(c => c.name === TICKET_CATEGORY_NAME && c.type === 4);
@@ -574,17 +666,19 @@ async function openTicket(interaction) {
     }
 
     // Create ticket channel
-    const ticketName = `${TICKET_PREFIX}${user.username.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+    const ticketName = `${TICKET_PREFIX}${user.username.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 20)}`;
     const channel = await guild.channels.create({
         name: ticketName,
         type: 0,
         parent: category.id,
+        topic: user.id,
         permissionOverwrites: [
             { id: guild.id, deny: ["ViewChannel"] },
             { id: user.id, allow: ["ViewChannel", "SendMessages", "ReadMessageHistory"] },
             { id: client.user.id, allow: ["ViewChannel", "SendMessages", "ManageChannels", "ReadMessageHistory"] },
         ]
     });
+    console.log(`[TICKET] Created #${ticketName} for ${user.tag}`);
 
     // Init conversation history
     ticketConversations[channel.id] = [];
@@ -597,6 +691,7 @@ async function openTicket(interaction) {
         new ButtonBuilder().setCustomId("close_ticket").setLabel("🔒 Close Ticket").setStyle(ButtonStyle.Danger),
     );
 
+    const issueBlock = issue ? `\n**Issue:**\n> ${issue.replace(/\n/g, "\n> ")}\n` : "";
     await channel.send({
         embeds: [embed("🎫 Ticket Opened", [
             `Hey ${user}, welcome to PhantomHub support!`,
@@ -604,13 +699,13 @@ async function openTicket(interaction) {
             "Our AI bot will answer your questions instantly.",
             "An admin will step in if needed.",
             keyInfo,
-            "",
-            "**What do you need help with?** Just type your question below.",
+            issueBlock,
+            "Type below if you need anything else.",
         ].join("\n"), CLR.accent)],
         components: [closeRow]
     });
 
-    return interaction.reply({ embeds: [embed("✅ Ticket Created", `Your ticket: ${channel}`, CLR.success)], ephemeral: true });
+    return interaction.editReply({ embeds: [embed("✅ Ticket Created", `Your ticket: ${channel}`, CLR.success)] });
 }
 
 async function closeTicket(interaction) {
@@ -649,7 +744,10 @@ client.on("messageCreate", async (message) => {
     // Ignore bots, DMs, non-ticket channels
     if (message.author.bot) return;
     if (!message.guild) return;
-    if (!message.channel.name.startsWith(TICKET_PREFIX)) return;
+    if (!message.channel.name.startsWith(TICKET_PREFIX)) {
+        return;
+    }
+    console.log(`[TICKET MSG] ${message.author.username} in #${message.channel.name}: ${message.content.substring(0, 80)}`);
     if (!message.content || message.content.length < 2) return;
 
     const channelId = message.channel.id;
@@ -693,6 +791,7 @@ client.on("interactionCreate", async (interaction) => {
             if (n === "revoke-key") return handleRevoke(interaction);
             if (n === "brainrot") return handleBrainrot(interaction);
             if (n === "phantom") return handlePhantom(interaction);
+            if (n === "check-purchase") return handleCheckPurchase(interaction);
             if (n === "ticket-setup") return handleTicketSetup(interaction);
             if (n === "ticket-panel") return handleTicketPanel(interaction);
             if (n === "close") return closeTicket(interaction);
@@ -711,13 +810,12 @@ client.on("interactionCreate", async (interaction) => {
                 const [keyStr, data] = userKey;
                 const expiresStr = data.expiresAt === "never" ? "Never (Lifetime)" : `<t:${Math.floor(data.expiresAt / 1000)}:R>`;
 
-                // Per-user loadstring with their key baked in
-                const apiBase = process.env.RENDER_EXTERNAL_URL || process.env.API_URL || `http://localhost:${PORT}`;
-                const loadstring = `loadstring(game:HttpGet("${apiBase}/api/script?key=${keyStr}&hwid=" .. (game:GetService("RbxAnalyticsService"):GetClientId())))()`;
+                // Per-user loadstring — uses the loader, never exposes raw source
+                const userScript = `script_key="${keyStr}"; loadstring(game:HttpGet("https://raw.githubusercontent.com/765632/PhantomHub/master/loader.lua"))()`;
 
                 return interaction.reply({ embeds: [embed("📥 PhantomHub Script", [
                     "Copy and paste into your executor:",
-                    "", "```lua", loadstring, "```", "",
+                    "", "```lua", userScript, "```", "",
                     `**Key:** \`${keyStr}\``,
                     `**Expires:** ${expiresStr}`,
                     `**HWID Locked:** ${data.hwid ? "Yes" : "Locks on first use"}`,
@@ -759,7 +857,14 @@ client.on("interactionCreate", async (interaction) => {
                 return interaction.reply({ embeds: [embed("✅ Verified", "You're verified.", CLR.success)], ephemeral: true });
             }
 
-            if (id === "open_ticket") return openTicket(interaction);
+            if (id === "open_ticket") {
+                const modal = new ModalBuilder().setCustomId("ticket_issue_modal").setTitle("Open a Ticket");
+                const issueInput = new TextInputBuilder().setCustomId("ticket_issue").setLabel("What's your issue?")
+                    .setPlaceholder("Describe your problem so we can help faster...")
+                    .setStyle(TextInputStyle.Paragraph).setRequired(true).setMinLength(5).setMaxLength(500);
+                modal.addComponents(new ActionRowBuilder().addComponents(issueInput));
+                return interaction.showModal(modal);
+            }
             if (id === "close_ticket") return closeTicket(interaction);
 
             if (id === "reset_hwid") {
@@ -771,6 +876,11 @@ client.on("interactionCreate", async (interaction) => {
                 saveKeys(keys);
                 return interaction.reply({ embeds: [embed("🔄 HWID Reset", "Your HWID has been cleared. It will lock to your next device on first script launch.", CLR.success)], ephemeral: true });
             }
+        }
+
+        if (interaction.isModalSubmit() && interaction.customId === "ticket_issue_modal") {
+            const issue = interaction.fields.getTextInputValue("ticket_issue").trim();
+            return openTicket(interaction, issue);
         }
 
         if (interaction.isModalSubmit() && interaction.customId === "redeem_modal") {
@@ -803,6 +913,22 @@ client.on("interactionCreate", async (interaction) => {
             if (interaction.replied || interaction.deferred) await interaction.followUp(r);
             else await interaction.reply(r);
         } catch {}
+    }
+});
+
+// ══════════════════════════════════════════════════
+// ── AUTO ROLE ON JOIN                           ──
+// ══════════════════════════════════════════════════
+
+client.on("guildMemberAdd", async (member) => {
+    try {
+        const memberRole = member.guild.roles.cache.find(r => r.name === "Member");
+        if (memberRole) {
+            await member.roles.add(memberRole);
+            console.log(`[ROLE] Gave Member role to ${member.user.tag}`);
+        }
+    } catch (e) {
+        console.error("[ROLE]", e.message);
     }
 });
 
