@@ -6028,11 +6028,6 @@ local function buildRiddlerPanel()
 
     -- also build solve log
     buildSolveLog()
-
-    -- store getFeedOpen for onRiddleDetected
-    panel:SetAttribute("_feedOpen", true)
-    _riddlerPanel._getFeedOpen = getFeedOpen
-    _riddlerPanel._solvedLbl = solvedLbl
 end
 
 local function destroyRiddlerPanel()
@@ -6106,8 +6101,14 @@ local function onRiddleDetected(text)
                 _riddlerCountLabel.Text = _riddlerSolvedCount .. " solved"
             end
             -- update panel bottom solved label
-            if _riddlerPanel and _riddlerPanel._solvedLbl then
-                pcall(function() _riddlerPanel._solvedLbl.Text = _riddlerSolvedCount .. " solved" end)
+            if _riddlerPanel then
+                pcall(function()
+                    for _, ch in ipairs(_riddlerPanel:GetChildren()) do
+                        if ch:IsA("TextLabel") and ch.Text:find("solved") then
+                            ch.Text = _riddlerSolvedCount .. " solved"
+                        end
+                    end
+                end)
             end
 
             -- add to solve log

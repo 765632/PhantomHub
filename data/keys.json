@@ -16,5 +16,159 @@
     "createdBy": "system",
     "expiresAt": "never",
     "expired": false
+  },
+  "PH-P8SZT-UFUNV-9BKTP": {
+    "duration": "lifetime",
+    "label": "Lifetime",
+    "createdAt": 1792528209673,
+    "createdBy": "1532174717124087905",
+    "redeemedBy": "1531099339093577900",
+    "redeemedAt": 1792528230972,
+    "expiresAt": "never",
+    "expired": false,
+    "hwid": null
+  },
+  "PH-UZH4A-3E99V-KUL2T": {
+    "duration": "5h",
+    "label": "5 Hours",
+    "createdAt": 1792532634369,
+    "createdBy": "1532174717124087905",
+    "redeemedBy": "1239564095519199286",
+    "redeemedAt": 1792532719714,
+    "expiresAt": 1792550719714,
+    "expired": true,
+    "hwid": null
+  },
+  "PH-Q2DKY-BDGFE-86DC3": {
+    "duration": "lifetime",
+    "label": "Lifetime",
+    "createdAt": 1792550628678,
+    "createdBy": "1503188446477549568",
+    "redeemedBy": "1503188446477549568",
+    "redeemedAt": 1792550637583,
+    "expiresAt": "never",
+    "expired": false,
+    "hwid": null
+  },
+  "PH-7TJV5-YS3BE-5XKJR": {
+    "duration": "lifetime",
+    "label": "Lifetime",
+    "createdAt": 1792630481275,
+    "createdBy": "1532174717124087905",
+    "redeemedBy": "1531682962398248960",
+    "redeemedAt": 1792630510738,
+    "expiresAt": "never",
+    "expired": false,
+    "hwid": null
+  },
+  "PH-MYB7C-X3HCD-29TEK": {
+    "duration": "5h",
+    "label": "5 Hours",
+    "createdAt": 1792631553634,
+    "createdBy": "1532174717124087905",
+    "redeemedBy": "1531682962398248960",
+    "redeemedAt": 1792631595642,
+    "expiresAt": 1792649595642,
+    "expired": false,
+    "hwid": null
+  },
+  "PH-AVUEV-6ZJCA-ULELM": {
+    "duration": "lifetime",
+    "label": "Lifetime",
+    "createdAt": 1792631860497,
+    "createdBy": "1532174717124087905",
+    "redeemedBy": "1532174717124087905",
+    "redeemedAt": 1792631957250,
+    "expiresAt": "never",
+    "expired": false,
+    "hwid": null
+  },
+  "PH-45KP4-9H28G-FV6Z3": {
+    "duration": "lifetime",
+    "label": "Lifetime",
+    "createdAt": 1792631860497,
+    "createdBy": "1532174717124087905",
+    "redeemedBy": null,
+    "redeemedAt": null,
+    "expiresAt": null,
+    "expired": false,
+    "hwid": null
+  },
+  "PH-VRCYM-3X2VB-BRCVN": {
+    "duration": "lifetime",
+    "label": "Lifetime",
+    "createdAt": 1792631860497,
+    "createdBy": "1532174717124087905",
+    "redeemedBy": null,
+    "redeemedAt": null,
+    "expiresAt": null,
+    "expired": false,
+    "hwid": null
+  },
+  "PH-F7J3M-VBQQD-KR35C": {
+    "duration": "lifetime",
+    "label": "Lifetime",
+    "createdAt": 1792631860497,
+    "createdBy": "1532174717124087905",
+    "redeemedBy": null,
+    "redeemedAt": null,
+    "expiresAt": null,
+    "expired": false,
+    "hwid": null
+  },
+  "PH-K9EAZ-8UKGJ-9BNFR": {
+    "duration": "lifetime",
+    "label": "Lifetime",
+    "createdAt": 1792631860497,
+    "createdBy": "1532174717124087905",
+    "redeemedBy": null,
+    "redeemedAt": null,
+    "expiresAt": null,
+    "expired": false,
+    "hwid": null
+  },
+  "PH-DAXMW-FYHVD-6MWXD": {
+    "duration": "lifetime",
+    "label": "Lifetime",
+    "createdAt": 1792631860497,
+    "createdBy": "1532174717124087905",
+    "redeemedBy": null,
+    "redeemedAt": null,
+    "expiresAt": null,
+    "expired": false,
+    "hwid": null
+  },
+  "PH-BHARM-XKMMC-JTE2Z": {
+    "duration": "lifetime",
+    "label": "Lifetime",
+    "createdAt": 1792631860497,
+    "createdBy": "1532174717124087905",
+    "redeemedBy": null,
+    "redeemedAt": null,
+    "expiresAt": null,
+    "expired": false,
+    "hwid": null
+  },
+  "PH-H9QK3-UXZE8-TTZMA": {
+    "duration": "7d",
+    "label": "7 Days",
+    "createdAt": 1792634818741,
+    "createdBy": "1532174717124087905",
+    "redeemedBy": "1531099339093577900",
+    "redeemedAt": 1792634884552,
+    "expiresAt": 1793239684552,
+    "expired": false,
+    "hwid": null
+  },
+  "PH-MSPWH-8Z7XE-G66D7": {
+    "duration": "lifetime",
+    "label": "Lifetime",
+    "createdAt": 1729640000000,
+    "createdBy": "system",
+    "redeemedBy": null,
+    "redeemedAt": null,
+    "expiresAt": null,
+    "expired": false,
+    "hwid": null
   }
 }
