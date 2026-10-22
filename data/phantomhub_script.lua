@@ -6651,7 +6651,7 @@ end)
 -- ======================== HEAD BILLBOARD TAG ========================
 do
     local function buildPhantomTag(head)
-        local stale = head:FindFirstChild("PhantomTag")
+        local stale = PlayerGui:FindFirstChild("PhantomTag")
         if stale then stale:Destroy() end
 
         local bb = Instance.new("BillboardGui")
@@ -6662,7 +6662,8 @@ do
         bb.LightInfluence = 0
         bb.MaxDistance = 300
         bb.ResetOnSpawn = false
-        bb.Parent = head
+        bb.Adornee = head
+        bb.Parent = PlayerGui
 
         local frame = Instance.new("Frame")
         frame.Name = "TagFrame"
