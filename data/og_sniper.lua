@@ -2132,12 +2132,12 @@ spawn(function()
     end
 end)
 
--- active OG player scanner (rescan every 5s to find who has OGs)
+-- active OG player scanner (rescan every 0.1s to find who has OGs)
 spawn(function()
     task.wait(1.5)
     while state.running do
         pcall(refreshOGPlayers)
-        task.wait(5)
+        task.wait(0.1)
     end
 end)
 
