@@ -70,94 +70,55 @@ local knownBrainrots = {} -- already-seen brainrot instances (avoid dupes)
 local knownGlobalTexts = {} -- dedup global feed entries
 local conns = {}          -- connections for cleanup
 
--- ════════════════════ OG GLOSSARY ════════════════════
--- categorized: base brainrots, mutations, traits
+-- ════════════════════ OG BRAINROT LIST (SAB) ════════════════════
+-- the actual OG brainrots in Steal a Brainrot + their earn rates
 
-local OG_BASES = {
-    "Headless Horseman", "Headless",
-    "Korblox", "Korblox Deathspeaker",
-    "Dominus", "Dominus Empyreus", "Dominus Frigidus", "Dominus Infernus",
-    "Dominus Aureus", "Dominus Messor", "Dominus Rex", "Dominus Praefectus",
-    "Clockwork", "Clockwork Headphones",
-    "Valkyrie", "Valkyrie Helm", "Dark Valkyrie",
-    "Icicle", "Iceberg",
-    "Dragon", "Hydra", "Titan", "Leviathan",
-    "Pumpkin King", "Grim Reaper",
+local OG_BRAINROTS = {
+    {name = "Skibidi Toilet",       rate = "$450M/s"},
+    {name = "John Pork",            rate = "$500M/s"},
+    {name = "Headless Horseman",    rate = "$600M/s"},
+    {name = "Meowl",                rate = "$600M/s"},
+    {name = "Strawberry Elephant",  rate = "$750M/s"},
+    {name = "Spyder Elephant",      rate = "$1B/s"},
 }
 
-local OG_MUTATIONS = {
-    "Golden", "Rainbow", "Diamond", "Void", "Cosmic", "Galaxy",
-    "Celestial", "Phantom", "Shadow", "Inferno", "Frost",
-    "Crystal", "Neon", "Lava", "Electric", "Toxic",
-    "Prismatic", "Holographic", "Obsidian", "Emerald", "Ruby",
-}
-
-local OG_TRAITS = {
-    "Mythic", "Legendary", "Divine", "Eternal", "Omega",
-    "Ancient", "Corrupted", "Enchanted", "Ascended", "Supreme",
-    "Godly", "Immortal", "Demonic", "Sacred", "Abyssal",
-}
-
--- build flat lookup for fast matching
+-- flat lookup for fast matching
 local OG_LIST = {}
-for _, v in ipairs(OG_BASES) do OG_LIST[v:lower()] = "base" end
-for _, v in ipairs(OG_MUTATIONS) do OG_LIST[v:lower()] = "mutation" end
-for _, v in ipairs(OG_TRAITS) do OG_LIST[v:lower()] = "trait" end
-
--- keyword lists for partial matching
-local BASE_KEYWORDS = {"headless", "korblox", "dominus", "clockwork", "valkyrie", "icicle", "iceberg", "dragon", "hydra", "titan", "leviathan", "pumpkin", "reaper"}
-local MUTATION_KEYWORDS = {"golden", "rainbow", "diamond", "void", "cosmic", "galaxy", "celestial", "phantom", "shadow", "inferno", "frost", "crystal", "neon", "lava", "electric", "toxic", "prismatic", "holographic", "obsidian", "emerald", "ruby"}
-local TRAIT_KEYWORDS = {"mythic", "legendary", "divine", "eternal", "omega", "ancient", "corrupted", "enchanted", "ascended", "supreme", "godly", "immortal", "demonic", "sacred", "abyssal"}
+local OG_KEYWORDS = {}
+for _, og in ipairs(OG_BRAINROTS) do
+    OG_LIST[og.name:lower()] = og
+    -- add partial keywords for each word in the name
+    for word in og.name:lower():gmatch("%S+") do
+        if word ~= "the" and word ~= "a" and #word > 2 then
+            OG_KEYWORDS[word] = og.name
+        end
+    end
+end
 
 local function isOG(name)
     if not name then return false end
     local lower = name:lower()
     if OG_LIST[lower] then return true end
-    for _, kw in ipairs(BASE_KEYWORDS) do if lower:find(kw) then return true end end
-    for _, kw in ipairs(MUTATION_KEYWORDS) do if lower:find(kw) then return true end end
-    for _, kw in ipairs(TRAIT_KEYWORDS) do if lower:find(kw) then return true end end
+    -- check partial matches
+    for keyword, _ in pairs(OG_KEYWORDS) do
+        if lower:find(keyword, 1, true) then return true end
+    end
     return false
 end
 
-local function classifyOG(name)
-    -- returns {base=, mutation=, trait=} based on what keywords are in the name
+local function getOGInfo(name)
     if not name then return nil end
     local lower = name:lower()
-    local result = {base = nil, mutation = nil, trait = nil, full = name}
-    for _, kw in ipairs(BASE_KEYWORDS) do
-        if lower:find(kw) then
-            -- find the full base name
-            for _, b in ipairs(OG_BASES) do
-                if lower:find(b:lower()) then result.base = b; break end
-            end
-            if not result.base then result.base = kw:sub(1,1):upper() .. kw:sub(2) end
-            break
-        end
+    if OG_LIST[lower] then return OG_LIST[lower] end
+    for keyword, ogName in pairs(OG_KEYWORDS) do
+        if lower:find(keyword, 1, true) then return OG_LIST[ogName:lower()] end
     end
-    for _, kw in ipairs(MUTATION_KEYWORDS) do
-        if lower:find(kw) then
-            for _, m in ipairs(OG_MUTATIONS) do
-                if lower:find(m:lower()) then result.mutation = m; break end
-            end
-            if not result.mutation then result.mutation = kw:sub(1,1):upper() .. kw:sub(2) end
-            break
-        end
-    end
-    for _, kw in ipairs(TRAIT_KEYWORDS) do
-        if lower:find(kw) then
-            for _, t in ipairs(OG_TRAITS) do
-                if lower:find(t:lower()) then result.trait = t; break end
-            end
-            if not result.trait then result.trait = kw:sub(1,1):upper() .. kw:sub(2) end
-            break
-        end
-    end
-    return result
+    return nil
 end
 
 -- ════════════════════ GLOBAL OG DATABASE ════════════════════
 -- stores ALL detected OG players from any source (local + global)
-local globalOGDB = {} -- {playerName = {brainrots = {name = classifyResult}, source = "LOCAL"/"GLOBAL", lastSeen = time, inServer = bool}}
+local globalOGDB = {} -- {playerName = {brainrots = {name = ogInfo}, source, lastSeen, inServer}}
 
 local function addToGlobalOGDB(playerName, brainrotName, source)
     if not globalOGDB[playerName] then
@@ -172,7 +133,7 @@ local function addToGlobalOGDB(playerName, brainrotName, source)
     entry.lastSeen = os.time()
     if source == "LOCAL" then entry.inServer = true end
     if not entry.brainrots[brainrotName] then
-        entry.brainrots[brainrotName] = classifyOG(brainrotName)
+        entry.brainrots[brainrotName] = getOGInfo(brainrotName) or {name = brainrotName, rate = "?"}
     end
 end
 
@@ -681,114 +642,10 @@ local ogCountLabel = makeLabel(pageOG, {
     sz = UDim2.new(1, 0, 0, 20), pos = UDim2.new(0, 0, 0, 0)
 })
 
--- ═══ FILTER CHIPS: BASE / MUTATION / TRAIT ═══
-local filterState = { category = "ALL", selected = nil } -- selected = specific name or nil for all
-
-local filterBar = Instance.new("Frame")
-filterBar.Size = UDim2.new(1, 0, 0, 24)
-filterBar.Position = UDim2.new(0, 0, 0, 22)
-filterBar.BackgroundTransparency = 1
-filterBar.ZIndex = 3
-filterBar.Parent = pageOG
-
-local filterLayout = Instance.new("UIListLayout")
-filterLayout.FillDirection = Enum.FillDirection.Horizontal
-filterLayout.Padding = UDim.new(0, 4)
-filterLayout.SortOrder = Enum.SortOrder.LayoutOrder
-filterLayout.Parent = filterBar
-
-local filterBtns = {}
-local FILTER_CATS = {"ALL", "BASE", "MUTATION", "TRAIT"}
-
-for i, cat in ipairs(FILTER_CATS) do
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, cat == "MUTATION" and 68 or 48, 0, 22)
-    btn.BackgroundColor3 = (cat == "ALL") and Theme.accent or Theme.bgCard
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 9
-    btn.TextColor3 = (cat == "ALL") and Theme.bg or Theme.textMuted
-    btn.Text = cat
-    btn.AutoButtonColor = false
-    btn.ZIndex = 4
-    btn.LayoutOrder = i
-    btn.Parent = filterBar
-    corner(btn, 5)
-    filterBtns[cat] = btn
-end
-
--- ═══ GLOSSARY CHIPS (shows brainrot names for selected category) ═══
-local glossaryFrame = Instance.new("ScrollingFrame")
-glossaryFrame.Size = UDim2.new(1, 0, 0, 52)
-glossaryFrame.Position = UDim2.new(0, 0, 0, 48)
-glossaryFrame.BackgroundTransparency = 1
-glossaryFrame.ScrollBarThickness = 2
-glossaryFrame.ScrollBarImageColor3 = Theme.accentDim
-glossaryFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-glossaryFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-glossaryFrame.BorderSizePixel = 0
-glossaryFrame.ZIndex = 3
-glossaryFrame.Parent = pageOG
-
-local glossaryLayout = Instance.new("UIListLayout")
-glossaryLayout.FillDirection = Enum.FillDirection.Horizontal
-glossaryLayout.Padding = UDim.new(0, 4)
-glossaryLayout.SortOrder = Enum.SortOrder.LayoutOrder
-glossaryLayout.Wraps = true
-glossaryLayout.Parent = glossaryFrame
-pad(glossaryFrame, 0, 4, 0, 0)
-
-local glossaryChips = {} -- chip buttons
-
-local function buildGlossaryChips()
-    for _, c in pairs(glossaryFrame:GetChildren()) do
-        if c:IsA("TextButton") then c:Destroy() end
-    end
-    glossaryChips = {}
-
-    local items = {}
-    if filterState.category == "ALL" or filterState.category == "BASE" then
-        for _, v in ipairs(OG_BASES) do table.insert(items, {name = v, cat = "base"}) end
-    end
-    if filterState.category == "ALL" or filterState.category == "MUTATION" then
-        for _, v in ipairs(OG_MUTATIONS) do table.insert(items, {name = v, cat = "mutation"}) end
-    end
-    if filterState.category == "ALL" or filterState.category == "TRAIT" then
-        for _, v in ipairs(OG_TRAITS) do table.insert(items, {name = v, cat = "trait"}) end
-    end
-
-    for idx, item in ipairs(items) do
-        local catColor = item.cat == "base" and Theme.ogGold or (item.cat == "mutation" and Color3.fromRGB(100, 180, 255) or Color3.fromRGB(180, 100, 255))
-        local isSelected = (filterState.selected and filterState.selected:lower() == item.name:lower())
-        local chip = Instance.new("TextButton")
-        chip.Size = UDim2.new(0, math.max(#item.name * 6 + 12, 40), 0, 22)
-        chip.BackgroundColor3 = isSelected and catColor or Theme.bgCard
-        chip.Font = Enum.Font.GothamBold
-        chip.TextSize = 8
-        chip.TextColor3 = isSelected and Theme.bg or catColor
-        chip.Text = item.name:upper()
-        chip.AutoButtonColor = false
-        chip.ZIndex = 4
-        chip.LayoutOrder = idx
-        chip.Parent = glossaryFrame
-        corner(chip, 5)
-
-        chip.MouseButton1Click:Connect(function()
-            if filterState.selected == item.name then
-                filterState.selected = nil -- deselect
-            else
-                filterState.selected = item.name
-            end
-            buildGlossaryChips()
-            refreshOGDisplay()
-        end)
-        glossaryChips[item.name] = chip
-    end
-end
-
 -- ═══ OG PLAYERS LIST ═══
 local ogListFrame = Instance.new("Frame")
-ogListFrame.Size = UDim2.new(1, 0, 1, -106)
-ogListFrame.Position = UDim2.new(0, 0, 0, 106)
+ogListFrame.Size = UDim2.new(1, 0, 1, -24)
+ogListFrame.Position = UDim2.new(0, 0, 0, 24)
 ogListFrame.BackgroundTransparency = 1
 ogListFrame.ZIndex = 2
 ogListFrame.Parent = pageOG
@@ -878,7 +735,14 @@ local function addOGPlayerRow(playerName, brainrotNames, isInServer)
         pcall(function()
             local row = ogPlayerRows[playerName]
             local brLbl = row:FindFirstChild("_brLbl")
-            if brLbl then brLbl.Text = "★ " .. table.concat(brainrotNames, ", ") end
+            if brLbl then
+                local parts = {}
+                for _, brName in ipairs(brainrotNames) do
+                    local info = getOGInfo(brName)
+                    table.insert(parts, info and (brName .. " " .. info.rate) or brName)
+                end
+                brLbl.Text = "★ " .. table.concat(parts, ", ")
+            end
             local srcLbl = row:FindFirstChild("_srcLbl")
             if srcLbl then srcLbl.Text = isInServer and "IN SERVER" or "GLOBAL"; srcLbl.TextColor3 = isInServer and Theme.success or Color3.fromRGB(100, 180, 255) end
         end)
@@ -962,7 +826,17 @@ local function addOGPlayerRow(playerName, brainrotNames, isInServer)
     brLbl.TextSize = 9
     brLbl.TextColor3 = Theme.ogGold
     brLbl.TextXAlignment = Enum.TextXAlignment.Left
-    brLbl.Text = "★ " .. table.concat(brainrotNames, ", ")
+    -- build brainrot text with rates
+    local brParts = {}
+    for _, brName in ipairs(brainrotNames) do
+        local info = getOGInfo(brName)
+        if info then
+            table.insert(brParts, brName .. " " .. info.rate)
+        else
+            table.insert(brParts, brName)
+        end
+    end
+    brLbl.Text = "★ " .. table.concat(brParts, ", ")
     brLbl.TextTruncate = Enum.TextTruncate.AtEnd
     brLbl.ZIndex = 4
     brLbl.TextTransparency = 1
@@ -1059,80 +933,37 @@ local function addOGPlayerRow(playerName, brainrotNames, isInServer)
     if rowStroke then rowStroke.Transparency = 1; TweenService:Create(rowStroke, fadeInfo, { Transparency = 0 }):Play() end
 end
 
--- ═══ FILTER BUTTON LOGIC ═══
-for _, cat in ipairs(FILTER_CATS) do
-    filterBtns[cat].MouseButton1Click:Connect(function()
-        filterState.category = cat
-        filterState.selected = nil
-        for c, btn in pairs(filterBtns) do
-            if c == cat then
-                TweenService:Create(btn, TweenFast, { BackgroundColor3 = Theme.accent }):Play()
-                btn.TextColor3 = Theme.bg
-            else
-                TweenService:Create(btn, TweenFast, { BackgroundColor3 = Theme.bgCard }):Play()
-                btn.TextColor3 = Theme.textMuted
-            end
-        end
-        buildGlossaryChips()
-        refreshOGDisplay()
-    end)
-end
-
--- ═══ OG DISPLAY REFRESH (from global database) ═══
+-- ═══ OG DISPLAY REFRESH (from global database — no destroy/recreate) ═══
 local function refreshOGDisplay()
-    -- clear current rows
-    for pName, rowFrame in pairs(ogPlayerRows) do
-        pcall(function() rowFrame:Destroy() end)
-    end
-    ogPlayerRows = {}
+    local currentPlayers = {} -- track who should be shown
 
     local count = 0
     for playerName, data in pairs(globalOGDB) do
-        -- filter by selected glossary item
-        local matchesFilter = true
-        if filterState.selected then
-            matchesFilter = false
-            for brName, classification in pairs(data.brainrots) do
-                if brName:lower():find(filterState.selected:lower()) then
-                    matchesFilter = true
-                    break
-                end
-                if classification then
-                    if classification.base and classification.base:lower() == filterState.selected:lower() then matchesFilter = true; break end
-                    if classification.mutation and classification.mutation:lower() == filterState.selected:lower() then matchesFilter = true; break end
-                    if classification.trait and classification.trait:lower() == filterState.selected:lower() then matchesFilter = true; break end
-                end
-            end
-        elseif filterState.category ~= "ALL" then
-            matchesFilter = false
-            local catKey = filterState.category:lower()
-            for _, classification in pairs(data.brainrots) do
-                if classification and classification[catKey] then matchesFilter = true; break end
-            end
-        end
+        count = count + 1
+        currentPlayers[playerName] = true
+        local brNames = {}
+        for brName, _ in pairs(data.brainrots) do table.insert(brNames, brName) end
+        addOGPlayerRow(playerName, brNames, data.inServer)
+    end
 
-        if matchesFilter then
-            count = count + 1
-            local brNames = {}
-            for brName, _ in pairs(data.brainrots) do table.insert(brNames, brName) end
-            addOGPlayerRow(playerName, brNames, data.inServer)
+    -- only remove rows for players no longer in the DB
+    for pName, rowFrame in pairs(ogPlayerRows) do
+        if not currentPlayers[pName] then
+            pcall(function() rowFrame:Destroy() end)
+            ogPlayerRows[pName] = nil
         end
     end
 
     state.ogCaught = count
     caughtLabel.Text = count .. " caught"
-    local totalDB = 0
-    for _ in pairs(globalOGDB) do totalDB = totalDB + 1 end
-    ogCountLabel.Text = totalDB .. " global"
+    ogCountLabel.Text = count .. " global"
     if count == 0 then
         ogWaiting.Visible = true
-        ogWaiting.Text = filterState.selected and ("no players with " .. filterState.selected) or "scanning all servers..."
+        ogWaiting.Text = "scanning all servers..."
     else
         ogWaiting.Visible = false
     end
 end
-
-buildGlossaryChips()
 
 -- ════════════════════ ACTIVE OG SCANNER ════════════════════
 -- Scans workspace + feeds global OG database
@@ -2249,12 +2080,12 @@ spawn(function()
     end
 end)
 
--- active OG player scanner (rescan every 0.1s to find who has OGs)
+-- active OG player scanner (rescan every 3s to find who has OGs)
 spawn(function()
     task.wait(1.5)
     while state.running do
         pcall(refreshOGPlayers)
-        task.wait(0.1)
+        task.wait(3)
     end
 end)
 
