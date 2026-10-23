@@ -79,7 +79,6 @@ local OG_BRAINROTS = {
     {name = "Headless Horseman",    rate = "$600M/s"},
     {name = "Meowl",                rate = "$600M/s"},
     {name = "Strawberry Elephant",  rate = "$750M/s"},
-    {name = "Spyder Elephant",      rate = "$1B/s"},
 }
 
 -- flat lookup for fast matching
