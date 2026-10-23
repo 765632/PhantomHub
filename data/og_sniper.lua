@@ -523,66 +523,170 @@ local function makeScrollFeed(parent)
 end
 
 local function addLogEntry(scroll, text, color, isOGEntry)
+    -- simple text log (used for system messages)
     local entry = Instance.new("Frame")
-    entry.Size = UDim2.new(1, -8, 0, 0)
-    entry.AutomaticSize = Enum.AutomaticSize.Y
+    entry.Size = UDim2.new(1, -8, 0, 24)
     entry.BackgroundColor3 = isOGEntry and Color3.fromRGB(30, 25, 10) or Theme.bgCard
     entry.BorderSizePixel = 0
     entry.ZIndex = 3
-    entry.LayoutOrder = -os.clock() * 1000 -- newest first
+    entry.LayoutOrder = -os.clock() * 1000
     entry.Parent = scroll
     corner(entry, 6)
-
-    if isOGEntry then
-        stroke(entry, Theme.ogGold, 1)
-    end
+    if isOGEntry then stroke(entry, Theme.ogGold, 1) end
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -12, 0, 0)
-    lbl.Position = UDim2.new(0, 6, 0, 4)
-    lbl.AutomaticSize = Enum.AutomaticSize.Y
+    lbl.Size = UDim2.new(1, -12, 1, 0)
+    lbl.Position = UDim2.new(0, 6, 0, 0)
     lbl.BackgroundTransparency = 1
-    lbl.Font = Enum.Font.RobotoMono
-    lbl.TextSize = 11
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextSize = 10
     lbl.TextColor3 = color or Theme.textMuted
     lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.TextWrapped = true
     lbl.Text = text
     lbl.ZIndex = 4
     lbl.TextTransparency = 1
     lbl.Parent = entry
 
-    -- fade in
     entry.BackgroundTransparency = 1
-    TweenService:Create(entry, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundTransparency = isOGEntry and 0 or 0 }):Play()
-    TweenService:Create(lbl, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play()
+    local fadeInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    TweenService:Create(entry, fadeInfo, { BackgroundTransparency = 0 }):Play()
+    TweenService:Create(lbl, fadeInfo, { TextTransparency = 0 }):Play()
     if isOGEntry then
         local s = entry:FindFirstChildWhichIsA("UIStroke")
-        if s then s.Transparency = 1; TweenService:Create(s, TweenInfo.new(0.35), { Transparency = 0 }):Play() end
+        if s then s.Transparency = 1; TweenService:Create(s, TweenInfo.new(0.3), { Transparency = 0 }):Play() end
     end
 
-    pad(entry, 0, 0, 2, 6)
-
-    -- cap entries
+    -- cap at 150
     local children = scroll:GetChildren()
     local count = 0
-    for _, c in pairs(children) do
-        if c:IsA("Frame") then count = count + 1 end
-    end
+    for _, c in pairs(children) do if c:IsA("Frame") then count = count + 1 end end
     if count > 150 then
-        -- remove oldest
-        local oldest = nil
-        local oldestOrder = math.huge
+        local oldest, oldestOrder = nil, math.huge
         for _, c in pairs(children) do
-            if c:IsA("Frame") and c.LayoutOrder < oldestOrder then
-                oldestOrder = c.LayoutOrder
-                oldest = c
-            end
+            if c:IsA("Frame") and c.LayoutOrder < oldestOrder then oldestOrder = c.LayoutOrder; oldest = c end
         end
         if oldest then oldest:Destroy() end
     end
-
     return entry
+end
+
+-- clean structured log row for spawn events
+local function addSpawnLog(scroll, playerName, brainrotName, isOGEntry, sourceTag)
+    local ogInfo = isOGEntry and getOGInfo(brainrotName) or nil
+    local rowH = isOGEntry and 36 or 28
+
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, -8, 0, rowH)
+    row.BackgroundColor3 = isOGEntry and Color3.fromRGB(30, 25, 10) or Theme.bgCard
+    row.BorderSizePixel = 0
+    row.ZIndex = 3
+    row.LayoutOrder = -os.clock() * 1000
+    row.Parent = scroll
+    corner(row, 6)
+    if isOGEntry then stroke(row, Theme.ogGold, 1) end
+
+    -- timestamp (left)
+    local timeLbl = Instance.new("TextLabel")
+    timeLbl.Size = UDim2.new(0, 42, 0, 12)
+    timeLbl.Position = UDim2.new(0, 6, 0, isOGEntry and 4 or 8)
+    timeLbl.BackgroundTransparency = 1
+    timeLbl.Font = Enum.Font.RobotoMono
+    timeLbl.TextSize = 9
+    timeLbl.TextColor3 = Theme.accentDim
+    timeLbl.TextXAlignment = Enum.TextXAlignment.Left
+    timeLbl.Text = os.date("%H:%M")
+    timeLbl.ZIndex = 4
+    timeLbl.TextTransparency = 1
+    timeLbl.Parent = row
+
+    -- player name
+    local pLbl = Instance.new("TextLabel")
+    pLbl.Size = UDim2.new(0, 90, 0, 14)
+    pLbl.Position = UDim2.new(0, 50, 0, isOGEntry and 3 or 7)
+    pLbl.BackgroundTransparency = 1
+    pLbl.Font = Enum.Font.GothamBold
+    pLbl.TextSize = isOGEntry and 11 or 10
+    pLbl.TextColor3 = isOGEntry and Theme.white or Theme.text
+    pLbl.TextXAlignment = Enum.TextXAlignment.Left
+    pLbl.Text = playerName
+    pLbl.TextTruncate = Enum.TextTruncate.AtEnd
+    pLbl.ZIndex = 4
+    pLbl.TextTransparency = 1
+    pLbl.Parent = row
+
+    -- brainrot name (right side)
+    local brLbl = Instance.new("TextLabel")
+    brLbl.Size = UDim2.new(0, 130, 0, 14)
+    brLbl.Position = UDim2.new(0, 145, 0, isOGEntry and 3 or 7)
+    brLbl.BackgroundTransparency = 1
+    brLbl.Font = Enum.Font.Gotham
+    brLbl.TextSize = isOGEntry and 10 or 9
+    brLbl.TextColor3 = isOGEntry and Theme.ogGold or Theme.textMuted
+    brLbl.TextXAlignment = Enum.TextXAlignment.Left
+    brLbl.Text = brainrotName
+    brLbl.TextTruncate = Enum.TextTruncate.AtEnd
+    brLbl.ZIndex = 4
+    brLbl.TextTransparency = 1
+    brLbl.Parent = row
+
+    -- source tag (far right)
+    if sourceTag and sourceTag ~= "" then
+        local srcLbl = Instance.new("TextLabel")
+        srcLbl.Size = UDim2.new(0, 30, 0, 10)
+        srcLbl.Position = UDim2.new(1, -36, 0, isOGEntry and 5 or 9)
+        srcLbl.BackgroundTransparency = 1
+        srcLbl.Font = Enum.Font.GothamBold
+        srcLbl.TextSize = 7
+        srcLbl.TextColor3 = Color3.fromRGB(100, 180, 255)
+        srcLbl.TextXAlignment = Enum.TextXAlignment.Right
+        srcLbl.Text = sourceTag
+        srcLbl.ZIndex = 4
+        srcLbl.TextTransparency = 1
+        srcLbl.Parent = row
+        TweenService:Create(srcLbl, TweenInfo.new(0.3, Enum.EasingStyle.Quad), { TextTransparency = 0 }):Play()
+    end
+
+    -- OG extra line: earn rate
+    if isOGEntry and ogInfo then
+        local rateLbl = Instance.new("TextLabel")
+        rateLbl.Size = UDim2.new(1, -56, 0, 12)
+        rateLbl.Position = UDim2.new(0, 50, 0, 20)
+        rateLbl.BackgroundTransparency = 1
+        rateLbl.Font = Enum.Font.Gotham
+        rateLbl.TextSize = 9
+        rateLbl.TextColor3 = Theme.ogGold
+        rateLbl.TextXAlignment = Enum.TextXAlignment.Left
+        rateLbl.Text = "★ " .. ogInfo.rate .. " earn rate"
+        rateLbl.ZIndex = 4
+        rateLbl.TextTransparency = 1
+        rateLbl.Parent = row
+        TweenService:Create(rateLbl, TweenInfo.new(0.3, Enum.EasingStyle.Quad), { TextTransparency = 0 }):Play()
+    end
+
+    -- fade in
+    row.BackgroundTransparency = 1
+    local fadeInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    TweenService:Create(row, fadeInfo, { BackgroundTransparency = 0 }):Play()
+    TweenService:Create(timeLbl, fadeInfo, { TextTransparency = 0 }):Play()
+    TweenService:Create(pLbl, fadeInfo, { TextTransparency = 0 }):Play()
+    TweenService:Create(brLbl, fadeInfo, { TextTransparency = 0 }):Play()
+    if isOGEntry then
+        local s = row:FindFirstChildWhichIsA("UIStroke")
+        if s then s.Transparency = 1; TweenService:Create(s, TweenInfo.new(0.3), { Transparency = 0 }):Play() end
+    end
+
+    -- cap at 150
+    local children = scroll:GetChildren()
+    local count = 0
+    for _, c in pairs(children) do if c:IsA("Frame") then count = count + 1 end end
+    if count > 150 then
+        local oldest, oldestOrder = nil, math.huge
+        for _, c in pairs(children) do
+            if c:IsA("Frame") and c.LayoutOrder < oldestOrder then oldestOrder = c.LayoutOrder; oldest = c end
+        end
+        if oldest then oldest:Destroy() end
+    end
+    return row
 end
 
 -- ════════════════════ PAGE: LIVE ════════════════════
@@ -1445,30 +1549,29 @@ hopNowBtn.MouseButton1Click:Connect(function()
     hopNowBtn.Text = "HOPPING..."
     spawn(function()
         pcall(function()
-            local reqFn = request or http_request or (syn and syn.request)
-            if reqFn then
-                local resp = reqFn({
-                    Url = "https://games.roblox.com/v1/games/" .. PLACE_ID .. "/servers/0?sortOrder=2&excludeFullGames=true&limit=100",
-                    Method = "GET",
-                    Headers = {["Content-Type"] = "application/json"}
-                })
-                local data = HttpService:JSONDecode(resp.Body)
-                if data and data.data then
-                    local candidates = {}
-                    for _, s in pairs(data.data) do
-                        if s.id ~= game.JobId and s.playing and s.playing > 3 then
-                            table.insert(candidates, s)
-                        end
-                    end
-                    if #candidates > 0 then
-                        local pick = candidates[math.random(1, #candidates)]
-                        TeleportService:TeleportToPlaceInstance(PLACE_ID, pick.id, LP)
-                    end
+            -- mark current server visited
+            serverScanState.visited[game.JobId] = true
+            local servers = fetchServerList()
+            -- prefer unvisited servers with most players
+            local unvisited, visited = {}, {}
+            for _, s in pairs(servers) do
+                if not serverScanState.visited[s.id] then
+                    table.insert(unvisited, s)
+                else
+                    table.insert(visited, s)
                 end
+            end
+            table.sort(unvisited, function(a, b) return (a.playing or 0) > (b.playing or 0) end)
+            table.sort(visited, function(a, b) return (a.playing or 0) > (b.playing or 0) end)
+            local pick = unvisited[1] or visited[1]
+            if pick then
+                addLogEntry(liveScroll, "• [" .. os.date("%H:%M:%S") .. "] Manual hop → " .. string.sub(pick.id, 1, 8) .. "... (" .. (pick.playing or "?") .. "p)", Color3.fromRGB(100, 180, 255), false)
+                TeleportService:TeleportToPlaceInstance(PLACE_ID, pick.id, LP)
             else
                 TeleportService:Teleport(PLACE_ID, LP)
             end
         end)
+        hopNowBtn.Text = "HOP SERVER NOW"
     end)
 end)
 
@@ -1589,12 +1692,9 @@ local function logSpawn(playerName, brainrotName, isOGSpawn, source)
     -- hide waiting text
     if liveWaiting.Visible then liveWaiting.Visible = false end
 
-    -- add to live feed — tag global entries with globe icon
-    local prefix = isOGSpawn and "★ " or "• "
-    local srcTag = isGlobal and " [ALL]" or ""
-    local color = isOGSpawn and Theme.ogGold or (isGlobal and Color3.fromRGB(100, 180, 255) or Theme.textMuted)
-    local text = prefix .. "[" .. timestamp .. "]" .. srcTag .. " " .. playerName .. " → " .. brainrotName
-    addLogEntry(liveScroll, text, color, isOGSpawn)
+    -- add to live feed with clean structured row
+    local srcTag = isGlobal and "ALL" or "LOCAL"
+    addSpawnLog(liveScroll, playerName, brainrotName, isOGSpawn, srcTag)
     liveCountLabel.Text = liveEventCount .. " events"
 
     -- auto-track every player from live spawns
@@ -1920,83 +2020,184 @@ local function scanForGlobalFeed()
     end)
 end
 
--- Method 6: Watch ReplicatedStorage for global feed remotes/events
-pcall(function()
-    local globalRemoteNames = {
-        "GlobalFeed", "LiveFeed", "LiveSpawns", "GlobalNotification",
-        "WorldFeed", "GlobalEvent", "ServerFeed", "BrainrotFeed",
-        "Feed", "Leaderboard", "GlobalLeaderboard", "StealFeed",
-        "ActivityFeed", "Activity", "GlobalActivity"
-    }
-    for _, remoteName in pairs(globalRemoteNames) do
-        pcall(function()
-            -- search in Net
-            if Net then
-                for _, d in pairs(Net:GetDescendants()) do
-                    pcall(function()
-                        if d:IsA("RemoteEvent") and d.Name:lower():find(remoteName:lower()) then
-                            local c = d.OnClientEvent:Connect(function(...)
-                                local evArgs = {...}
-                                pcall(function()
-                                    for _, arg in pairs(evArgs) do
-                                        if type(arg) == "string" then
-                                            local player, brainrot = parseClaimText(arg)
-                                            if player and brainrot then
-                                                if not knownGlobalTexts[arg] then
-                                                    knownGlobalTexts[arg] = true
-                                                    local ogStatus = isOG(brainrot)
-                                                    logSpawn(player, brainrot, ogStatus, "GLOBAL")
-                                                end
-                                            end
-                                        elseif type(arg) == "table" then
-                                            local player = arg.Player or arg.player or arg.PlayerName or arg.username or arg.Username or arg.Name or arg.name
-                                            local brainrot = arg.Brainrot or arg.brainrot or arg.BrainrotName or arg.item or arg.Item or arg.Name or arg.name
-                                            if player and brainrot and tostring(player) ~= tostring(brainrot) then
-                                                local key = tostring(player) .. ":" .. tostring(brainrot)
-                                                if not knownGlobalTexts[key] then
-                                                    knownGlobalTexts[key] = true
-                                                    local ogStatus = isOG(tostring(brainrot))
-                                                    logSpawn(tostring(player), tostring(brainrot), ogStatus, "GLOBAL")
-                                                end
-                                            end
-                                        end
-                                    end
-                                end)
-                            end)
-                            conns[#conns+1] = c
-                        end
-                    end)
+-- Method 6: Hook EVERY RemoteEvent under Net + RS (don't guess names)
+-- SAB remotes live under RS.Packages.Net — we hook ALL of them and filter
+-- for data that looks like brainrot spawn/claim events from any server.
+local hookedRemotes = {} -- dedup so we don't double-hook
+
+local function tryExtractSpawnData(arg)
+    if type(arg) == "string" then
+        local player, brainrot = parseClaimText(arg)
+        if player and brainrot then
+            local key = player .. ":" .. brainrot
+            if not knownGlobalTexts[key] then
+                knownGlobalTexts[key] = true
+                logSpawn(player, brainrot, isOG(brainrot), "GLOBAL")
+            end
+        end
+    elseif type(arg) == "table" then
+        -- try every common key pattern SAB might use
+        local player = arg.Player or arg.player or arg.PlayerName or arg.playerName
+                    or arg.username or arg.Username or arg.Name or arg.name
+                    or arg.Owner or arg.owner or arg.User or arg.user
+        local brainrot = arg.Brainrot or arg.brainrot or arg.BrainrotName or arg.brainrotName
+                      or arg.item or arg.Item or arg.ItemName or arg.itemName
+                      or arg.Pet or arg.pet or arg.PetName or arg.petName
+                      or arg.Creature or arg.creature
+        if player and brainrot and tostring(player) ~= tostring(brainrot) then
+            local key = tostring(player) .. ":" .. tostring(brainrot)
+            if not knownGlobalTexts[key] then
+                knownGlobalTexts[key] = true
+                logSpawn(tostring(player), tostring(brainrot), isOG(tostring(brainrot)), "GLOBAL")
+            end
+        end
+        -- also recurse into nested tables (some games nest data)
+        for k, v in pairs(arg) do
+            if type(v) == "string" then
+                local p2, b2 = parseClaimText(v)
+                if p2 and b2 then
+                    local key2 = p2 .. ":" .. b2
+                    if not knownGlobalTexts[key2] then
+                        knownGlobalTexts[key2] = true
+                        logSpawn(p2, b2, isOG(b2), "GLOBAL")
+                    end
                 end
             end
+        end
+    end
+end
 
-            -- also search directly in RS
+local function hookRemoteEvent(remote)
+    if hookedRemotes[remote] then return end
+    if remote == remotes.notify then return end -- already hooked in Method 2
+    hookedRemotes[remote] = true
+    pcall(function()
+        local c = remote.OnClientEvent:Connect(function(...)
+            if not state.running then return end
+            local evArgs = {...}
             pcall(function()
-                for _, d in pairs(RS:GetDescendants()) do
-                    pcall(function()
-                        if d:IsA("RemoteEvent") and d.Name:lower():find(remoteName:lower()) and d ~= remotes.notify then
-                            local c = d.OnClientEvent:Connect(function(...)
-                                local evArgs = {...}
-                                pcall(function()
-                                    for _, arg in pairs(evArgs) do
-                                        if type(arg) == "string" then
-                                            local player, brainrot = parseClaimText(arg)
-                                            if player and brainrot then
-                                                if not knownGlobalTexts[arg] then
-                                                    knownGlobalTexts[arg] = true
-                                                    local ogStatus = isOG(brainrot)
-                                                    logSpawn(player, brainrot, ogStatus, "GLOBAL")
-                                                end
-                                            end
-                                        end
-                                    end
-                                end)
-                            end)
-                            conns[#conns+1] = c
-                        end
-                    end)
+                for _, arg in pairs(evArgs) do
+                    tryExtractSpawnData(arg)
                 end
             end)
         end)
+        conns[#conns+1] = c
+    end)
+end
+
+-- hook everything under Net
+pcall(function()
+    if Net then
+        for _, d in pairs(Net:GetDescendants()) do
+            pcall(function()
+                if d:IsA("RemoteEvent") then hookRemoteEvent(d) end
+            end)
+        end
+        -- watch for new remotes added later
+        local nc = Net.DescendantAdded:Connect(function(d)
+            task.wait(0.1)
+            pcall(function()
+                if d:IsA("RemoteEvent") then hookRemoteEvent(d) end
+            end)
+        end)
+        conns[#conns+1] = nc
+    end
+end)
+
+-- hook everything directly under RS too
+pcall(function()
+    for _, d in pairs(RS:GetDescendants()) do
+        pcall(function()
+            if d:IsA("RemoteEvent") then hookRemoteEvent(d) end
+        end)
+    end
+    local rc = RS.DescendantAdded:Connect(function(d)
+        task.wait(0.1)
+        pcall(function()
+            if d:IsA("RemoteEvent") then hookRemoteEvent(d) end
+        end)
+    end)
+    conns[#conns+1] = rc
+end)
+
+-- Method 6b: Systematic ALL-SERVER scanner via Roblox Games API
+-- Fetches server list, teleports to each, scans for OGs, hops to next.
+-- Builds globalOGDB across every server over time.
+local serverScanState = {
+    scanning = false,
+    visited = {},   -- jobId -> true
+    queue = {},     -- server entries to visit
+    lastFetch = 0,
+    cursor = nil,
+}
+
+local function fetchServerList()
+    local reqFn = request or http_request or (syn and syn.request) or (http and http.request)
+    if not reqFn then return {} end
+    local servers = {}
+    local cursor = ""
+    -- fetch up to 3 pages (300 servers)
+    for page = 1, 3 do
+        local ok2, resp = pcall(function()
+            return reqFn({
+                Url = "https://games.roblox.com/v1/games/" .. PLACE_ID .. "/servers/0?sortOrder=2&excludeFullGames=true&limit=100" .. (cursor ~= "" and ("&cursor=" .. cursor) or ""),
+                Method = "GET",
+                Headers = {["Content-Type"] = "application/json"}
+            })
+        end)
+        if ok2 and resp and resp.Body then
+            local ok3, data = pcall(function() return HttpService:JSONDecode(resp.Body) end)
+            if ok3 and data and data.data then
+                for _, s in pairs(data.data) do
+                    if s.id and s.id ~= game.JobId and s.playing and s.playing > 0 then
+                        table.insert(servers, s)
+                    end
+                end
+                cursor = data.nextPageCursor or ""
+                if cursor == "" then break end
+            else break end
+        else break end
+    end
+    return servers
+end
+
+-- auto-scan loop: when serverHop is enabled, systematically visit servers
+spawn(function()
+    task.wait(5)
+    while state.running do
+        if state.serverHop and not serverScanState.scanning then
+            serverScanState.scanning = true
+            pcall(function()
+                -- fetch fresh server list
+                local servers = fetchServerList()
+                local unvisited = {}
+                for _, s in pairs(servers) do
+                    if not serverScanState.visited[s.id] then
+                        table.insert(unvisited, s)
+                    end
+                end
+                -- sort by player count (more players = more likely OGs)
+                table.sort(unvisited, function(a, b) return (a.playing or 0) > (b.playing or 0) end)
+                addLogEntry(liveScroll, "• [" .. os.date("%H:%M:%S") .. "] Found " .. #servers .. " servers (" .. #unvisited .. " unvisited)", Color3.fromRGB(100, 180, 255), false)
+                if #unvisited > 0 then
+                    -- mark current server as visited before hopping
+                    serverScanState.visited[game.JobId] = true
+                    local pick = unvisited[1]
+                    addLogEntry(liveScroll, "• [" .. os.date("%H:%M:%S") .. "] Hopping → server " .. string.sub(pick.id, 1, 8) .. "... (" .. (pick.playing or "?") .. " players)", Color3.fromRGB(100, 180, 255), false)
+                    task.wait(2) -- let the log show before teleporting
+                    pcall(function()
+                        TeleportService:TeleportToPlaceInstance(PLACE_ID, pick.id, LP)
+                    end)
+                else
+                    -- all servers visited, reset and wait
+                    addLogEntry(liveScroll, "• [" .. os.date("%H:%M:%S") .. "] All " .. #servers .. " servers scanned — resetting in 60s", Theme.ogGold, false)
+                    serverScanState.visited = {}
+                    task.wait(60)
+                end
+            end)
+            serverScanState.scanning = false
+        end
+        task.wait(10)
     end
 end)
 
@@ -2106,43 +2307,9 @@ spawn(function()
     end
 end)
 
--- auto server hop (every 5 minutes if enabled)
-spawn(function()
-    while state.running do
-        if state.serverHop then
-            task.wait(300) -- 5 min
-            if state.serverHop and state.running then
-                pcall(function()
-                    local reqFn = request or http_request or (syn and syn.request)
-                    if reqFn then
-                        local resp = reqFn({
-                            Url = "https://games.roblox.com/v1/games/" .. PLACE_ID .. "/servers/0?sortOrder=2&excludeFullGames=true&limit=100",
-                            Method = "GET",
-                            Headers = {["Content-Type"] = "application/json"}
-                        })
-                        local data = HttpService:JSONDecode(resp.Body)
-                        if data and data.data then
-                            local candidates = {}
-                            for _, s in pairs(data.data) do
-                                if s.id ~= game.JobId and s.playing and s.playing > 3 then
-                                    table.insert(candidates, s)
-                                end
-                            end
-                            if #candidates > 0 then
-                                local pick = candidates[math.random(1, #candidates)]
-                                TeleportService:TeleportToPlaceInstance(PLACE_ID, pick.id, LP)
-                            end
-                        end
-                    else
-                        TeleportService:Teleport(PLACE_ID, LP)
-                    end
-                end)
-            end
-        else
-            task.wait(5)
-        end
-    end
-end)
+-- auto server hop is now handled by the systematic scanner in Method 6b
+-- when serverHop is enabled, it fetches ALL servers and visits them one by one
+-- (see "Systematic ALL-SERVER scanner" above)
 
 -- auto fleece processor
 spawn(function()
