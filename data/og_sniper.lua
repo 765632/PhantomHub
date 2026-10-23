@@ -1549,24 +1549,26 @@ hopNowBtn.MouseButton1Click:Connect(function()
     hopNowBtn.Text = "HOPPING..."
     spawn(function()
         pcall(function()
-            -- mark current server visited
-            serverScanState.visited[game.JobId] = true
-            local servers = fetchServerList()
-            -- prefer unvisited servers with most players
-            local unvisited, visited = {}, {}
-            for _, s in pairs(servers) do
-                if not serverScanState.visited[s.id] then
-                    table.insert(unvisited, s)
-                else
-                    table.insert(visited, s)
+            local reqFn = request or http_request or (syn and syn.request) or (http and http.request)
+            if reqFn then
+                local resp = reqFn({
+                    Url = "https://games.roblox.com/v1/games/" .. PLACE_ID .. "/servers/0?sortOrder=2&excludeFullGames=true&limit=100",
+                    Method = "GET",
+                    Headers = {["Content-Type"] = "application/json"}
+                })
+                local data = HttpService:JSONDecode(resp.Body)
+                if data and data.data then
+                    local candidates = {}
+                    for _, s in pairs(data.data) do
+                        if s.id ~= game.JobId and s.playing and s.playing > 3 then
+                            table.insert(candidates, s)
+                        end
+                    end
+                    if #candidates > 0 then
+                        local pick = candidates[math.random(1, #candidates)]
+                        TeleportService:TeleportToPlaceInstance(PLACE_ID, pick.id, LP)
+                    end
                 end
-            end
-            table.sort(unvisited, function(a, b) return (a.playing or 0) > (b.playing or 0) end)
-            table.sort(visited, function(a, b) return (a.playing or 0) > (b.playing or 0) end)
-            local pick = unvisited[1] or visited[1]
-            if pick then
-                addLogEntry(liveScroll, "• [" .. os.date("%H:%M:%S") .. "] Manual hop → " .. string.sub(pick.id, 1, 8) .. "... (" .. (pick.playing or "?") .. "p)", Color3.fromRGB(100, 180, 255), false)
-                TeleportService:TeleportToPlaceInstance(PLACE_ID, pick.id, LP)
             else
                 TeleportService:Teleport(PLACE_ID, LP)
             end
@@ -1891,369 +1893,345 @@ end)
 
 -- ════════════════════ CROSS-SERVER: Global Feed Detection ════════════════════
 
--- Method 5: Deep-scan the game's native live feed GUI
--- SAB has a built-in global live feed that shows claims from ALL servers.
--- We find it by searching PlayerGui for ScrollingFrames with claim text.
+-- ═══════════════════════════════════════════════════════════════════
+-- CROSS-SERVER LOG SCANNER — reads the game's actual logs/feed
+-- Scans SAB + Trading Plaza by hooking every remote, scraping every
+-- GUI text element, and checking every player's displayed brainrots.
+-- ═══════════════════════════════════════════════════════════════════
 
-local globalFeedFrames = {} -- track which game GUI frames we're watching
+local hookedRemotes = {}   -- dedup remote hooks
+local hookedTextLabels = {} -- dedup text watchers
+local scannedGuiFrames = {} -- dedup gui frames
 
+-- ═══ TEXT PARSING ═══
+-- matches every variation of SAB's log text format
 local function parseClaimText(text)
     if not text or text == "" then return nil, nil end
-    -- SAB claim patterns
-    local player, brainrot = text:match("(.+)%s+stole%s+(.+)")
-    if not player then player, brainrot = text:match("(.+)%s+claimed%s+(.+)") end
-    if not player then player, brainrot = text:match("(.+)%s+got%s+(.+)") end
-    if not player then player, brainrot = text:match("(.+)%s+found%s+(.+)") end
-    if not player then player, brainrot = text:match("(.+)%s+obtained%s+(.+)") end
-    if not player then player, brainrot = text:match("(.+)%s+caught%s+(.+)") end
-    if not player then player, brainrot = text:match("(.+)%s+grabbed%s+(.+)") end
-    if player and brainrot then
-        player = player:gsub("^%s+", ""):gsub("%s+$", "")
-        brainrot = brainrot:gsub("!", ""):gsub("%.$", ""):gsub("^%s+", ""):gsub("%s+$", "")
-        return player, brainrot
+    local lower = text:lower()
+    -- skip our own GUI text
+    if lower:find("og sniper") or lower:find("phantomhub") or lower:find("scanning") then return nil, nil end
+    -- SAB log patterns (order matters — most specific first)
+    local patterns = {
+        "(.+)%s+stole%s+(.+)",
+        "(.+)%s+claimed%s+(.+)",
+        "(.+)%s+got%s+a?%s*(.+)",
+        "(.+)%s+found%s+a?%s*(.+)",
+        "(.+)%s+obtained%s+(.+)",
+        "(.+)%s+caught%s+(.+)",
+        "(.+)%s+grabbed%s+(.+)",
+        "(.+)%s+received%s+(.+)",
+        "(.+)%s+hatched%s+(.+)",
+        "(.+)%s+unlocked%s+(.+)",
+        "(.+)%s+earned%s+(.+)",
+        "(.+)%s+picked up%s+(.+)",
+        "(.+)%s+collected%s+(.+)",
+        -- Trading Plaza patterns
+        "(.+)%s+is trading%s+(.+)",
+        "(.+)%s+traded%s+(.+)",
+        "(.+)%s+has%s+(.+)",
+        "(.+)%s+owns%s+(.+)",
+        "(.+)%s+equipped%s+(.+)",
+    }
+    for _, pat in ipairs(patterns) do
+        local player, brainrot = text:match(pat)
+        if player and brainrot then
+            player = player:gsub("^%s+", ""):gsub("%s+$", ""):gsub("^%[.-%]%s*", "")
+            brainrot = brainrot:gsub("[!%.,%?]+$", ""):gsub("^%s+", ""):gsub("%s+$", "")
+            if #player > 0 and #player < 30 and #brainrot > 0 and #brainrot < 60 then
+                return player, brainrot
+            end
+        end
+    end
+    -- also check if the text just contains an OG brainrot name (billboard/label)
+    for _, og in ipairs(OG_BRAINROTS) do
+        if lower:find(og.name:lower(), 1, true) then
+            -- it's a label showing a brainrot name — try to find owner from parent
+            return nil, og.name
+        end
     end
     return nil, nil
 end
 
-local function watchGlobalFeedFrame(frame)
-    if globalFeedFrames[frame] then return end
-    globalFeedFrames[frame] = true
+-- ═══ REMOTE HOOKING — hook ALL remotes, extract spawn data ═══
 
-    -- scrape existing entries in the frame
-    pcall(function()
-        for _, child in pairs(frame:GetDescendants()) do
-            pcall(function()
-                if (child:IsA("TextLabel") or child:IsA("TextButton")) and child.Text and child.Text ~= "" then
-                    local txt = child.Text
-                    if not knownGlobalTexts[txt] then
-                        knownGlobalTexts[txt] = true
-                        local player, brainrot = parseClaimText(txt)
-                        if player and brainrot then
-                            local ogStatus = isOG(brainrot)
-                            logSpawn(player, brainrot, ogStatus, "GLOBAL")
-                        end
+local function tryExtractSpawnData(...)
+    local args = {...}
+    for _, arg in pairs(args) do
+        pcall(function()
+            if type(arg) == "string" then
+                local player, brainrot = parseClaimText(arg)
+                if player and brainrot then
+                    local key = player .. ":" .. brainrot
+                    if not knownGlobalTexts[key] then
+                        knownGlobalTexts[key] = true
+                        logSpawn(player, brainrot, isOG(brainrot), "GLOBAL")
                     end
                 end
-            end)
-        end
-    end)
-
-    -- watch for new entries
-    local c = frame.DescendantAdded:Connect(function(child)
-        task.wait(0.1)
-        if not state.running then return end
-        pcall(function()
-            if not child or not child.Parent then return end
-            if child:IsA("TextLabel") or child:IsA("TextButton") then
-                local txt = child.Text or ""
-                -- also watch for text property changes (game may set text after creation)
-                local textConn
-                textConn = child:GetPropertyChangedSignal("Text"):Connect(function()
-                    pcall(function()
-                        local t = child.Text
-                        if t and t ~= "" and not knownGlobalTexts[t] then
-                            knownGlobalTexts[t] = true
-                            local player, brainrot = parseClaimText(t)
-                            if player and brainrot then
-                                local ogStatus = isOG(brainrot)
-                                logSpawn(player, brainrot, ogStatus, "GLOBAL")
+            elseif type(arg) == "table" then
+                -- structured data from remotes
+                local player = arg.Player or arg.player or arg.PlayerName or arg.playerName
+                            or arg.username or arg.Username or arg.User or arg.user
+                            or arg.Owner or arg.owner or arg.DisplayName or arg.displayName
+                local brainrot = arg.Brainrot or arg.brainrot or arg.BrainrotName or arg.brainrotName
+                              or arg.item or arg.Item or arg.ItemName or arg.itemName
+                              or arg.Pet or arg.pet or arg.PetName or arg.petName
+                              or arg.Creature or arg.creature or arg.Name or arg.name
+                if player and brainrot and tostring(player) ~= tostring(brainrot) then
+                    local key = tostring(player) .. ":" .. tostring(brainrot)
+                    if not knownGlobalTexts[key] then
+                        knownGlobalTexts[key] = true
+                        logSpawn(tostring(player), tostring(brainrot), isOG(tostring(brainrot)), "GLOBAL")
+                    end
+                end
+                -- also check every string value in the table
+                for k, v in pairs(arg) do
+                    if type(v) == "string" then
+                        local p, b = parseClaimText(v)
+                        if p and b then
+                            local key = p .. ":" .. b
+                            if not knownGlobalTexts[key] then
+                                knownGlobalTexts[key] = true
+                                logSpawn(p, b, isOG(b), "GLOBAL")
                             end
                         end
-                    end)
-                end)
-                conns[#conns+1] = textConn
-
-                if txt ~= "" and not knownGlobalTexts[txt] then
-                    knownGlobalTexts[txt] = true
-                    local player, brainrot = parseClaimText(txt)
-                    if player and brainrot then
-                        local ogStatus = isOG(brainrot)
-                        logSpawn(player, brainrot, ogStatus, "GLOBAL")
+                    elseif type(v) == "table" then
+                        -- one level deeper for nested data
+                        tryExtractSpawnData(v)
                     end
                 end
             end
         end)
-    end)
-    conns[#conns+1] = c
-end
-
-local function scanForGlobalFeed()
-    pcall(function()
-        for _, gui in pairs(PG:GetChildren()) do
-            pcall(function()
-                if gui:IsA("ScreenGui") and gui ~= screenGui then
-                    -- look for scrolling frames that contain claim text
-                    for _, desc in pairs(gui:GetDescendants()) do
-                        pcall(function()
-                            if desc:IsA("ScrollingFrame") and not globalFeedFrames[desc] then
-                                -- check if this frame has claim text children
-                                local hasClaims = false
-                                for _, child in pairs(desc:GetChildren()) do
-                                    if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("Frame") then
-                                        local txt = ""
-                                        if child:IsA("TextLabel") or child:IsA("TextButton") then
-                                            txt = child.Text or ""
-                                        else
-                                            -- check child's text children
-                                            for _, sub in pairs(child:GetChildren()) do
-                                                if (sub:IsA("TextLabel") or sub:IsA("TextButton")) and sub.Text and sub.Text ~= "" then
-                                                    txt = sub.Text
-                                                    break
-                                                end
-                                            end
-                                        end
-                                        if txt:find("stole") or txt:find("claimed") or txt:find("got") or txt:find("caught") or txt:find("grabbed") then
-                                            hasClaims = true
-                                            break
-                                        end
-                                    end
-                                end
-                                if hasClaims then
-                                    watchGlobalFeedFrame(desc)
-                                end
-                            end
-                        end)
-                    end
-                end
-            end)
-        end
-    end)
-end
-
--- Method 6: Hook EVERY RemoteEvent under Net + RS (don't guess names)
--- SAB remotes live under RS.Packages.Net — we hook ALL of them and filter
--- for data that looks like brainrot spawn/claim events from any server.
-local hookedRemotes = {} -- dedup so we don't double-hook
-
-local function tryExtractSpawnData(arg)
-    if type(arg) == "string" then
-        local player, brainrot = parseClaimText(arg)
-        if player and brainrot then
-            local key = player .. ":" .. brainrot
-            if not knownGlobalTexts[key] then
-                knownGlobalTexts[key] = true
-                logSpawn(player, brainrot, isOG(brainrot), "GLOBAL")
-            end
-        end
-    elseif type(arg) == "table" then
-        -- try every common key pattern SAB might use
-        local player = arg.Player or arg.player or arg.PlayerName or arg.playerName
-                    or arg.username or arg.Username or arg.Name or arg.name
-                    or arg.Owner or arg.owner or arg.User or arg.user
-        local brainrot = arg.Brainrot or arg.brainrot or arg.BrainrotName or arg.brainrotName
-                      or arg.item or arg.Item or arg.ItemName or arg.itemName
-                      or arg.Pet or arg.pet or arg.PetName or arg.petName
-                      or arg.Creature or arg.creature
-        if player and brainrot and tostring(player) ~= tostring(brainrot) then
-            local key = tostring(player) .. ":" .. tostring(brainrot)
-            if not knownGlobalTexts[key] then
-                knownGlobalTexts[key] = true
-                logSpawn(tostring(player), tostring(brainrot), isOG(tostring(brainrot)), "GLOBAL")
-            end
-        end
-        -- also recurse into nested tables (some games nest data)
-        for k, v in pairs(arg) do
-            if type(v) == "string" then
-                local p2, b2 = parseClaimText(v)
-                if p2 and b2 then
-                    local key2 = p2 .. ":" .. b2
-                    if not knownGlobalTexts[key2] then
-                        knownGlobalTexts[key2] = true
-                        logSpawn(p2, b2, isOG(b2), "GLOBAL")
-                    end
-                end
-            end
-        end
     end
 end
 
-local function hookRemoteEvent(remote)
+local function hookRemote(remote)
     if hookedRemotes[remote] then return end
-    if remote == remotes.notify then return end -- already hooked in Method 2
     hookedRemotes[remote] = true
     pcall(function()
         local c = remote.OnClientEvent:Connect(function(...)
             if not state.running then return end
-            local evArgs = {...}
-            pcall(function()
-                for _, arg in pairs(evArgs) do
-                    tryExtractSpawnData(arg)
-                end
-            end)
+            pcall(tryExtractSpawnData, ...)
         end)
         conns[#conns+1] = c
     end)
 end
 
--- hook everything under Net
+-- hook every RemoteEvent in Net, RS, and the entire game
 pcall(function()
-    if Net then
-        for _, d in pairs(Net:GetDescendants()) do
-            pcall(function()
-                if d:IsA("RemoteEvent") then hookRemoteEvent(d) end
+    local sources = {}
+    if Net then table.insert(sources, Net) end
+    table.insert(sources, RS)
+    -- also check StarterGui, ServerStorage refs if accessible
+    pcall(function() table.insert(sources, game:GetService("StarterGui")) end)
+
+    for _, source in pairs(sources) do
+        pcall(function()
+            for _, d in pairs(source:GetDescendants()) do
+                pcall(function()
+                    if d:IsA("RemoteEvent") then hookRemote(d) end
+                end)
+            end
+            -- watch for new remotes
+            local nc = source.DescendantAdded:Connect(function(d)
+                task.wait(0.1)
+                pcall(function()
+                    if d:IsA("RemoteEvent") then hookRemote(d) end
+                end)
             end)
+            conns[#conns+1] = nc
+        end)
+    end
+end)
+
+-- ═══ GUI LOG SCANNER — scrape EVERY text element in game GUIs ═══
+-- Don't just look for ScrollingFrames with "stole" — scan ALL text.
+-- SAB and Trading Plaza both render logs as TextLabels in various containers.
+
+local function hookTextElement(label)
+    if hookedTextLabels[label] then return end
+    hookedTextLabels[label] = true
+
+    -- read current text
+    pcall(function()
+        local txt = label.Text
+        if txt and txt ~= "" then
+            local player, brainrot = parseClaimText(txt)
+            if player and brainrot then
+                local key = player .. ":" .. brainrot
+                if not knownGlobalTexts[key] then
+                    knownGlobalTexts[key] = true
+                    logSpawn(player, brainrot, isOG(brainrot), "GLOBAL")
+                end
+            end
         end
-        -- watch for new remotes added later
-        local nc = Net.DescendantAdded:Connect(function(d)
-            task.wait(0.1)
-            pcall(function()
-                if d:IsA("RemoteEvent") then hookRemoteEvent(d) end
-            end)
-        end)
-        conns[#conns+1] = nc
-    end
-end)
-
--- hook everything directly under RS too
-pcall(function()
-    for _, d in pairs(RS:GetDescendants()) do
-        pcall(function()
-            if d:IsA("RemoteEvent") then hookRemoteEvent(d) end
-        end)
-    end
-    local rc = RS.DescendantAdded:Connect(function(d)
-        task.wait(0.1)
-        pcall(function()
-            if d:IsA("RemoteEvent") then hookRemoteEvent(d) end
-        end)
     end)
-    conns[#conns+1] = rc
-end)
 
--- Method 6b: Systematic ALL-SERVER scanner via Roblox Games API
--- Fetches server list, teleports to each, scans for OGs, hops to next.
--- Builds globalOGDB across every server over time.
-local serverScanState = {
-    scanning = false,
-    visited = {},   -- jobId -> true
-    queue = {},     -- server entries to visit
-    lastFetch = 0,
-    cursor = nil,
-}
-
-local function fetchServerList()
-    local reqFn = request or http_request or (syn and syn.request) or (http and http.request)
-    if not reqFn then return {} end
-    local servers = {}
-    local cursor = ""
-    -- fetch up to 3 pages (300 servers)
-    for page = 1, 3 do
-        local ok2, resp = pcall(function()
-            return reqFn({
-                Url = "https://games.roblox.com/v1/games/" .. PLACE_ID .. "/servers/0?sortOrder=2&excludeFullGames=true&limit=100" .. (cursor ~= "" and ("&cursor=" .. cursor) or ""),
-                Method = "GET",
-                Headers = {["Content-Type"] = "application/json"}
-            })
-        end)
-        if ok2 and resp and resp.Body then
-            local ok3, data = pcall(function() return HttpService:JSONDecode(resp.Body) end)
-            if ok3 and data and data.data then
-                for _, s in pairs(data.data) do
-                    if s.id and s.id ~= game.JobId and s.playing and s.playing > 0 then
-                        table.insert(servers, s)
+    -- watch for text changes (game sets text after creation)
+    pcall(function()
+        local tc = label:GetPropertyChangedSignal("Text"):Connect(function()
+            if not state.running then return end
+            pcall(function()
+                local txt = label.Text
+                if txt and txt ~= "" then
+                    local player, brainrot = parseClaimText(txt)
+                    if player and brainrot then
+                        local key = player .. ":" .. brainrot
+                        if not knownGlobalTexts[key] then
+                            knownGlobalTexts[key] = true
+                            logSpawn(player, brainrot, isOG(brainrot), "GLOBAL")
+                        end
                     end
                 end
-                cursor = data.nextPageCursor or ""
-                if cursor == "" then break end
-            else break end
-        else break end
-    end
-    return servers
+            end)
+        end)
+        conns[#conns+1] = tc
+    end)
 end
 
--- auto-scan loop: when serverHop is enabled, systematically visit servers
-spawn(function()
-    task.wait(5)
-    while state.running do
-        if state.serverHop and not serverScanState.scanning then
-            serverScanState.scanning = true
+-- scan a GUI and all its descendants for text
+local function deepScanGui(gui)
+    if gui == screenGui then return end -- skip our own
+    pcall(function()
+        for _, desc in pairs(gui:GetDescendants()) do
             pcall(function()
-                -- fetch fresh server list
-                local servers = fetchServerList()
-                local unvisited = {}
-                for _, s in pairs(servers) do
-                    if not serverScanState.visited[s.id] then
-                        table.insert(unvisited, s)
-                    end
-                end
-                -- sort by player count (more players = more likely OGs)
-                table.sort(unvisited, function(a, b) return (a.playing or 0) > (b.playing or 0) end)
-                addLogEntry(liveScroll, "• [" .. os.date("%H:%M:%S") .. "] Found " .. #servers .. " servers (" .. #unvisited .. " unvisited)", Color3.fromRGB(100, 180, 255), false)
-                if #unvisited > 0 then
-                    -- mark current server as visited before hopping
-                    serverScanState.visited[game.JobId] = true
-                    local pick = unvisited[1]
-                    addLogEntry(liveScroll, "• [" .. os.date("%H:%M:%S") .. "] Hopping → server " .. string.sub(pick.id, 1, 8) .. "... (" .. (pick.playing or "?") .. " players)", Color3.fromRGB(100, 180, 255), false)
-                    task.wait(2) -- let the log show before teleporting
-                    pcall(function()
-                        TeleportService:TeleportToPlaceInstance(PLACE_ID, pick.id, LP)
-                    end)
-                else
-                    -- all servers visited, reset and wait
-                    addLogEntry(liveScroll, "• [" .. os.date("%H:%M:%S") .. "] All " .. #servers .. " servers scanned — resetting in 60s", Theme.ogGold, false)
-                    serverScanState.visited = {}
-                    task.wait(60)
+                if desc:IsA("TextLabel") or desc:IsA("TextButton") then
+                    hookTextElement(desc)
                 end
             end)
-            serverScanState.scanning = false
         end
-        task.wait(10)
+    end)
+    -- watch for new text elements
+    pcall(function()
+        local gc = gui.DescendantAdded:Connect(function(desc)
+            task.wait(0.1)
+            if not state.running then return end
+            pcall(function()
+                if desc:IsA("TextLabel") or desc:IsA("TextButton") then
+                    hookTextElement(desc)
+                end
+            end)
+        end)
+        conns[#conns+1] = gc
+    end)
+end
+
+-- scan all existing GUIs
+pcall(function()
+    for _, gui in pairs(PG:GetChildren()) do
+        pcall(function()
+            if gui:IsA("ScreenGui") then deepScanGui(gui) end
+        end)
     end
 end)
 
--- Method 7: Watch for new ScreenGuis with live feeds (game may load GUI later)
+-- watch for new GUIs (Trading Plaza loads new ones)
 conns[#conns+1] = PG.ChildAdded:Connect(function(gui)
-    task.wait(1) -- let GUI populate
+    task.wait(0.5)
     if not state.running then return end
     pcall(function()
-        if gui:IsA("ScreenGui") and gui ~= screenGui then
-            -- scan this new GUI for feed frames
-            for _, desc in pairs(gui:GetDescendants()) do
-                pcall(function()
-                    if desc:IsA("ScrollingFrame") and not globalFeedFrames[desc] then
-                        local hasClaims = false
-                        for _, child in pairs(desc:GetDescendants()) do
+        if gui:IsA("ScreenGui") then deepScanGui(gui) end
+    end)
+end)
+
+-- ═══ TRADING PLAZA SCANNER — scan all players' displayed brainrots ═══
+-- In Trading Plaza, players have brainrots visible on their character/plot.
+-- Scan workspace for any model with a brainrot name near a player.
+
+local function scanTradingPlaza()
+    pcall(function()
+        -- scan all workspace models for brainrot displays/billboards
+        for _, obj in pairs(workspace:GetDescendants()) do
+            pcall(function()
+                -- look for BillboardGuis showing brainrot names
+                if obj:IsA("BillboardGui") then
+                    for _, child in pairs(obj:GetDescendants()) do
+                        pcall(function()
                             if (child:IsA("TextLabel") or child:IsA("TextButton")) and child.Text then
                                 local txt = child.Text
-                                if txt:find("stole") or txt:find("claimed") or txt:find("got") or txt:find("caught") then
-                                    hasClaims = true
-                                    break
+                                for _, og in ipairs(OG_BRAINROTS) do
+                                    if txt:lower():find(og.name:lower(), 1, true) then
+                                        -- find the owner — walk up to find a player character
+                                        local parent = obj.Adornee or obj.Parent
+                                        while parent and parent ~= workspace do
+                                            local plr = Players:FindFirstChild(parent.Name)
+                                            if plr then
+                                                addToGlobalOGDB(plr.Name, og.name, "PLAZA")
+                                                local key = plr.Name .. ":" .. og.name .. ":plaza"
+                                                if not knownGlobalTexts[key] then
+                                                    knownGlobalTexts[key] = true
+                                                    logSpawn(plr.Name, og.name, true, "GLOBAL")
+                                                end
+                                                break
+                                            end
+                                            parent = parent.Parent
+                                        end
+                                    end
+                                end
+                            end
+                        end)
+                    end
+                end
+
+                -- look for models/folders named after OG brainrots with owner references
+                if obj:IsA("Model") or obj:IsA("Folder") then
+                    for _, og in ipairs(OG_BRAINROTS) do
+                        if obj.Name:lower():find(og.name:lower(), 1, true) then
+                            local ownerName = getOwnerName(obj)
+                            if not ownerName then
+                                -- walk up parents to find player
+                                local p = obj.Parent
+                                while p and p ~= workspace do
+                                    if Players:FindFirstChild(p.Name) then
+                                        ownerName = p.Name
+                                        break
+                                    end
+                                    p = p.Parent
+                                end
+                            end
+                            if ownerName then
+                                addToGlobalOGDB(ownerName, og.name, "PLAZA")
+                                local key = ownerName .. ":" .. og.name .. ":plaza"
+                                if not knownGlobalTexts[key] then
+                                    knownGlobalTexts[key] = true
+                                    logSpawn(ownerName, og.name, true, "GLOBAL")
                                 end
                             end
                         end
-                        if hasClaims then
-                            watchGlobalFeedFrame(desc)
+                    end
+                end
+            end)
+        end
+
+        -- scan ReplicatedStorage for trade listings/inventory data
+        pcall(function()
+            for _, obj in pairs(RS:GetDescendants()) do
+                pcall(function()
+                    if obj:IsA("StringValue") or obj:IsA("Folder") then
+                        for _, og in ipairs(OG_BRAINROTS) do
+                            local val = obj:IsA("StringValue") and obj.Value or obj.Name
+                            if val and val:lower():find(og.name:lower(), 1, true) then
+                                -- try to find who owns this
+                                local p = obj.Parent
+                                while p and p ~= RS do
+                                    if Players:FindFirstChild(p.Name) then
+                                        addToGlobalOGDB(p.Name, og.name, "DATA")
+                                        local key = p.Name .. ":" .. og.name .. ":data"
+                                        if not knownGlobalTexts[key] then
+                                            knownGlobalTexts[key] = true
+                                            logSpawn(p.Name, og.name, true, "GLOBAL")
+                                        end
+                                        break
+                                    end
+                                    p = p.Parent
+                                end
+                            end
                         end
                     end
                 end)
             end
-
-            -- also watch this GUI for future feed frames
-            gui.DescendantAdded:Connect(function(desc)
-                task.wait(0.5)
-                if not state.running then return end
-                pcall(function()
-                    if desc:IsA("ScrollingFrame") and not globalFeedFrames[desc] then
-                        task.wait(1)
-                        local hasClaims = false
-                        for _, child in pairs(desc:GetDescendants()) do
-                            if (child:IsA("TextLabel") or child:IsA("TextButton")) and child.Text then
-                                local txt = child.Text
-                                if txt:find("stole") or txt:find("claimed") or txt:find("got") or txt:find("caught") then
-                                    hasClaims = true
-                                    break
-                                end
-                            end
-                        end
-                        if hasClaims then
-                            watchGlobalFeedFrame(desc)
-                        end
-                    end
-                end)
-            end)
-        end
+        end)
     end)
-end)
+end
 
 -- ════════════════════ MAIN LOOPS ════════════════════
 
@@ -2271,12 +2249,23 @@ spawn(function()
     end
 end)
 
--- periodic global feed scanner (re-check for game's live feed GUI every 10s)
+-- periodic log + plaza scanner (re-scan game GUIs + Trading Plaza every 5s)
 spawn(function()
     task.wait(2)
     while state.running do
-        scanForGlobalFeed()
-        task.wait(10)
+        -- re-scan GUIs for any new text labels we missed
+        pcall(function()
+            for _, gui in pairs(PG:GetChildren()) do
+                pcall(function()
+                    if gui:IsA("ScreenGui") and gui ~= screenGui then
+                        deepScanGui(gui)
+                    end
+                end)
+            end
+        end)
+        -- scan Trading Plaza brainrot displays + workspace billboards
+        pcall(scanTradingPlaza)
+        task.wait(5)
     end
 end)
 
@@ -2298,18 +2287,54 @@ spawn(function()
             local secs = math.floor(elapsed % 60)
             local trackedCount = 0
             for _ in pairs(trackedUsers) do trackedCount = trackedCount + 1 end
-            local feedCount = 0
-            for _ in pairs(globalFeedFrames) do feedCount = feedCount + 1 end
+            local hookCount = 0
+            for _ in pairs(hookedRemotes) do hookCount = hookCount + 1 end
+            local textCount = 0
+            for _ in pairs(hookedTextLabels) do textCount = textCount + 1 end
             statsDetailLbl.Text = "OG: " .. state.ogCaught .. "  |  Scanned: " .. state.totalScanned .. "  |  Global: " .. state.globalEvents
-            statsUptimeLbl.Text = "Uptime: " .. mins .. "m " .. secs .. "s  |  Feeds: " .. feedCount .. "  |  Tracked: " .. trackedCount
+            statsUptimeLbl.Text = "Uptime: " .. mins .. "m " .. secs .. "s  |  Hooks: " .. hookCount .. "  |  Labels: " .. textCount .. "  |  Tracked: " .. trackedCount
         end)
         task.wait(5)
     end
 end)
 
--- auto server hop is now handled by the systematic scanner in Method 6b
--- when serverHop is enabled, it fetches ALL servers and visits them one by one
--- (see "Systematic ALL-SERVER scanner" above)
+-- auto server hop (every 5 minutes if enabled)
+spawn(function()
+    while state.running do
+        if state.serverHop then
+            task.wait(300)
+            if state.serverHop and state.running then
+                pcall(function()
+                    local reqFn = request or http_request or (syn and syn.request) or (http and http.request)
+                    if reqFn then
+                        local resp = reqFn({
+                            Url = "https://games.roblox.com/v1/games/" .. PLACE_ID .. "/servers/0?sortOrder=2&excludeFullGames=true&limit=100",
+                            Method = "GET",
+                            Headers = {["Content-Type"] = "application/json"}
+                        })
+                        local data = HttpService:JSONDecode(resp.Body)
+                        if data and data.data then
+                            local candidates = {}
+                            for _, s in pairs(data.data) do
+                                if s.id ~= game.JobId and s.playing and s.playing > 3 then
+                                    table.insert(candidates, s)
+                                end
+                            end
+                            if #candidates > 0 then
+                                local pick = candidates[math.random(1, #candidates)]
+                                TeleportService:TeleportToPlaceInstance(PLACE_ID, pick.id, LP)
+                            end
+                        end
+                    else
+                        TeleportService:Teleport(PLACE_ID, LP)
+                    end
+                end)
+            end
+        else
+            task.wait(5)
+        end
+    end
+end)
 
 -- auto fleece processor
 spawn(function()
@@ -2337,9 +2362,13 @@ end)
 spawn(function()
     task.wait(1)
     scanForBrainrots()
-    scanForGlobalFeed()
+    pcall(scanTradingPlaza)
     pcall(refreshOGPlayers)
-    addLogEntry(liveScroll, "• [" .. os.date("%H:%M:%S") .. "] OG Sniper active — scanning all servers...", Theme.success, false)
+    local hookCount = 0
+    for _ in pairs(hookedRemotes) do hookCount = hookCount + 1 end
+    local textCount = 0
+    for _ in pairs(hookedTextLabels) do textCount = textCount + 1 end
+    addLogEntry(liveScroll, "• [" .. os.date("%H:%M:%S") .. "] OG Sniper active — hooked " .. hookCount .. " remotes, watching " .. textCount .. " labels", Theme.success, false)
     if liveWaiting.Visible then liveWaiting.Visible = false end
 end)
 
