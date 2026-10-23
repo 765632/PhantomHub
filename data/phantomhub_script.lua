@@ -5306,16 +5306,51 @@ local _notifyRemoteRef = nil
 local function riddlerGetCodeBox()
     local pg = LocalPlayer:FindFirstChildOfClass("PlayerGui")
     if not pg then return nil end
+
+    -- method 1: exact path
     local gui = pg:FindFirstChild("Codes")
-    if not gui then return nil end
-    local root = gui:FindFirstChild("Codes") or gui
-    local redeem = root:FindFirstChild("CodeRedeem")
-    local box = redeem and redeem:FindFirstChild("TextBox")
-    if box and box:IsA("TextBox") then return box end
-    -- fallback: search all descendants
-    for _, item in ipairs(gui:GetDescendants()) do
-        if item:IsA("TextBox") then return item end
+    if gui then
+        local root = gui:FindFirstChild("Codes") or gui
+        local redeem = root:FindFirstChild("CodeRedeem")
+        local box = redeem and redeem:FindFirstChild("TextBox")
+        if box and box:IsA("TextBox") then return box end
+        for _, item in ipairs(gui:GetDescendants()) do
+            if item:IsA("TextBox") then return item end
+        end
     end
+
+    -- method 2: search ALL guis for code-related textboxes
+    for _, g in ipairs(pg:GetChildren()) do
+        if g:IsA("ScreenGui") then
+            local gn = g.Name:lower()
+            if gn:find("code") or gn:find("redeem") or gn:find("input") or gn:find("submit") then
+                for _, d in ipairs(g:GetDescendants()) do
+                    if d:IsA("TextBox") then return d end
+                end
+            end
+        end
+    end
+
+    -- method 3: brute force every ScreenGui for any TextBox near a redeem/submit button
+    for _, g in ipairs(pg:GetChildren()) do
+        if g:IsA("ScreenGui") and g ~= screenGui then
+            local hasRedeemBtn = false
+            local foundBox = nil
+            for _, d in ipairs(g:GetDescendants()) do
+                if (d:IsA("TextButton") or d:IsA("ImageButton")) then
+                    local t = ((pcall(function() return d.Text end) and d.Text or "") .. d.Name):lower()
+                    if t:find("redeem") or t:find("submit") or t:find("claim") or t:find("enter") then
+                        hasRedeemBtn = true
+                    end
+                end
+                if d:IsA("TextBox") and not foundBox then
+                    foundBox = d
+                end
+            end
+            if hasRedeemBtn and foundBox then return foundBox end
+        end
+    end
+
     return nil
 end
 
@@ -5345,24 +5380,31 @@ local function riddlerSubmitAnswer(answer)
     answer = tostring(answer or ""):upper():gsub("%s+", "")
     if answer == "" then return false, "empty" end
 
-    local box = riddlerGetCodeBox()
-    if not box then
-        -- try opening the Codes GUI first
+    -- try opening any codes/redeem GUI before searching
+    pcall(function()
         local pg = LocalPlayer:FindFirstChildOfClass("PlayerGui")
         if pg then
-            local gui = pg:FindFirstChild("Codes")
-            if gui and gui:IsA("ScreenGui") then gui.Enabled = true end
-            if gui then
-                local codesFrame = gui:FindFirstChild("Codes") or gui
-                if codesFrame and codesFrame:IsA("GuiObject") then codesFrame.Visible = true end
-                local cur = codesFrame
-                while cur and cur ~= gui do
-                    if cur:IsA("GuiObject") then cur.Visible = true end
-                    cur = cur.Parent
+            for _, g in ipairs(pg:GetChildren()) do
+                if g:IsA("ScreenGui") then
+                    local gn = g.Name:lower()
+                    if gn:find("code") or gn:find("redeem") then
+                        pcall(function() g.Enabled = true end)
+                        for _, d in ipairs(g:GetDescendants()) do
+                            if d:IsA("GuiObject") then
+                                pcall(function() d.Visible = true end)
+                            end
+                        end
+                    end
                 end
             end
         end
-        task.wait(0.15)
+    end)
+    task.wait(0.15)
+
+    local box = riddlerGetCodeBox()
+    if not box then
+        -- retry after a brief wait
+        task.wait(0.2)
         box = riddlerGetCodeBox()
     end
 
@@ -5446,6 +5488,44 @@ local function riddlerSubmitAnswer(answer)
     end
 
     pcall(function() box:ReleaseFocus(false) end)
+
+    -- method 5: fire redeem remote directly as backup
+    pcall(function()
+        local Net = game:GetService("ReplicatedStorage"):FindFirstChild("Packages")
+        if Net then
+            Net = Net:FindFirstChild("Net")
+        end
+        if Net then
+            for _, d in pairs(Net:GetDescendants()) do
+                if d:IsA("RemoteEvent") and d.Name:find("StockEventService/Redeem") then
+                    pcall(function() d:FireServer(answer) end)
+                    pushLog("> riddler: fired remote redeem", Color3.fromRGB(180, 180, 180))
+                    break
+                end
+            end
+        end
+    end)
+
+    -- method 6: fire any code/redeem remote we can find
+    pcall(function()
+        local Net = game:GetService("ReplicatedStorage"):FindFirstChild("Packages")
+        if Net then Net = Net:FindFirstChild("Net") end
+        if Net then
+            for _, d in pairs(Net:GetDescendants()) do
+                if d:IsA("RemoteEvent") or d:IsA("RemoteFunction") then
+                    local n = d.Name:lower()
+                    if n:find("redeem") or n:find("code") then
+                        if d:IsA("RemoteEvent") then
+                            pcall(function() d:FireServer(answer) end)
+                        else
+                            pcall(function() d:InvokeServer(answer) end)
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
     return true, submitted and "submitted" or "typed only"
 end
 
