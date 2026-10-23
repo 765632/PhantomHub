@@ -170,5 +170,18 @@
     "expiresAt": null,
     "expired": false,
     "hwid": null
+  },
+  "PH-9FXK7-49KT9-EUT62": {
+    "duration": "lifetime",
+    "label": "Lifetime",
+    "script": "og-sniper",
+    "scriptLabel": "OG Sniper",
+    "createdAt": 1792726863762,
+    "createdBy": "1532174717124087905",
+    "redeemedBy": "1532174717124087905",
+    "redeemedAt": 1792726863762,
+    "expiresAt": "never",
+    "expired": false,
+    "hwid": null
   }
 }
