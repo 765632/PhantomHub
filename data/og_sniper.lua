@@ -309,7 +309,7 @@ corner(logoBg, 8)
 local logoText = Instance.new("TextLabel")
 logoText.Size = UDim2.new(1, 0, 1, 0)
 logoText.BackgroundTransparency = 1
-logoText.Text = "H"
+logoText.Text = "P"
 logoText.Font = Enum.Font.GothamBlack
 logoText.TextSize = 18
 logoText.TextColor3 = Theme.bg
@@ -524,7 +524,17 @@ local function addLogEntry(scroll, text, color, isOGEntry)
     lbl.TextWrapped = true
     lbl.Text = text
     lbl.ZIndex = 4
+    lbl.TextTransparency = 1
     lbl.Parent = entry
+
+    -- fade in
+    entry.BackgroundTransparency = 1
+    TweenService:Create(entry, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundTransparency = isOGEntry and 0 or 0 }):Play()
+    TweenService:Create(lbl, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play()
+    if isOGEntry then
+        local s = entry:FindFirstChildWhichIsA("UIStroke")
+        if s then s.Transparency = 1; TweenService:Create(s, TweenInfo.new(0.35), { Transparency = 0 }):Play() end
+    end
 
     pad(entry, 0, 0, 2, 6)
 
@@ -698,6 +708,16 @@ local function addOGCard(playerName, brainrotName)
     pLabel.TextTruncate = Enum.TextTruncate.AtEnd
     pLabel.ZIndex = 5
     pLabel.Parent = card
+
+    -- fade in card
+    card.BackgroundTransparency = 1
+    nameLabel.TextTransparency = 1
+    pLabel.TextTransparency = 1
+    TweenService:Create(card, TweenInfo.new(0.3, Enum.EasingStyle.Quad), { BackgroundTransparency = 0 }):Play()
+    TweenService:Create(nameLabel, TweenInfo.new(0.3, Enum.EasingStyle.Quad), { TextTransparency = 0 }):Play()
+    TweenService:Create(pLabel, TweenInfo.new(0.3, Enum.EasingStyle.Quad), { TextTransparency = 0 }):Play()
+    local cardStroke = card:FindFirstChildWhichIsA("UIStroke")
+    if cardStroke then cardStroke.Transparency = 1; TweenService:Create(cardStroke, TweenInfo.new(0.3), { Transparency = 0 }):Play() end
 end
 
 -- ════════════════════ PAGE: TRACK ════════════════════
@@ -752,48 +772,10 @@ trackAddBtn.Parent = trackAddRow
 corner(trackAddBtn, 6)
 hoverFx(trackAddBtn, Theme.accent, Theme.accentHover)
 
--- custom OG name row
-local ogAddRow = Instance.new("Frame")
-ogAddRow.Size = UDim2.new(1, 0, 0, 34)
-ogAddRow.Position = UDim2.new(0, 0, 0, 62)
-ogAddRow.BackgroundTransparency = 1
-ogAddRow.ZIndex = 3
-ogAddRow.Parent = pageTrack
-
-local ogNameInput = Instance.new("TextBox")
-ogNameInput.Size = UDim2.new(1, -80, 1, 0)
-ogNameInput.BackgroundColor3 = Theme.bgCard
-ogNameInput.Font = Enum.Font.Gotham
-ogNameInput.TextSize = 12
-ogNameInput.TextColor3 = Theme.text
-ogNameInput.PlaceholderText = "Add custom OG name..."
-ogNameInput.PlaceholderColor3 = Theme.textMuted
-ogNameInput.Text = ""
-ogNameInput.ClearTextOnFocus = false
-ogNameInput.ZIndex = 4
-ogNameInput.Parent = ogAddRow
-corner(ogNameInput, 6)
-stroke(ogNameInput, Theme.stroke, 1)
-pad(ogNameInput, 8, 8, 0, 0)
-
-local ogAddBtn = Instance.new("TextButton")
-ogAddBtn.Size = UDim2.new(0, 70, 1, 0)
-ogAddBtn.Position = UDim2.new(1, -70, 0, 0)
-ogAddBtn.BackgroundColor3 = Theme.ogGold
-ogAddBtn.Font = Enum.Font.GothamBold
-ogAddBtn.TextSize = 11
-ogAddBtn.TextColor3 = Theme.bg
-ogAddBtn.Text = "+ OG"
-ogAddBtn.AutoButtonColor = false
-ogAddBtn.ZIndex = 4
-ogAddBtn.Parent = ogAddRow
-corner(ogAddBtn, 6)
-hoverFx(ogAddBtn, Theme.ogGold, Color3.fromRGB(255, 210, 100))
-
 -- tracked users list
 local trackListFrame = Instance.new("Frame")
-trackListFrame.Size = UDim2.new(1, 0, 1, -104)
-trackListFrame.Position = UDim2.new(0, 0, 0, 104)
+trackListFrame.Size = UDim2.new(1, 0, 1, -64)
+trackListFrame.Position = UDim2.new(0, 0, 0, 64)
 trackListFrame.BackgroundTransparency = 1
 trackListFrame.ZIndex = 2
 trackListFrame.Parent = pageTrack
@@ -851,49 +833,6 @@ local function refreshTrackList()
         end)
     end
 
-    -- show custom OGs
-    for ogName, _ in pairs(customOGs) do
-        hasAny = true
-        local row = Instance.new("Frame")
-        row.Size = UDim2.new(1, -8, 0, 30)
-        row.BackgroundColor3 = Color3.fromRGB(30, 25, 10)
-        row.BorderSizePixel = 0
-        row.ZIndex = 3
-        row.Parent = trackScroll
-        corner(row, 6)
-        stroke(row, Theme.ogGold, 1)
-
-        local ogLbl = Instance.new("TextLabel")
-        ogLbl.Size = UDim2.new(1, -40, 1, 0)
-        ogLbl.Position = UDim2.new(0, 8, 0, 0)
-        ogLbl.BackgroundTransparency = 1
-        ogLbl.Font = Enum.Font.GothamBold
-        ogLbl.TextSize = 11
-        ogLbl.TextColor3 = Theme.ogGold
-        ogLbl.TextXAlignment = Enum.TextXAlignment.Left
-        ogLbl.Text = "OG: " .. ogName
-        ogLbl.ZIndex = 4
-        ogLbl.Parent = row
-
-        local removeBtn = Instance.new("TextButton")
-        removeBtn.Size = UDim2.new(0, 24, 0, 24)
-        removeBtn.Position = UDim2.new(1, -28, 0.5, -12)
-        removeBtn.BackgroundColor3 = Theme.danger
-        removeBtn.Font = Enum.Font.GothamBold
-        removeBtn.TextSize = 10
-        removeBtn.TextColor3 = Theme.white
-        removeBtn.Text = "X"
-        removeBtn.AutoButtonColor = false
-        removeBtn.ZIndex = 4
-        removeBtn.Parent = row
-        corner(removeBtn, 4)
-
-        removeBtn.MouseButton1Click:Connect(function()
-            customOGs[ogName] = nil
-            refreshTrackList()
-        end)
-    end
-
     trackEmpty.Visible = not hasAny
 end
 
@@ -902,15 +841,6 @@ trackAddBtn.MouseButton1Click:Connect(function()
     if name ~= "" then
         trackedUsers[name] = true
         trackInput.Text = ""
-        refreshTrackList()
-    end
-end)
-
-ogAddBtn.MouseButton1Click:Connect(function()
-    local name = ogNameInput.Text:gsub("^%s+", ""):gsub("%s+$", "")
-    if name ~= "" then
-        customOGs[name:lower()] = true
-        ogNameInput.Text = ""
         refreshTrackList()
     end
 end)
