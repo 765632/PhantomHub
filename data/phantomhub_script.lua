@@ -649,6 +649,11 @@ screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.IgnoreGuiInset = true
 screenGui.Parent = PlayerGui
 
+-- ======================== PLATFORM DETECTION ========================
+local _isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+local _screenSize = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)
+local _isPhone = _isMobile and (_screenSize.X < 800 or _screenSize.Y < 500)
+
 -- ======================== MAIN FRAME ========================
 local main = Instance.new("Frame")
 main.Name = "Main"
@@ -662,6 +667,13 @@ main.Active = true
 main.Parent = screenGui
 corner(main, 14)
 stroke(main, Theme.stroke, 1.5)
+
+-- mobile scaling for main frame
+if _isMobile then
+    local mainScale = Instance.new("UIScale")
+    mainScale.Scale = _isPhone and 0.75 or 0.9
+    mainScale.Parent = main
+end
 
 -- ======================== TITLE BAR ========================
 local titleBar = Instance.new("Frame")
@@ -5621,11 +5633,36 @@ end
 local function buildRiddlerPanel()
     if _riddlerPanel and _riddlerPanel.Parent then return end
 
-    local W, H = 360, 580
+    -- detect platform and scale
+    local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+    local screenSize = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)
+    local isSmallScreen = screenSize.X < 800 or screenSize.Y < 500
+
+    local W, H
+    local _scale = 1
+    if isMobile and isSmallScreen then
+        -- phone
+        W, H = math.min(screenSize.X - 20, 280), math.min(screenSize.Y - 60, 420)
+        _scale = 0.75
+    elseif isMobile then
+        -- iPad / tablet
+        W, H = 340, 540
+        _scale = 0.9
+    else
+        -- PC
+        W, H = 360, 580
+        _scale = 1
+    end
+
     local panel = Instance.new("Frame")
     panel.Name = "RiddlerPanel"
     panel.Size = UDim2.fromOffset(W, H)
-    panel.Position = UDim2.new(0.5, -(320/2) - W - 10, 0.5, -(H / 2))
+    -- mobile: center on screen, PC: left of main window
+    if isMobile then
+        panel.Position = UDim2.new(0.5, -(W / 2), 0.5, -(H / 2))
+    else
+        panel.Position = UDim2.new(0.5, -(320/2) - W - 10, 0.5, -(H / 2))
+    end
     panel.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
     panel.BorderSizePixel = 0
     panel.ClipsDescendants = true
@@ -5634,6 +5671,13 @@ local function buildRiddlerPanel()
     panel.Parent = screenGui
     corner(panel, 10)
     stroke(panel, Color3.fromRGB(50, 50, 50), 1)
+
+    -- scale for mobile
+    if _scale ~= 1 then
+        local uiScale = Instance.new("UIScale")
+        uiScale.Scale = _scale
+        uiScale.Parent = panel
+    end
 
     -- ═══ HEADER BAR ═══
     local header = Instance.new("Frame")
