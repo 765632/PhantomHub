@@ -1386,8 +1386,8 @@ end)
 -- Method 2: Hook notification remote
 if remotes.notify then
     conns[#conns+1] = remotes.notify.OnClientEvent:Connect(function(...)
+        local args = {...}
         pcall(function()
-            local args = {...}
             for _, arg in pairs(args) do
                 if type(arg) == "string" then
                     -- look for spawn notification patterns
