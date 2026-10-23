@@ -44,7 +44,7 @@ end
 
 showMsg("[PhantomHub] Loading...", Color3.fromRGB(100, 200, 255))
 
-local URL = "https://raw.githubusercontent.com/765632/PhantomHub/master/data/phantomhub_script.lua"
+local URL = "https://raw.githubusercontent.com/765632/PhantomHub/master/data/phantomhub_script.lua?v=" .. tostring(tick())
 local src
 local method = "none"
 
