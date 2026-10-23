@@ -62,7 +62,7 @@ local state = {
     serverHop    = false,
 }
 
-local trackedUsers = {}   -- {username = true}
+local trackedUsers = {}   -- {username = {brainrot, time, og, source, count}}
 local ogLog = {}          -- {timestamp, playerName, brainrotName, isOG}
 local liveLog = {}        -- all spawn events
 local fleeceQueue = {}    -- players to auto-trade
@@ -732,122 +732,146 @@ pageTrack.Parent = content
 pages["Track"] = pageTrack
 
 local trackHeader = makeLabel(pageTrack, {
-    text = "TRACKED USERS", font = Enum.Font.GothamBold, size = 12,
-    color = Theme.text, sz = UDim2.new(1, 0, 0, 20), pos = UDim2.new(0, 0, 0, 0)
+    text = "TRACKED PLAYERS", font = Enum.Font.GothamBold, size = 12,
+    color = Theme.text, sz = UDim2.new(0.5, 0, 0, 20), pos = UDim2.new(0, 0, 0, 0)
 })
 
--- add user row
-local trackAddRow = Instance.new("Frame")
-trackAddRow.Size = UDim2.new(1, 0, 0, 34)
-trackAddRow.Position = UDim2.new(0, 0, 0, 24)
-trackAddRow.BackgroundTransparency = 1
-trackAddRow.ZIndex = 3
-trackAddRow.Parent = pageTrack
+local trackCountLabel = makeLabel(pageTrack, {
+    text = "0 players", font = Enum.Font.Gotham, size = 10,
+    color = Theme.textMuted, align = Enum.TextXAlignment.Right,
+    sz = UDim2.new(1, 0, 0, 20), pos = UDim2.new(0, 0, 0, 0)
+})
 
-local trackInput = Instance.new("TextBox")
-trackInput.Size = UDim2.new(1, -80, 1, 0)
-trackInput.BackgroundColor3 = Theme.bgCard
-trackInput.Font = Enum.Font.Gotham
-trackInput.TextSize = 12
-trackInput.TextColor3 = Theme.text
-trackInput.PlaceholderText = "Enter username..."
-trackInput.PlaceholderColor3 = Theme.textMuted
-trackInput.Text = ""
-trackInput.ClearTextOnFocus = false
-trackInput.ZIndex = 4
-trackInput.Parent = trackAddRow
-corner(trackInput, 6)
-stroke(trackInput, Theme.stroke, 1)
-pad(trackInput, 8, 8, 0, 0)
-
-local trackAddBtn = Instance.new("TextButton")
-trackAddBtn.Size = UDim2.new(0, 70, 1, 0)
-trackAddBtn.Position = UDim2.new(1, -70, 0, 0)
-trackAddBtn.BackgroundColor3 = Theme.accent
-trackAddBtn.Font = Enum.Font.GothamBold
-trackAddBtn.TextSize = 11
-trackAddBtn.TextColor3 = Theme.bg
-trackAddBtn.Text = "TRACK"
-trackAddBtn.AutoButtonColor = false
-trackAddBtn.ZIndex = 4
-trackAddBtn.Parent = trackAddRow
-corner(trackAddBtn, 6)
-hoverFx(trackAddBtn, Theme.accent, Theme.accentHover)
+local trackDesc = makeLabel(pageTrack, {
+    text = "auto-fills from live spawns", font = Enum.Font.Gotham, size = 9,
+    color = Theme.accentDim, sz = UDim2.new(1, 0, 0, 14), pos = UDim2.new(0, 0, 0, 18)
+})
 
 -- tracked users list
 local trackListFrame = Instance.new("Frame")
-trackListFrame.Size = UDim2.new(1, 0, 1, -64)
-trackListFrame.Position = UDim2.new(0, 0, 0, 64)
+trackListFrame.Size = UDim2.new(1, 0, 1, -36)
+trackListFrame.Position = UDim2.new(0, 0, 0, 36)
 trackListFrame.BackgroundTransparency = 1
 trackListFrame.ZIndex = 2
 trackListFrame.Parent = pageTrack
 
 local trackScroll, trackList = makeScrollFeed(trackListFrame)
 local trackEmpty = makeLabel(trackListFrame, {
-    text = "no users tracked yet", font = Enum.Font.Gotham, size = 11,
+    text = "no players detected yet...", font = Enum.Font.Gotham, size = 11,
     color = Theme.textMuted, align = Enum.TextXAlignment.Center,
     sz = UDim2.new(1, 0, 0, 20), pos = UDim2.new(0, 0, 0.3, 0), z = 4
 })
 
-local function refreshTrackList()
-    for _, c in pairs(trackScroll:GetChildren()) do
-        if c:IsA("Frame") then c:Destroy() end
-    end
-    local hasAny = false
-    for username, _ in pairs(trackedUsers) do
-        hasAny = true
-        local row = Instance.new("Frame")
-        row.Size = UDim2.new(1, -8, 0, 30)
-        row.BackgroundColor3 = Theme.bgCard
-        row.BorderSizePixel = 0
-        row.ZIndex = 3
-        row.Parent = trackScroll
-        corner(row, 6)
+local trackRowMap = {} -- username -> row frame (avoid dupes, update count)
 
-        local userLbl = Instance.new("TextLabel")
-        userLbl.Size = UDim2.new(1, -40, 1, 0)
-        userLbl.Position = UDim2.new(0, 8, 0, 0)
-        userLbl.BackgroundTransparency = 1
-        userLbl.Font = Enum.Font.GothamBold
-        userLbl.TextSize = 11
-        userLbl.TextColor3 = Theme.text
-        userLbl.TextXAlignment = Enum.TextXAlignment.Left
-        userLbl.Text = username
-        userLbl.ZIndex = 4
-        userLbl.Parent = row
-
-        local removeBtn = Instance.new("TextButton")
-        removeBtn.Size = UDim2.new(0, 24, 0, 24)
-        removeBtn.Position = UDim2.new(1, -28, 0.5, -12)
-        removeBtn.BackgroundColor3 = Theme.danger
-        removeBtn.Font = Enum.Font.GothamBold
-        removeBtn.TextSize = 10
-        removeBtn.TextColor3 = Theme.white
-        removeBtn.Text = "X"
-        removeBtn.AutoButtonColor = false
-        removeBtn.ZIndex = 4
-        removeBtn.Parent = row
-        corner(removeBtn, 4)
-
-        removeBtn.MouseButton1Click:Connect(function()
-            trackedUsers[username] = nil
-            refreshTrackList()
-        end)
+local function addTrackEntry(playerName, brainrotName, isOGSpawn, source)
+    -- update or create tracked user data
+    local data = trackedUsers[playerName]
+    if data then
+        data.count = data.count + 1
+        data.lastBrainrot = brainrotName
+        data.lastTime = os.date("%H:%M:%S")
+        data.lastOG = isOGSpawn
+        data.source = source or data.source
+        -- update existing row if it exists
+        if trackRowMap[playerName] then
+            pcall(function()
+                local row = trackRowMap[playerName]
+                local countLbl = row:FindFirstChild("_countLbl")
+                local brLbl = row:FindFirstChild("_brLbl")
+                if countLbl then countLbl.Text = data.count .. "x" end
+                if brLbl then brLbl.Text = brainrotName .. " · " .. data.lastTime end
+            end)
+            return
+        end
+    else
+        trackedUsers[playerName] = {
+            count = 1,
+            lastBrainrot = brainrotName,
+            lastTime = os.date("%H:%M:%S"),
+            lastOG = isOGSpawn,
+            source = source or "LOCAL",
+        }
+        data = trackedUsers[playerName]
     end
 
-    trackEmpty.Visible = not hasAny
+    trackEmpty.Visible = false
+    local pCount = 0
+    for _ in pairs(trackedUsers) do pCount = pCount + 1 end
+    trackCountLabel.Text = pCount .. " players"
+
+    local isOG = isOGSpawn
+    local row = Instance.new("Frame")
+    row.Name = "track_" .. playerName
+    row.Size = UDim2.new(1, -8, 0, 38)
+    row.BackgroundColor3 = isOG and Color3.fromRGB(30, 25, 10) or Theme.bgCard
+    row.BorderSizePixel = 0
+    row.ZIndex = 3
+    row.LayoutOrder = -os.clock() * 1000
+    row.Parent = trackScroll
+    corner(row, 6)
+    if isOG then stroke(row, Theme.ogGold, 1) end
+    trackRowMap[playerName] = row
+
+    -- player name
+    local userLbl = Instance.new("TextLabel")
+    userLbl.Size = UDim2.new(0.55, 0, 0, 16)
+    userLbl.Position = UDim2.new(0, 8, 0, 4)
+    userLbl.BackgroundTransparency = 1
+    userLbl.Font = Enum.Font.GothamBold
+    userLbl.TextSize = 11
+    userLbl.TextColor3 = isOG and Theme.ogGold or Theme.text
+    userLbl.TextXAlignment = Enum.TextXAlignment.Left
+    userLbl.Text = playerName
+    userLbl.TextTruncate = Enum.TextTruncate.AtEnd
+    userLbl.ZIndex = 4
+    userLbl.TextTransparency = 1
+    userLbl.Parent = row
+
+    -- count badge
+    local countLbl = Instance.new("TextLabel")
+    countLbl.Name = "_countLbl"
+    countLbl.Size = UDim2.new(0, 28, 0, 16)
+    countLbl.Position = UDim2.new(1, -36, 0, 4)
+    countLbl.BackgroundColor3 = isOG and Theme.ogGold or Theme.accentDim
+    countLbl.BackgroundTransparency = 0.4
+    countLbl.Font = Enum.Font.GothamBold
+    countLbl.TextSize = 9
+    countLbl.TextColor3 = isOG and Theme.bg or Theme.text
+    countLbl.Text = "1x"
+    countLbl.ZIndex = 4
+    countLbl.TextTransparency = 1
+    countLbl.Parent = row
+    corner(countLbl, 4)
+
+    -- brainrot + time subtitle
+    local brLbl = Instance.new("TextLabel")
+    brLbl.Name = "_brLbl"
+    brLbl.Size = UDim2.new(1, -16, 0, 12)
+    brLbl.Position = UDim2.new(0, 8, 0, 22)
+    brLbl.BackgroundTransparency = 1
+    brLbl.Font = Enum.Font.Gotham
+    brLbl.TextSize = 9
+    brLbl.TextColor3 = Theme.textMuted
+    brLbl.TextXAlignment = Enum.TextXAlignment.Left
+    brLbl.Text = brainrotName .. " · " .. os.date("%H:%M:%S")
+    brLbl.TextTruncate = Enum.TextTruncate.AtEnd
+    brLbl.ZIndex = 4
+    brLbl.TextTransparency = 1
+    brLbl.Parent = row
+
+    -- fade in
+    row.BackgroundTransparency = 1
+    TweenService:Create(row, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundTransparency = 0 }):Play()
+    TweenService:Create(userLbl, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play()
+    TweenService:Create(countLbl, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0, BackgroundTransparency = 0.4 }):Play()
+    TweenService:Create(brLbl, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextTransparency = 0 }):Play()
+    if isOG then
+        local s = row:FindFirstChildWhichIsA("UIStroke")
+        if s then s.Transparency = 1; TweenService:Create(s, TweenInfo.new(0.35), { Transparency = 0 }):Play() end
+    end
+    countLbl.BackgroundTransparency = 1
 end
-
-trackAddBtn.MouseButton1Click:Connect(function()
-    local name = trackInput.Text:gsub("%s+", "")
-    if name ~= "" then
-        trackedUsers[name] = true
-        trackInput.Text = ""
-        refreshTrackList()
-    end
-end)
-
-refreshTrackList()
 
 -- ════════════════════ PAGE: FLEECE ════════════════════
 local pageFleece = Instance.new("Frame")
@@ -1227,6 +1251,9 @@ local function logSpawn(playerName, brainrotName, isOGSpawn, source)
     addLogEntry(liveScroll, text, color, isOGSpawn)
     liveCountLabel.Text = liveEventCount .. " events"
 
+    -- auto-track every player from live spawns
+    addTrackEntry(playerName, brainrotName, isOGSpawn, src)
+
     -- if OG, add to OG feed and card
     if isOGSpawn then
         state.ogCaught = state.ogCaught + 1
@@ -1240,11 +1267,6 @@ local function logSpawn(playerName, brainrotName, isOGSpawn, source)
         if state.autoFleece then
             table.insert(fleeceQueue, {player = playerName, brainrot = brainrotName})
             addFleeceEntry(playerName, brainrotName)
-        end
-
-        -- check if tracked user
-        if trackedUsers[playerName] then
-            addLogEntry(liveScroll, "⚡ TRACKED USER " .. playerName .. " GOT OG: " .. brainrotName, Theme.success, true)
         end
     end
 
