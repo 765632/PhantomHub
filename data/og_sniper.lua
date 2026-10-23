@@ -55,6 +55,7 @@ local state = {
     running      = true,
     ogCaught     = 0,
     totalScanned = 0,
+    globalEvents = 0,
     autoFleece   = false,
     autoTrack    = true,
     soundAlerts  = true,
@@ -66,6 +67,7 @@ local ogLog = {}          -- {timestamp, playerName, brainrotName, isOG}
 local liveLog = {}        -- all spawn events
 local fleeceQueue = {}    -- players to auto-trade
 local knownBrainrots = {} -- already-seen brainrot instances (avoid dupes)
+local knownGlobalTexts = {} -- dedup global feed entries
 local conns = {}          -- connections for cleanup
 
 -- ════════════════════ OG BRAINROT LIST ════════════════════
@@ -569,7 +571,7 @@ pageLive.Parent = content
 pages["Live"] = pageLive
 
 local liveHeader = makeLabel(pageLive, {
-    text = "LIVE FEED", font = Enum.Font.GothamBold, size = 12,
+    text = "LIVE FEED — ALL SERVERS", font = Enum.Font.GothamBold, size = 12,
     color = Theme.text, sz = UDim2.new(1, 0, 0, 20), pos = UDim2.new(0, 0, 0, 0)
 })
 
@@ -589,7 +591,7 @@ liveFeedFrame.Parent = pageLive
 local liveScroll, liveList = makeScrollFeed(liveFeedFrame)
 
 local liveWaiting = makeLabel(liveFeedFrame, {
-    text = "waiting for spawns...", font = Enum.Font.Gotham, size = 12,
+    text = "scanning all servers...", font = Enum.Font.Gotham, size = 12,
     color = Theme.textMuted, align = Enum.TextXAlignment.Center,
     sz = UDim2.new(1, 0, 0, 30), pos = UDim2.new(0, 0, 0.4, 0), z = 4
 })
@@ -1206,17 +1208,22 @@ local function getOwnerName(obj)
     return ownerName
 end
 
-local function logSpawn(playerName, brainrotName, isOGSpawn)
+local function logSpawn(playerName, brainrotName, isOGSpawn, source)
     local timestamp = os.date("%H:%M:%S")
     liveEventCount = liveEventCount + 1
+
+    local src = source or "LOCAL"
+    local isGlobal = (src == "GLOBAL")
+    if isGlobal then state.globalEvents = state.globalEvents + 1 end
 
     -- hide waiting text
     if liveWaiting.Visible then liveWaiting.Visible = false end
 
-    -- add to live feed
+    -- add to live feed — tag global entries with globe icon
     local prefix = isOGSpawn and "★ " or "• "
-    local color = isOGSpawn and Theme.ogGold or Theme.textMuted
-    local text = prefix .. "[" .. timestamp .. "] " .. playerName .. " → " .. brainrotName
+    local srcTag = isGlobal and " [ALL]" or ""
+    local color = isOGSpawn and Theme.ogGold or (isGlobal and Color3.fromRGB(100, 180, 255) or Theme.textMuted)
+    local text = prefix .. "[" .. timestamp .. "]" .. srcTag .. " " .. playerName .. " → " .. brainrotName
     addLogEntry(liveScroll, text, color, isOGSpawn)
     liveCountLabel.Text = liveEventCount .. " events"
 
@@ -1226,7 +1233,7 @@ local function logSpawn(playerName, brainrotName, isOGSpawn)
         caughtLabel.Text = state.ogCaught .. " caught"
 
         if ogWaiting.Visible then ogWaiting.Visible = false end
-        addLogEntry(ogScroll, "★ [" .. timestamp .. "] " .. playerName .. " claimed " .. brainrotName, Theme.ogGold, true)
+        addLogEntry(ogScroll, "★ [" .. timestamp .. "]" .. srcTag .. " " .. playerName .. " claimed " .. brainrotName, Theme.ogGold, true)
         addOGCard(playerName, brainrotName)
 
         -- add to fleece queue if auto-fleece is on
@@ -1242,9 +1249,9 @@ local function logSpawn(playerName, brainrotName, isOGSpawn)
     end
 
     -- store in log tables
-    table.insert(liveLog, {time = timestamp, player = playerName, brainrot = brainrotName, og = isOGSpawn})
+    table.insert(liveLog, {time = timestamp, player = playerName, brainrot = brainrotName, og = isOGSpawn, source = src})
     if isOGSpawn then
-        table.insert(ogLog, {time = timestamp, player = playerName, brainrot = brainrotName})
+        table.insert(ogLog, {time = timestamp, player = playerName, brainrot = brainrotName, source = src})
     end
 end
 
@@ -1418,6 +1425,271 @@ pcall(function()
     end
 end)
 
+-- ════════════════════ CROSS-SERVER: Global Feed Detection ════════════════════
+
+-- Method 5: Deep-scan the game's native live feed GUI
+-- SAB has a built-in global live feed that shows claims from ALL servers.
+-- We find it by searching PlayerGui for ScrollingFrames with claim text.
+
+local globalFeedFrames = {} -- track which game GUI frames we're watching
+
+local function parseClaimText(text)
+    if not text or text == "" then return nil, nil end
+    -- SAB claim patterns
+    local player, brainrot = text:match("(.+)%s+stole%s+(.+)")
+    if not player then player, brainrot = text:match("(.+)%s+claimed%s+(.+)") end
+    if not player then player, brainrot = text:match("(.+)%s+got%s+(.+)") end
+    if not player then player, brainrot = text:match("(.+)%s+found%s+(.+)") end
+    if not player then player, brainrot = text:match("(.+)%s+obtained%s+(.+)") end
+    if not player then player, brainrot = text:match("(.+)%s+caught%s+(.+)") end
+    if not player then player, brainrot = text:match("(.+)%s+grabbed%s+(.+)") end
+    if player and brainrot then
+        player = player:gsub("^%s+", ""):gsub("%s+$", "")
+        brainrot = brainrot:gsub("!", ""):gsub("%.$", ""):gsub("^%s+", ""):gsub("%s+$", "")
+        return player, brainrot
+    end
+    return nil, nil
+end
+
+local function watchGlobalFeedFrame(frame)
+    if globalFeedFrames[frame] then return end
+    globalFeedFrames[frame] = true
+
+    -- scrape existing entries in the frame
+    pcall(function()
+        for _, child in pairs(frame:GetDescendants()) do
+            pcall(function()
+                if (child:IsA("TextLabel") or child:IsA("TextButton")) and child.Text and child.Text ~= "" then
+                    local txt = child.Text
+                    if not knownGlobalTexts[txt] then
+                        knownGlobalTexts[txt] = true
+                        local player, brainrot = parseClaimText(txt)
+                        if player and brainrot then
+                            local ogStatus = isOG(brainrot)
+                            logSpawn(player, brainrot, ogStatus, "GLOBAL")
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+
+    -- watch for new entries
+    local c = frame.DescendantAdded:Connect(function(child)
+        task.wait(0.1)
+        if not state.running then return end
+        pcall(function()
+            if not child or not child.Parent then return end
+            if child:IsA("TextLabel") or child:IsA("TextButton") then
+                local txt = child.Text or ""
+                -- also watch for text property changes (game may set text after creation)
+                local textConn
+                textConn = child:GetPropertyChangedSignal("Text"):Connect(function()
+                    pcall(function()
+                        local t = child.Text
+                        if t and t ~= "" and not knownGlobalTexts[t] then
+                            knownGlobalTexts[t] = true
+                            local player, brainrot = parseClaimText(t)
+                            if player and brainrot then
+                                local ogStatus = isOG(brainrot)
+                                logSpawn(player, brainrot, ogStatus, "GLOBAL")
+                            end
+                        end
+                    end)
+                end)
+                conns[#conns+1] = textConn
+
+                if txt ~= "" and not knownGlobalTexts[txt] then
+                    knownGlobalTexts[txt] = true
+                    local player, brainrot = parseClaimText(txt)
+                    if player and brainrot then
+                        local ogStatus = isOG(brainrot)
+                        logSpawn(player, brainrot, ogStatus, "GLOBAL")
+                    end
+                end
+            end
+        end)
+    end)
+    conns[#conns+1] = c
+end
+
+local function scanForGlobalFeed()
+    pcall(function()
+        for _, gui in pairs(PG:GetChildren()) do
+            pcall(function()
+                if gui:IsA("ScreenGui") and gui ~= screenGui then
+                    -- look for scrolling frames that contain claim text
+                    for _, desc in pairs(gui:GetDescendants()) do
+                        pcall(function()
+                            if desc:IsA("ScrollingFrame") and not globalFeedFrames[desc] then
+                                -- check if this frame has claim text children
+                                local hasClaims = false
+                                for _, child in pairs(desc:GetChildren()) do
+                                    if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("Frame") then
+                                        local txt = ""
+                                        if child:IsA("TextLabel") or child:IsA("TextButton") then
+                                            txt = child.Text or ""
+                                        else
+                                            -- check child's text children
+                                            for _, sub in pairs(child:GetChildren()) do
+                                                if (sub:IsA("TextLabel") or sub:IsA("TextButton")) and sub.Text and sub.Text ~= "" then
+                                                    txt = sub.Text
+                                                    break
+                                                end
+                                            end
+                                        end
+                                        if txt:find("stole") or txt:find("claimed") or txt:find("got") or txt:find("caught") or txt:find("grabbed") then
+                                            hasClaims = true
+                                            break
+                                        end
+                                    end
+                                end
+                                if hasClaims then
+                                    watchGlobalFeedFrame(desc)
+                                end
+                            end
+                        end)
+                    end
+                end
+            end)
+        end
+    end)
+end
+
+-- Method 6: Watch ReplicatedStorage for global feed remotes/events
+pcall(function()
+    local globalRemoteNames = {
+        "GlobalFeed", "LiveFeed", "LiveSpawns", "GlobalNotification",
+        "WorldFeed", "GlobalEvent", "ServerFeed", "BrainrotFeed",
+        "Feed", "Leaderboard", "GlobalLeaderboard", "StealFeed",
+        "ActivityFeed", "Activity", "GlobalActivity"
+    }
+    for _, remoteName in pairs(globalRemoteNames) do
+        pcall(function()
+            -- search in Net
+            if Net then
+                for _, d in pairs(Net:GetDescendants()) do
+                    pcall(function()
+                        if d:IsA("RemoteEvent") and d.Name:lower():find(remoteName:lower()) then
+                            local c = d.OnClientEvent:Connect(function(...)
+                                local evArgs = {...}
+                                pcall(function()
+                                    for _, arg in pairs(evArgs) do
+                                        if type(arg) == "string" then
+                                            local player, brainrot = parseClaimText(arg)
+                                            if player and brainrot then
+                                                if not knownGlobalTexts[arg] then
+                                                    knownGlobalTexts[arg] = true
+                                                    local ogStatus = isOG(brainrot)
+                                                    logSpawn(player, brainrot, ogStatus, "GLOBAL")
+                                                end
+                                            end
+                                        elseif type(arg) == "table" then
+                                            local player = arg.Player or arg.player or arg.PlayerName or arg.username or arg.Username or arg.Name or arg.name
+                                            local brainrot = arg.Brainrot or arg.brainrot or arg.BrainrotName or arg.item or arg.Item or arg.Name or arg.name
+                                            if player and brainrot and tostring(player) ~= tostring(brainrot) then
+                                                local key = tostring(player) .. ":" .. tostring(brainrot)
+                                                if not knownGlobalTexts[key] then
+                                                    knownGlobalTexts[key] = true
+                                                    local ogStatus = isOG(tostring(brainrot))
+                                                    logSpawn(tostring(player), tostring(brainrot), ogStatus, "GLOBAL")
+                                                end
+                                            end
+                                        end
+                                    end
+                                end)
+                            end)
+                            conns[#conns+1] = c
+                        end
+                    end)
+                end
+            end
+
+            -- also search directly in RS
+            pcall(function()
+                for _, d in pairs(RS:GetDescendants()) do
+                    pcall(function()
+                        if d:IsA("RemoteEvent") and d.Name:lower():find(remoteName:lower()) and d ~= remotes.notify then
+                            local c = d.OnClientEvent:Connect(function(...)
+                                local evArgs = {...}
+                                pcall(function()
+                                    for _, arg in pairs(evArgs) do
+                                        if type(arg) == "string" then
+                                            local player, brainrot = parseClaimText(arg)
+                                            if player and brainrot then
+                                                if not knownGlobalTexts[arg] then
+                                                    knownGlobalTexts[arg] = true
+                                                    local ogStatus = isOG(brainrot)
+                                                    logSpawn(player, brainrot, ogStatus, "GLOBAL")
+                                                end
+                                            end
+                                        end
+                                    end
+                                end)
+                            end)
+                            conns[#conns+1] = c
+                        end
+                    end)
+                end
+            end)
+        end)
+    end
+end)
+
+-- Method 7: Watch for new ScreenGuis with live feeds (game may load GUI later)
+conns[#conns+1] = PG.ChildAdded:Connect(function(gui)
+    task.wait(1) -- let GUI populate
+    if not state.running then return end
+    pcall(function()
+        if gui:IsA("ScreenGui") and gui ~= screenGui then
+            -- scan this new GUI for feed frames
+            for _, desc in pairs(gui:GetDescendants()) do
+                pcall(function()
+                    if desc:IsA("ScrollingFrame") and not globalFeedFrames[desc] then
+                        local hasClaims = false
+                        for _, child in pairs(desc:GetDescendants()) do
+                            if (child:IsA("TextLabel") or child:IsA("TextButton")) and child.Text then
+                                local txt = child.Text
+                                if txt:find("stole") or txt:find("claimed") or txt:find("got") or txt:find("caught") then
+                                    hasClaims = true
+                                    break
+                                end
+                            end
+                        end
+                        if hasClaims then
+                            watchGlobalFeedFrame(desc)
+                        end
+                    end
+                end)
+            end
+
+            -- also watch this GUI for future feed frames
+            gui.DescendantAdded:Connect(function(desc)
+                task.wait(0.5)
+                if not state.running then return end
+                pcall(function()
+                    if desc:IsA("ScrollingFrame") and not globalFeedFrames[desc] then
+                        task.wait(1)
+                        local hasClaims = false
+                        for _, child in pairs(desc:GetDescendants()) do
+                            if (child:IsA("TextLabel") or child:IsA("TextButton")) and child.Text then
+                                local txt = child.Text
+                                if txt:find("stole") or txt:find("claimed") or txt:find("got") or txt:find("caught") then
+                                    hasClaims = true
+                                    break
+                                end
+                            end
+                        end
+                        if hasClaims then
+                            watchGlobalFeedFrame(desc)
+                        end
+                    end
+                end)
+            end)
+        end
+    end)
+end)
+
 -- ════════════════════ MAIN LOOPS ════════════════════
 
 -- periodic workspace scan
@@ -1434,6 +1706,15 @@ spawn(function()
     end
 end)
 
+-- periodic global feed scanner (re-check for game's live feed GUI every 10s)
+spawn(function()
+    task.wait(2)
+    while state.running do
+        scanForGlobalFeed()
+        task.wait(10)
+    end
+end)
+
 -- stats updater
 spawn(function()
     while state.running do
@@ -1441,12 +1722,12 @@ spawn(function()
             local elapsed = os.clock() - startTime
             local mins = math.floor(elapsed / 60)
             local secs = math.floor(elapsed % 60)
-            statsDetailLbl.Text = "OG Caught: " .. state.ogCaught .. "  |  Scanned: " .. state.totalScanned .. "  |  Tracked: " .. (function()
-                local c = 0
-                for _ in pairs(trackedUsers) do c = c + 1 end
-                return c
-            end)()
-            statsUptimeLbl.Text = "Uptime: " .. mins .. "m " .. secs .. "s  |  Server: " .. game.JobId:sub(1, 12) .. "..."
+            local trackedCount = 0
+            for _ in pairs(trackedUsers) do trackedCount = trackedCount + 1 end
+            local feedCount = 0
+            for _ in pairs(globalFeedFrames) do feedCount = feedCount + 1 end
+            statsDetailLbl.Text = "OG: " .. state.ogCaught .. "  |  Scanned: " .. state.totalScanned .. "  |  Global: " .. state.globalEvents
+            statsUptimeLbl.Text = "Uptime: " .. mins .. "m " .. secs .. "s  |  Feeds: " .. feedCount .. "  |  Tracked: " .. trackedCount
         end)
         task.wait(5)
     end
@@ -1516,7 +1797,8 @@ end)
 spawn(function()
     task.wait(1)
     scanForBrainrots()
-    addLogEntry(liveScroll, "• [" .. os.date("%H:%M:%S") .. "] OG Sniper active — scanning server...", Theme.success, false)
+    scanForGlobalFeed()
+    addLogEntry(liveScroll, "• [" .. os.date("%H:%M:%S") .. "] OG Sniper active — scanning all servers...", Theme.success, false)
     if liveWaiting.Visible then liveWaiting.Visible = false end
 end)
 
