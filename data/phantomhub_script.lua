@@ -1,7 +1,7 @@
 -- ============================================================
 --  MAINTENANCE MODE (flip to false when done working)
 -- ============================================================
-local MAINTENANCE = true
+local MAINTENANCE = false
 local MAINTENANCE_MSG = "PhantomHub is currently under maintenance. Check back soon."
 
 if MAINTENANCE then
