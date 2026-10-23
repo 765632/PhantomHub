@@ -70,67 +70,110 @@ local knownBrainrots = {} -- already-seen brainrot instances (avoid dupes)
 local knownGlobalTexts = {} -- dedup global feed entries
 local conns = {}          -- connections for cleanup
 
--- ════════════════════ OG BRAINROT LIST ════════════════════
--- these are considered rare/OG — user can add more via TRACK tab
-local OG_LIST = {
-    -- headless tier
-    ["headless horseman"] = true,
-    ["headless"] = true,
-    -- korblox tier
-    ["korblox"] = true,
-    ["korblox deathspeaker"] = true,
-    -- dominus tier
-    ["dominus"] = true,
-    ["dominus empyreus"] = true,
-    ["dominus frigidus"] = true,
-    ["dominus infernus"] = true,
-    ["dominus aureus"] = true,
-    ["dominus messor"] = true,
-    ["dominus rex"] = true,
-    ["dominus praefectus"] = true,
-    -- mythic tier
-    ["clockwork"] = true,
-    ["clockwork headphones"] = true,
-    ["valkyrie"] = true,
-    ["valkyrie helm"] = true,
-    ["dark valkyrie"] = true,
-    -- event/limited
-    ["icicle"] = true,
-    ["iceberg"] = true,
-    ["rainbow"] = true,
-    ["rainbow brainrot"] = true,
-    ["golden"] = true,
-    ["golden brainrot"] = true,
-    ["diamond"] = true,
-    ["void"] = true,
-    ["cosmic"] = true,
-    ["galaxy"] = true,
-    ["celestial"] = true,
-    ["phantom"] = true,
-    ["shadow"] = true,
-    ["inferno"] = true,
-    ["frost"] = true,
-    ["dragon"] = true,
-    ["hydra"] = true,
-    ["titan"] = true,
-    ["leviathan"] = true,
-    ["pumpkin king"] = true,
-    ["grim reaper"] = true,
-    -- custom additions stored here at runtime
+-- ════════════════════ OG GLOSSARY ════════════════════
+-- categorized: base brainrots, mutations, traits
+
+local OG_BASES = {
+    "Headless Horseman", "Headless",
+    "Korblox", "Korblox Deathspeaker",
+    "Dominus", "Dominus Empyreus", "Dominus Frigidus", "Dominus Infernus",
+    "Dominus Aureus", "Dominus Messor", "Dominus Rex", "Dominus Praefectus",
+    "Clockwork", "Clockwork Headphones",
+    "Valkyrie", "Valkyrie Helm", "Dark Valkyrie",
+    "Icicle", "Iceberg",
+    "Dragon", "Hydra", "Titan", "Leviathan",
+    "Pumpkin King", "Grim Reaper",
 }
 
-local customOGs = {} -- user-added OG names
+local OG_MUTATIONS = {
+    "Golden", "Rainbow", "Diamond", "Void", "Cosmic", "Galaxy",
+    "Celestial", "Phantom", "Shadow", "Inferno", "Frost",
+    "Crystal", "Neon", "Lava", "Electric", "Toxic",
+    "Prismatic", "Holographic", "Obsidian", "Emerald", "Ruby",
+}
+
+local OG_TRAITS = {
+    "Mythic", "Legendary", "Divine", "Eternal", "Omega",
+    "Ancient", "Corrupted", "Enchanted", "Ascended", "Supreme",
+    "Godly", "Immortal", "Demonic", "Sacred", "Abyssal",
+}
+
+-- build flat lookup for fast matching
+local OG_LIST = {}
+for _, v in ipairs(OG_BASES) do OG_LIST[v:lower()] = "base" end
+for _, v in ipairs(OG_MUTATIONS) do OG_LIST[v:lower()] = "mutation" end
+for _, v in ipairs(OG_TRAITS) do OG_LIST[v:lower()] = "trait" end
+
+-- keyword lists for partial matching
+local BASE_KEYWORDS = {"headless", "korblox", "dominus", "clockwork", "valkyrie", "icicle", "iceberg", "dragon", "hydra", "titan", "leviathan", "pumpkin", "reaper"}
+local MUTATION_KEYWORDS = {"golden", "rainbow", "diamond", "void", "cosmic", "galaxy", "celestial", "phantom", "shadow", "inferno", "frost", "crystal", "neon", "lava", "electric", "toxic", "prismatic", "holographic", "obsidian", "emerald", "ruby"}
+local TRAIT_KEYWORDS = {"mythic", "legendary", "divine", "eternal", "omega", "ancient", "corrupted", "enchanted", "ascended", "supreme", "godly", "immortal", "demonic", "sacred", "abyssal"}
 
 local function isOG(name)
     if not name then return false end
     local lower = name:lower()
     if OG_LIST[lower] then return true end
-    if customOGs[lower] then return true end
-    -- partial match for rarity keywords
-    for _, keyword in ipairs({"headless", "korblox", "dominus", "golden", "rainbow", "void", "cosmic", "galaxy", "titan", "dragon", "celestial", "phantom", "mythic", "legendary", "divine", "eternal", "omega"}) do
-        if lower:find(keyword) then return true end
-    end
+    for _, kw in ipairs(BASE_KEYWORDS) do if lower:find(kw) then return true end end
+    for _, kw in ipairs(MUTATION_KEYWORDS) do if lower:find(kw) then return true end end
+    for _, kw in ipairs(TRAIT_KEYWORDS) do if lower:find(kw) then return true end end
     return false
+end
+
+local function classifyOG(name)
+    -- returns {base=, mutation=, trait=} based on what keywords are in the name
+    if not name then return nil end
+    local lower = name:lower()
+    local result = {base = nil, mutation = nil, trait = nil, full = name}
+    for _, kw in ipairs(BASE_KEYWORDS) do
+        if lower:find(kw) then
+            -- find the full base name
+            for _, b in ipairs(OG_BASES) do
+                if lower:find(b:lower()) then result.base = b; break end
+            end
+            if not result.base then result.base = kw:sub(1,1):upper() .. kw:sub(2) end
+            break
+        end
+    end
+    for _, kw in ipairs(MUTATION_KEYWORDS) do
+        if lower:find(kw) then
+            for _, m in ipairs(OG_MUTATIONS) do
+                if lower:find(m:lower()) then result.mutation = m; break end
+            end
+            if not result.mutation then result.mutation = kw:sub(1,1):upper() .. kw:sub(2) end
+            break
+        end
+    end
+    for _, kw in ipairs(TRAIT_KEYWORDS) do
+        if lower:find(kw) then
+            for _, t in ipairs(OG_TRAITS) do
+                if lower:find(t:lower()) then result.trait = t; break end
+            end
+            if not result.trait then result.trait = kw:sub(1,1):upper() .. kw:sub(2) end
+            break
+        end
+    end
+    return result
+end
+
+-- ════════════════════ GLOBAL OG DATABASE ════════════════════
+-- stores ALL detected OG players from any source (local + global)
+local globalOGDB = {} -- {playerName = {brainrots = {name = classifyResult}, source = "LOCAL"/"GLOBAL", lastSeen = time, inServer = bool}}
+
+local function addToGlobalOGDB(playerName, brainrotName, source)
+    if not globalOGDB[playerName] then
+        globalOGDB[playerName] = {
+            brainrots = {},
+            source = source or "LOCAL",
+            lastSeen = os.time(),
+            inServer = (source == "LOCAL"),
+        }
+    end
+    local entry = globalOGDB[playerName]
+    entry.lastSeen = os.time()
+    if source == "LOCAL" then entry.inServer = true end
+    if not entry.brainrots[brainrotName] then
+        entry.brainrots[brainrotName] = classifyOG(brainrotName)
+    end
 end
 
 -- ════════════════════ REMOTE DISCOVERY ════════════════════
@@ -616,7 +659,7 @@ local liveWaiting = makeLabel(liveFeedFrame, {
     sz = UDim2.new(1, 0, 0, 30), pos = UDim2.new(0, 0, 0.4, 0), z = 4
 })
 
--- ════════════════════ PAGE: OG ════════════════════
+-- ════════════════════ PAGE: OG (GLOSSARY + PLAYERS) ════════════════════
 local pageOG = Instance.new("Frame")
 pageOG.Size = UDim2.new(1, 0, 1, 0)
 pageOG.BackgroundTransparency = 1
@@ -625,63 +668,127 @@ pageOG.Visible = false
 pageOG.Parent = content
 pages["OG"] = pageOG
 
+state.autoDuel = false
+
 local ogHeader = makeLabel(pageOG, {
-    text = "OG PLAYERS", font = Enum.Font.GothamBold, size = 12,
+    text = "OG GLOSSARY", font = Enum.Font.GothamBold, size = 12,
     color = Theme.ogGold, sz = UDim2.new(0.5, 0, 0, 20), pos = UDim2.new(0, 0, 0, 0)
 })
 
 local ogCountLabel = makeLabel(pageOG, {
-    text = "scanning...", font = Enum.Font.Gotham, size = 10,
+    text = "0 global", font = Enum.Font.Gotham, size = 10,
     color = Theme.textMuted, align = Enum.TextXAlignment.Right,
     sz = UDim2.new(1, 0, 0, 20), pos = UDim2.new(0, 0, 0, 0)
 })
 
--- auto duel toggle row
-local ogAutoRow = Instance.new("Frame")
-ogAutoRow.Size = UDim2.new(1, 0, 0, 30)
-ogAutoRow.Position = UDim2.new(0, 0, 0, 22)
-ogAutoRow.BackgroundColor3 = Theme.bgCard
-ogAutoRow.BorderSizePixel = 0
-ogAutoRow.ZIndex = 3
-ogAutoRow.Parent = pageOG
-corner(ogAutoRow, 6)
+-- ═══ FILTER CHIPS: BASE / MUTATION / TRAIT ═══
+local filterState = { category = "ALL", selected = nil } -- selected = specific name or nil for all
 
-local autoDuelLbl = makeLabel(ogAutoRow, {
-    text = "Auto Duel OG Players", font = Enum.Font.GothamBold, size = 10,
-    color = Theme.text, sz = UDim2.new(0.65, 0, 1, 0), pos = UDim2.new(0, 10, 0, 0)
-})
+local filterBar = Instance.new("Frame")
+filterBar.Size = UDim2.new(1, 0, 0, 24)
+filterBar.Position = UDim2.new(0, 0, 0, 22)
+filterBar.BackgroundTransparency = 1
+filterBar.ZIndex = 3
+filterBar.Parent = pageOG
 
-local autoDuelToggle = Instance.new("TextButton")
-autoDuelToggle.Size = UDim2.new(0, 40, 0, 18)
-autoDuelToggle.Position = UDim2.new(1, -50, 0.5, -9)
-autoDuelToggle.BackgroundColor3 = Theme.toggleOff
-autoDuelToggle.Font = Enum.Font.GothamBold
-autoDuelToggle.TextSize = 8
-autoDuelToggle.TextColor3 = Theme.textMuted
-autoDuelToggle.Text = "OFF"
-autoDuelToggle.AutoButtonColor = false
-autoDuelToggle.ZIndex = 4
-autoDuelToggle.Parent = ogAutoRow
-corner(autoDuelToggle, 9)
+local filterLayout = Instance.new("UIListLayout")
+filterLayout.FillDirection = Enum.FillDirection.Horizontal
+filterLayout.Padding = UDim.new(0, 4)
+filterLayout.SortOrder = Enum.SortOrder.LayoutOrder
+filterLayout.Parent = filterBar
 
-state.autoDuel = false
-autoDuelToggle.MouseButton1Click:Connect(function()
-    state.autoDuel = not state.autoDuel
-    if state.autoDuel then
-        TweenService:Create(autoDuelToggle, TweenFast, { BackgroundColor3 = Theme.toggleOn }):Play()
-        autoDuelToggle.TextColor3 = Theme.bg
-        autoDuelToggle.Text = "ON"
-    else
-        TweenService:Create(autoDuelToggle, TweenFast, { BackgroundColor3 = Theme.toggleOff }):Play()
-        autoDuelToggle.TextColor3 = Theme.textMuted
-        autoDuelToggle.Text = "OFF"
+local filterBtns = {}
+local FILTER_CATS = {"ALL", "BASE", "MUTATION", "TRAIT"}
+
+for i, cat in ipairs(FILTER_CATS) do
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, cat == "MUTATION" and 68 or 48, 0, 22)
+    btn.BackgroundColor3 = (cat == "ALL") and Theme.accent or Theme.bgCard
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 9
+    btn.TextColor3 = (cat == "ALL") and Theme.bg or Theme.textMuted
+    btn.Text = cat
+    btn.AutoButtonColor = false
+    btn.ZIndex = 4
+    btn.LayoutOrder = i
+    btn.Parent = filterBar
+    corner(btn, 5)
+    filterBtns[cat] = btn
+end
+
+-- ═══ GLOSSARY CHIPS (shows brainrot names for selected category) ═══
+local glossaryFrame = Instance.new("ScrollingFrame")
+glossaryFrame.Size = UDim2.new(1, 0, 0, 52)
+glossaryFrame.Position = UDim2.new(0, 0, 0, 48)
+glossaryFrame.BackgroundTransparency = 1
+glossaryFrame.ScrollBarThickness = 2
+glossaryFrame.ScrollBarImageColor3 = Theme.accentDim
+glossaryFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+glossaryFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+glossaryFrame.BorderSizePixel = 0
+glossaryFrame.ZIndex = 3
+glossaryFrame.Parent = pageOG
+
+local glossaryLayout = Instance.new("UIListLayout")
+glossaryLayout.FillDirection = Enum.FillDirection.Horizontal
+glossaryLayout.Padding = UDim.new(0, 4)
+glossaryLayout.SortOrder = Enum.SortOrder.LayoutOrder
+glossaryLayout.Wraps = true
+glossaryLayout.Parent = glossaryFrame
+pad(glossaryFrame, 0, 4, 0, 0)
+
+local glossaryChips = {} -- chip buttons
+
+local function buildGlossaryChips()
+    for _, c in pairs(glossaryFrame:GetChildren()) do
+        if c:IsA("TextButton") then c:Destroy() end
     end
-end)
+    glossaryChips = {}
 
--- OG players list
+    local items = {}
+    if filterState.category == "ALL" or filterState.category == "BASE" then
+        for _, v in ipairs(OG_BASES) do table.insert(items, {name = v, cat = "base"}) end
+    end
+    if filterState.category == "ALL" or filterState.category == "MUTATION" then
+        for _, v in ipairs(OG_MUTATIONS) do table.insert(items, {name = v, cat = "mutation"}) end
+    end
+    if filterState.category == "ALL" or filterState.category == "TRAIT" then
+        for _, v in ipairs(OG_TRAITS) do table.insert(items, {name = v, cat = "trait"}) end
+    end
+
+    for idx, item in ipairs(items) do
+        local catColor = item.cat == "base" and Theme.ogGold or (item.cat == "mutation" and Color3.fromRGB(100, 180, 255) or Color3.fromRGB(180, 100, 255))
+        local isSelected = (filterState.selected and filterState.selected:lower() == item.name:lower())
+        local chip = Instance.new("TextButton")
+        chip.Size = UDim2.new(0, math.max(#item.name * 6 + 12, 40), 0, 22)
+        chip.BackgroundColor3 = isSelected and catColor or Theme.bgCard
+        chip.Font = Enum.Font.GothamBold
+        chip.TextSize = 8
+        chip.TextColor3 = isSelected and Theme.bg or catColor
+        chip.Text = item.name:upper()
+        chip.AutoButtonColor = false
+        chip.ZIndex = 4
+        chip.LayoutOrder = idx
+        chip.Parent = glossaryFrame
+        corner(chip, 5)
+
+        chip.MouseButton1Click:Connect(function()
+            if filterState.selected == item.name then
+                filterState.selected = nil -- deselect
+            else
+                filterState.selected = item.name
+            end
+            buildGlossaryChips()
+            refreshOGDisplay()
+        end)
+        glossaryChips[item.name] = chip
+    end
+end
+
+-- ═══ OG PLAYERS LIST ═══
 local ogListFrame = Instance.new("Frame")
-ogListFrame.Size = UDim2.new(1, 0, 1, -58)
-ogListFrame.Position = UDim2.new(0, 0, 0, 58)
+ogListFrame.Size = UDim2.new(1, 0, 1, -106)
+ogListFrame.Position = UDim2.new(0, 0, 0, 106)
 ogListFrame.BackgroundTransparency = 1
 ogListFrame.ZIndex = 2
 ogListFrame.Parent = pageOG
@@ -689,13 +796,14 @@ ogListFrame.Parent = pageOG
 local ogScroll, ogList = makeScrollFeed(ogListFrame)
 
 local ogWaiting = makeLabel(ogListFrame, {
-    text = "scanning players...", font = Enum.Font.Gotham, size = 12,
+    text = "scanning all servers...", font = Enum.Font.Gotham, size = 12,
     color = Theme.textMuted, align = Enum.TextXAlignment.Center,
     sz = UDim2.new(1, 0, 0, 30), pos = UDim2.new(0, 0, 0.3, 0), z = 4
 })
 
-local ogPlayerRows = {} -- {playerName = rowFrame} to avoid dupes and update
+local ogPlayerRows = {}
 
+-- ═══ TRADE / DUEL HELPERS ═══
 local function sendTrade(playerName, statusLbl)
     spawn(function()
         pcall(function()
@@ -720,14 +828,10 @@ local function sendTrade(playerName, statusLbl)
                     statusLbl.TextColor3 = Theme.danger
                 end
             else
-                statusLbl.Text = "not in server"
+                statusLbl.Text = "not here"
                 statusLbl.TextColor3 = Theme.danger
             end
-            task.delay(2, function()
-                pcall(function()
-                    statusLbl.Text = ""
-                end)
-            end)
+            task.delay(2, function() pcall(function() statusLbl.Text = "" end) end)
         end)
     end)
 end
@@ -748,53 +852,35 @@ local function sendDuel(playerName, statusLbl)
                     statusLbl.Text = "duel sent!"
                     statusLbl.TextColor3 = Theme.success
                 else
-                    -- fallback: try firing any remote with the player as arg
                     local found = false
                     for _, d in pairs(RS:GetDescendants()) do
                         local n = d.Name:lower()
                         if (n:find("duel") or n:find("battle") or n:find("fight") or n:find("pvp")) then
-                            if d:IsA("RemoteEvent") then
-                                d:FireServer(targetPlayer)
-                                found = true
-                                break
-                            elseif d:IsA("RemoteFunction") then
-                                d:InvokeServer(targetPlayer)
-                                found = true
-                                break
-                            end
+                            if d:IsA("RemoteEvent") then d:FireServer(targetPlayer); found = true; break
+                            elseif d:IsA("RemoteFunction") then d:InvokeServer(targetPlayer); found = true; break end
                         end
                     end
-                    if found then
-                        statusLbl.Text = "duel sent!"
-                        statusLbl.TextColor3 = Theme.success
-                    else
-                        statusLbl.Text = "no duel remote"
-                        statusLbl.TextColor3 = Theme.danger
-                    end
+                    statusLbl.Text = found and "duel sent!" or "no duel remote"
+                    statusLbl.TextColor3 = found and Theme.success or Theme.danger
                 end
             else
-                statusLbl.Text = "not in server"
+                statusLbl.Text = "not here"
                 statusLbl.TextColor3 = Theme.danger
             end
-            task.delay(2, function()
-                pcall(function()
-                    statusLbl.Text = ""
-                end)
-            end)
+            task.delay(2, function() pcall(function() statusLbl.Text = "" end) end)
         end)
     end)
 end
 
-local function addOGPlayerRow(playerName, ogBrainrots)
-    -- ogBrainrots = {"Headless", "Korblox", ...}
+-- ═══ BUILD OG PLAYER ROW ═══
+local function addOGPlayerRow(playerName, brainrotNames, isInServer)
     if ogPlayerRows[playerName] then
-        -- update existing row's brainrot list
         pcall(function()
             local row = ogPlayerRows[playerName]
             local brLbl = row:FindFirstChild("_brLbl")
-            if brLbl then
-                brLbl.Text = "★ " .. table.concat(ogBrainrots, ", ")
-            end
+            if brLbl then brLbl.Text = "★ " .. table.concat(brainrotNames, ", ") end
+            local srcLbl = row:FindFirstChild("_srcLbl")
+            if srcLbl then srcLbl.Text = isInServer and "IN SERVER" or "GLOBAL"; srcLbl.TextColor3 = isInServer and Theme.success or Color3.fromRGB(100, 180, 255) end
         end)
         return
     end
@@ -807,7 +893,7 @@ local function addOGPlayerRow(playerName, ogBrainrots)
     row.BackgroundColor3 = Color3.fromRGB(30, 25, 10)
     row.BorderSizePixel = 0
     row.ZIndex = 3
-    row.LayoutOrder = -os.clock() * 1000
+    row.LayoutOrder = isInServer and (-os.clock() * 1000) or (-os.clock() * 1000 + 500000)
     row.Parent = ogScroll
     corner(row, 8)
     stroke(row, Theme.ogGold, 1)
@@ -815,7 +901,7 @@ local function addOGPlayerRow(playerName, ogBrainrots)
 
     -- avatar
     local thumb = Instance.new("ImageLabel")
-    thumb.Size = UDim2.new(0, 36, 0, 36)
+    thumb.Size = UDim2.new(0, 34, 0, 34)
     thumb.Position = UDim2.new(0, 6, 0, 4)
     thumb.BackgroundColor3 = Theme.accentDim
     thumb.BorderSizePixel = 0
@@ -828,17 +914,21 @@ local function addOGPlayerRow(playerName, ogBrainrots)
             local plr = Players:FindFirstChild(playerName)
             if plr then
                 thumb.Image = Players:GetUserThumbnailAsync(plr.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+            else
+                local uid = nil
+                pcall(function() uid = Players:GetUserIdFromNameAsync(playerName) end)
+                if uid then thumb.Image = Players:GetUserThumbnailAsync(uid, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48) end
             end
         end)
     end)
 
     -- username
     local userLbl = Instance.new("TextLabel")
-    userLbl.Size = UDim2.new(0, 130, 0, 16)
-    userLbl.Position = UDim2.new(0, 48, 0, 3)
+    userLbl.Size = UDim2.new(0, 120, 0, 14)
+    userLbl.Position = UDim2.new(0, 46, 0, 3)
     userLbl.BackgroundTransparency = 1
     userLbl.Font = Enum.Font.GothamBold
-    userLbl.TextSize = 12
+    userLbl.TextSize = 11
     userLbl.TextColor3 = Theme.white
     userLbl.TextXAlignment = Enum.TextXAlignment.Left
     userLbl.Text = playerName
@@ -847,23 +937,38 @@ local function addOGPlayerRow(playerName, ogBrainrots)
     userLbl.TextTransparency = 1
     userLbl.Parent = row
 
+    -- source tag (IN SERVER / GLOBAL)
+    local srcLbl = Instance.new("TextLabel")
+    srcLbl.Name = "_srcLbl"
+    srcLbl.Size = UDim2.new(0, 60, 0, 12)
+    srcLbl.Position = UDim2.new(1, -66, 0, 4)
+    srcLbl.BackgroundTransparency = 1
+    srcLbl.Font = Enum.Font.GothamBold
+    srcLbl.TextSize = 7
+    srcLbl.TextColor3 = isInServer and Theme.success or Color3.fromRGB(100, 180, 255)
+    srcLbl.TextXAlignment = Enum.TextXAlignment.Right
+    srcLbl.Text = isInServer and "IN SERVER" or "GLOBAL"
+    srcLbl.ZIndex = 4
+    srcLbl.TextTransparency = 1
+    srcLbl.Parent = row
+
     -- brainrot names
     local brLbl = Instance.new("TextLabel")
     brLbl.Name = "_brLbl"
-    brLbl.Size = UDim2.new(0.9, -48, 0, 12)
-    brLbl.Position = UDim2.new(0, 48, 0, 20)
+    brLbl.Size = UDim2.new(1, -54, 0, 12)
+    brLbl.Position = UDim2.new(0, 46, 0, 18)
     brLbl.BackgroundTransparency = 1
     brLbl.Font = Enum.Font.Gotham
     brLbl.TextSize = 9
     brLbl.TextColor3 = Theme.ogGold
     brLbl.TextXAlignment = Enum.TextXAlignment.Left
-    brLbl.Text = "★ " .. table.concat(ogBrainrots, ", ")
+    brLbl.Text = "★ " .. table.concat(brainrotNames, ", ")
     brLbl.TextTruncate = Enum.TextTruncate.AtEnd
     brLbl.ZIndex = 4
     brLbl.TextTransparency = 1
     brLbl.Parent = row
 
-    -- status label (shared for trade/duel feedback)
+    -- status label
     local statusLbl = Instance.new("TextLabel")
     statusLbl.Size = UDim2.new(1, -8, 0, 10)
     statusLbl.Position = UDim2.new(0, 4, 1, -12)
@@ -875,13 +980,13 @@ local function addOGPlayerRow(playerName, ogBrainrots)
     statusLbl.ZIndex = 4
     statusLbl.Parent = row
 
-    -- button row: TRADE | DUEL | COPY
-    local btnY = 36
+    -- buttons: TRADE | DUEL | COPY
+    local btnY = 34
     local btnH = 18
 
     local tradeBtn = Instance.new("TextButton")
-    tradeBtn.Size = UDim2.new(0, 48, 0, btnH)
-    tradeBtn.Position = UDim2.new(0, 48, 0, btnY)
+    tradeBtn.Size = UDim2.new(0, 46, 0, btnH)
+    tradeBtn.Position = UDim2.new(0, 46, 0, btnY)
     tradeBtn.BackgroundColor3 = Theme.accent
     tradeBtn.Font = Enum.Font.GothamBold
     tradeBtn.TextSize = 9
@@ -894,8 +999,8 @@ local function addOGPlayerRow(playerName, ogBrainrots)
     hoverFx(tradeBtn, Theme.accent, Theme.accentHover)
 
     local duelBtn = Instance.new("TextButton")
-    duelBtn.Size = UDim2.new(0, 44, 0, btnH)
-    duelBtn.Position = UDim2.new(0, 100, 0, btnY)
+    duelBtn.Size = UDim2.new(0, 40, 0, btnH)
+    duelBtn.Position = UDim2.new(0, 96, 0, btnY)
     duelBtn.BackgroundColor3 = Theme.ogGold
     duelBtn.Font = Enum.Font.GothamBold
     duelBtn.TextSize = 9
@@ -908,8 +1013,8 @@ local function addOGPlayerRow(playerName, ogBrainrots)
     hoverFx(duelBtn, Theme.ogGold, Color3.fromRGB(255, 210, 100))
 
     local copyBtn = Instance.new("TextButton")
-    copyBtn.Size = UDim2.new(0, 40, 0, btnH)
-    copyBtn.Position = UDim2.new(0, 148, 0, btnY)
+    copyBtn.Size = UDim2.new(0, 38, 0, btnH)
+    copyBtn.Position = UDim2.new(0, 140, 0, btnY)
     copyBtn.BackgroundColor3 = Theme.accentDim
     copyBtn.Font = Enum.Font.GothamBold
     copyBtn.TextSize = 9
@@ -932,13 +1037,7 @@ local function addOGPlayerRow(playerName, ogBrainrots)
         copyBtn.Text = "✓"
         copyBtn.BackgroundColor3 = Theme.success
         copyBtn.TextColor3 = Theme.bg
-        task.delay(1, function()
-            pcall(function()
-                copyBtn.Text = "COPY"
-                copyBtn.BackgroundColor3 = Theme.accentDim
-                copyBtn.TextColor3 = Theme.text
-            end)
-        end)
+        task.delay(1, function() pcall(function() copyBtn.Text = "COPY"; copyBtn.BackgroundColor3 = Theme.accentDim; copyBtn.TextColor3 = Theme.text end) end)
     end)
 
     -- fade in
@@ -950,6 +1049,7 @@ local function addOGPlayerRow(playerName, ogBrainrots)
     local fadeInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
     TweenService:Create(row, fadeInfo, { BackgroundTransparency = 0 }):Play()
     TweenService:Create(userLbl, fadeInfo, { TextTransparency = 0 }):Play()
+    TweenService:Create(srcLbl, fadeInfo, { TextTransparency = 0 }):Play()
     TweenService:Create(brLbl, fadeInfo, { TextTransparency = 0 }):Play()
     TweenService:Create(tradeBtn, fadeInfo, { BackgroundTransparency = 0, TextTransparency = 0 }):Play()
     TweenService:Create(duelBtn, fadeInfo, { BackgroundTransparency = 0, TextTransparency = 0 }):Play()
@@ -959,20 +1059,90 @@ local function addOGPlayerRow(playerName, ogBrainrots)
     if rowStroke then rowStroke.Transparency = 1; TweenService:Create(rowStroke, fadeInfo, { Transparency = 0 }):Play() end
 end
 
+-- ═══ FILTER BUTTON LOGIC ═══
+for _, cat in ipairs(FILTER_CATS) do
+    filterBtns[cat].MouseButton1Click:Connect(function()
+        filterState.category = cat
+        filterState.selected = nil
+        for c, btn in pairs(filterBtns) do
+            if c == cat then
+                TweenService:Create(btn, TweenFast, { BackgroundColor3 = Theme.accent }):Play()
+                btn.TextColor3 = Theme.bg
+            else
+                TweenService:Create(btn, TweenFast, { BackgroundColor3 = Theme.bgCard }):Play()
+                btn.TextColor3 = Theme.textMuted
+            end
+        end
+        buildGlossaryChips()
+        refreshOGDisplay()
+    end)
+end
+
+-- ═══ OG DISPLAY REFRESH (from global database) ═══
+local function refreshOGDisplay()
+    -- clear current rows
+    for pName, rowFrame in pairs(ogPlayerRows) do
+        pcall(function() rowFrame:Destroy() end)
+    end
+    ogPlayerRows = {}
+
+    local count = 0
+    for playerName, data in pairs(globalOGDB) do
+        -- filter by selected glossary item
+        local matchesFilter = true
+        if filterState.selected then
+            matchesFilter = false
+            for brName, classification in pairs(data.brainrots) do
+                if brName:lower():find(filterState.selected:lower()) then
+                    matchesFilter = true
+                    break
+                end
+                if classification then
+                    if classification.base and classification.base:lower() == filterState.selected:lower() then matchesFilter = true; break end
+                    if classification.mutation and classification.mutation:lower() == filterState.selected:lower() then matchesFilter = true; break end
+                    if classification.trait and classification.trait:lower() == filterState.selected:lower() then matchesFilter = true; break end
+                end
+            end
+        elseif filterState.category ~= "ALL" then
+            matchesFilter = false
+            local catKey = filterState.category:lower()
+            for _, classification in pairs(data.brainrots) do
+                if classification and classification[catKey] then matchesFilter = true; break end
+            end
+        end
+
+        if matchesFilter then
+            count = count + 1
+            local brNames = {}
+            for brName, _ in pairs(data.brainrots) do table.insert(brNames, brName) end
+            addOGPlayerRow(playerName, brNames, data.inServer)
+        end
+    end
+
+    state.ogCaught = count
+    caughtLabel.Text = count .. " caught"
+    local totalDB = 0
+    for _ in pairs(globalOGDB) do totalDB = totalDB + 1 end
+    ogCountLabel.Text = totalDB .. " global"
+    if count == 0 then
+        ogWaiting.Visible = true
+        ogWaiting.Text = filterState.selected and ("no players with " .. filterState.selected) or "scanning all servers..."
+    else
+        ogWaiting.Visible = false
+    end
+end
+
+buildGlossaryChips()
+
 -- ════════════════════ ACTIVE OG SCANNER ════════════════════
--- Scans ALL workspace objects to find every player's brainrots and check for OGs
+-- Scans workspace + feeds global OG database
 
 local function scanAllPlayersForOGs()
-    local ogPlayers = {} -- {playerName = {brainrot1, brainrot2, ...}}
-    local scannedObjects = {}
-
-    -- scan all descendants of workspace
+    -- scan workspace for local server OGs
     pcall(function()
         for _, obj in pairs(workspace:GetDescendants()) do
             pcall(function()
-                if scannedObjects[obj] then return end
                 if not obj:IsA("Model") then return end
-
                 local isBrainrot = false
                 if obj:FindFirstChild("BrainrotData") or obj:FindFirstChild("BrainrotName") then
                     isBrainrot = true
@@ -983,28 +1153,20 @@ local function scanAllPlayersForOGs()
                 end
 
                 if isBrainrot then
-                    scannedObjects[obj] = true
                     local brainrotName = getBrainrotName(obj)
                     local ownerName = getOwnerName(obj)
 
-                    -- also try to find owner from parent hierarchy (plot-based ownership)
                     if not ownerName then
                         local parent = obj.Parent
                         while parent and parent ~= workspace do
                             pcall(function()
-                                -- check if parent name matches a player
                                 local plr = Players:FindFirstChild(parent.Name)
-                                if plr then
-                                    ownerName = parent.Name
-                                end
-                                -- check owner attributes on parent
+                                if plr then ownerName = parent.Name end
                                 if not ownerName then
                                     local o = parent:FindFirstChild("Owner") or parent:FindFirstChild("PlotOwner")
                                     if o then
-                                        if o:IsA("ObjectValue") and o.Value then
-                                            ownerName = o.Value.Name
-                                        elseif o:IsA("StringValue") then
-                                            ownerName = o.Value
+                                        if o:IsA("ObjectValue") and o.Value then ownerName = o.Value.Name
+                                        elseif o:IsA("StringValue") then ownerName = o.Value
                                         elseif o:IsA("IntValue") then
                                             local p = Players:GetPlayerByUserId(o.Value)
                                             if p then ownerName = p.Name end
@@ -1016,56 +1178,27 @@ local function scanAllPlayersForOGs()
                         end
                     end
 
-                    if ownerName and brainrotName then
-                        local ogStatus = isOG(brainrotName)
-                        if ogStatus then
-                            if not ogPlayers[ownerName] then
-                                ogPlayers[ownerName] = {}
-                            end
-                            -- avoid dupes
-                            local alreadyHas = false
-                            for _, existing in pairs(ogPlayers[ownerName]) do
-                                if existing == brainrotName then alreadyHas = true; break end
-                            end
-                            if not alreadyHas then
-                                table.insert(ogPlayers[ownerName], brainrotName)
-                            end
-                        end
+                    if ownerName and brainrotName and isOG(brainrotName) then
+                        addToGlobalOGDB(ownerName, brainrotName, "LOCAL")
                     end
                 end
             end)
         end
     end)
 
-    -- also scan player leaderstats/backpacks for brainrot items
+    -- scan backpacks/characters
     pcall(function()
         for _, plr in pairs(Players:GetPlayers()) do
             pcall(function()
-                -- check backpack
                 for _, item in pairs(plr.Backpack:GetChildren()) do
                     pcall(function()
-                        if isOG(item.Name) then
-                            if not ogPlayers[plr.Name] then ogPlayers[plr.Name] = {} end
-                            local alreadyHas = false
-                            for _, existing in pairs(ogPlayers[plr.Name]) do
-                                if existing == item.Name then alreadyHas = true; break end
-                            end
-                            if not alreadyHas then table.insert(ogPlayers[plr.Name], item.Name) end
-                        end
+                        if isOG(item.Name) then addToGlobalOGDB(plr.Name, item.Name, "LOCAL") end
                     end)
                 end
-                -- check character tools
                 if plr.Character then
                     for _, item in pairs(plr.Character:GetChildren()) do
                         pcall(function()
-                            if item:IsA("Tool") and isOG(item.Name) then
-                                if not ogPlayers[plr.Name] then ogPlayers[plr.Name] = {} end
-                                local alreadyHas = false
-                                for _, existing in pairs(ogPlayers[plr.Name]) do
-                                    if existing == item.Name then alreadyHas = true; break end
-                                end
-                                if not alreadyHas then table.insert(ogPlayers[plr.Name], item.Name) end
-                            end
+                            if item:IsA("Tool") and isOG(item.Name) then addToGlobalOGDB(plr.Name, item.Name, "LOCAL") end
                         end)
                     end
                 end
@@ -1073,51 +1206,35 @@ local function scanAllPlayersForOGs()
         end
     end)
 
-    return ogPlayers
+    -- mark players who left as not in server
+    for pName, data in pairs(globalOGDB) do
+        if data.inServer and not Players:FindFirstChild(pName) then
+            data.inServer = false
+            data.source = "GLOBAL"
+        end
+    end
+
+    -- auto duel in-server OG players
+    if state.autoDuel then
+        for pName, data in pairs(globalOGDB) do
+            if data.inServer and pName ~= LP.Name then
+                spawn(function()
+                    pcall(function()
+                        local target = Players:FindFirstChild(pName)
+                        if target then
+                            if remotes.duelSend then remotes.duelSend:FireServer(target)
+                            elseif remotes.duelSendRF then remotes.duelSendRF:InvokeServer(target) end
+                        end
+                    end)
+                end)
+            end
+        end
+    end
 end
 
 local function refreshOGPlayers()
-    local ogPlayers = scanAllPlayersForOGs()
-
-    local count = 0
-    for playerName, brainrots in pairs(ogPlayers) do
-        count = count + 1
-        addOGPlayerRow(playerName, brainrots)
-
-        -- auto duel if enabled
-        if state.autoDuel and playerName ~= LP.Name then
-            spawn(function()
-                pcall(function()
-                    local targetPlayer = Players:FindFirstChild(playerName)
-                    if targetPlayer then
-                        if remotes.duelSend then
-                            remotes.duelSend:FireServer(targetPlayer)
-                        elseif remotes.duelSendRF then
-                            remotes.duelSendRF:InvokeServer(targetPlayer)
-                        end
-                    end
-                end)
-            end)
-        end
-    end
-
-    -- remove rows for players who no longer have OGs or left
-    for pName, rowFrame in pairs(ogPlayerRows) do
-        if not ogPlayers[pName] then
-            pcall(function() rowFrame:Destroy() end)
-            ogPlayerRows[pName] = nil
-        end
-    end
-
-    state.ogCaught = count
-    caughtLabel.Text = count .. " caught"
-    ogCountLabel.Text = count .. " OG players"
-    if count == 0 then
-        ogWaiting.Visible = true
-        ogWaiting.Text = "no OG players found — rescanning..."
-    else
-        ogWaiting.Visible = false
-    end
+    scanAllPlayersForOGs()
+    refreshOGDisplay()
 end
 
 -- ════════════════════ PAGE: TRACK ════════════════════
@@ -1476,7 +1593,8 @@ end
 
 makeSettingRow("Sound Alerts", "soundAlerts", 1)
 makeSettingRow("Auto Track New Players", "autoTrack", 2)
-makeSettingRow("Auto Server Hop", "serverHop", 3)
+makeSettingRow("Auto Duel OG Players", "autoDuel", 3)
+makeSettingRow("Auto Server Hop", "serverHop", 4)
 
 -- server hop now button
 local hopNowBtn = Instance.new("TextButton")
@@ -1488,7 +1606,7 @@ hopNowBtn.TextColor3 = Theme.text
 hopNowBtn.Text = "HOP SERVER NOW"
 hopNowBtn.AutoButtonColor = false
 hopNowBtn.ZIndex = 3
-hopNowBtn.LayoutOrder = 4
+hopNowBtn.LayoutOrder = 5
 hopNowBtn.Parent = settingsScroll
 corner(hopNowBtn, 8)
 hoverFx(hopNowBtn, Theme.accentDim, Theme.accent)
@@ -1530,7 +1648,7 @@ statsRow.Size = UDim2.new(1, -8, 0, 60)
 statsRow.BackgroundColor3 = Theme.bgCard
 statsRow.BorderSizePixel = 0
 statsRow.ZIndex = 3
-statsRow.LayoutOrder = 5
+statsRow.LayoutOrder = 6
 statsRow.Parent = settingsScroll
 corner(statsRow, 8)
 
@@ -1560,7 +1678,7 @@ remoteLbl.Size = UDim2.new(1, -8, 0, 26)
 remoteLbl.BackgroundColor3 = Theme.bgCard
 remoteLbl.BorderSizePixel = 0
 remoteLbl.ZIndex = 3
-remoteLbl.LayoutOrder = 6
+remoteLbl.LayoutOrder = 7
 remoteLbl.Parent = settingsScroll
 corner(remoteLbl, 6)
 
@@ -1652,11 +1770,10 @@ local function logSpawn(playerName, brainrotName, isOGSpawn, source)
     -- auto-track every player from live spawns
     addTrackEntry(playerName, brainrotName, isOGSpawn, src)
 
-    -- if OG, add to OG player list and fleece queue
+    -- if OG, add to global database and fleece queue
     if isOGSpawn then
-        -- OG player row is handled by the active scanner (refreshOGPlayers)
-        -- but trigger an immediate rescan so it shows up fast
-        spawn(function() pcall(refreshOGPlayers) end)
+        addToGlobalOGDB(playerName, brainrotName, src)
+        spawn(function() pcall(refreshOGDisplay) end)
 
         -- add to fleece queue if auto-fleece is on
         if state.autoFleece then
