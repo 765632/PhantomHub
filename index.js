@@ -193,9 +193,21 @@ app.listen(PORT, () => {
 
 const slashCommands = [];
 
+const SCRIPTS = {
+    "code-sniper": { label: "Code Sniper", loader: "https://raw.githubusercontent.com/765632/PhantomHub/master/loader.lua" },
+    "og-sniper":   { label: "OG Sniper",   loader: "https://raw.githubusercontent.com/765632/PhantomHub/master/og_loader.lua" },
+    "auto-joiner": { label: "Auto Joiner",  loader: "https://raw.githubusercontent.com/765632/PhantomHub/master/aj_loader.lua" },
+};
+
 const createKeyCmd = new SlashCommandBuilder()
     .setName("create-key").setDescription("Generate a PhantomHub key")
     .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator)
+    .addStringOption(o => o.setName("script").setDescription("Which script this key is for").setRequired(true)
+        .addChoices(
+            { name: "Code Sniper", value: "code-sniper" },
+            { name: "OG Sniper", value: "og-sniper" },
+            { name: "Auto Joiner", value: "auto-joiner" },
+        ))
     .addStringOption(o => o.setName("duration").setDescription("How long the key lasts").setRequired(true)
         .addChoices(
             { name: "5 Hours", value: "5h" }, { name: "12 Hours", value: "12h" },
@@ -256,6 +268,26 @@ slashCommands.push(new SlashCommandBuilder().setName("check-purchase").setDescri
 slashCommands.push(new SlashCommandBuilder().setName("ticket-setup").setDescription("Create the ticket category + panel channel (admin)")
     .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator));
 
+slashCommands.push(new SlashCommandBuilder().setName("disable-key").setDescription("View & disable keys by script category")
+    .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator)
+    .addStringOption(o => o.setName("script").setDescription("Filter by script").setRequired(true)
+        .addChoices(
+            { name: "Code Sniper", value: "code-sniper" },
+            { name: "OG Sniper", value: "og-sniper" },
+            { name: "Auto Joiner", value: "auto-joiner" },
+            { name: "All", value: "all" },
+        ))
+    .addStringOption(o => o.setName("key").setDescription("Specific key to disable (leave empty to list)")));
+
+slashCommands.push(new SlashCommandBuilder().setName("script-panel").setDescription("Send the script panel embed for a channel (admin)")
+    .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator)
+    .addStringOption(o => o.setName("script").setDescription("Which script panel").setRequired(true)
+        .addChoices(
+            { name: "Code Sniper", value: "code-sniper" },
+            { name: "OG Sniper", value: "og-sniper" },
+            { name: "Auto Joiner", value: "auto-joiner" },
+        )));
+
 // ══════════════════════════════════════════════════
 // ── COMMAND HANDLERS                            ──
 // ══════════════════════════════════════════════════
@@ -267,12 +299,15 @@ function hasStaffRole(interaction) {
 async function handleCreateKey(interaction) {
     if (interaction.user.id !== interaction.guild.ownerId) return interaction.reply({ embeds: [embed("🔒 No Access", "Only the server owner can generate keys.", CLR.error)], ephemeral: true });
     const duration = interaction.options.getString("duration");
+    const scriptType = interaction.options.getString("script");
     const amount = interaction.options.getInteger("amount") || 1;
     const durInfo = DURATIONS[duration];
+    const scriptInfo = SCRIPTS[scriptType];
     const generated = [];
     for (let i = 0; i < amount; i++) {
         const key = generateKey();
-        keys[key] = { duration, label: durInfo.label, createdAt: Date.now(), createdBy: interaction.user.id,
+        keys[key] = { duration, label: durInfo.label, script: scriptType, scriptLabel: scriptInfo.label,
+            createdAt: Date.now(), createdBy: interaction.user.id,
             redeemedBy: null, redeemedAt: null, expiresAt: null, expired: false, hwid: null };
         generated.push(key);
     }
@@ -280,13 +315,15 @@ async function handleCreateKey(interaction) {
     if (amount === 1) {
         return interaction.reply({ embeds: [embed("🔐 Key Generated", null, CLR.key).addFields(
             { name: "Key", value: `\`\`\`${generated[0]}\`\`\``, inline: false },
+            { name: "Script", value: scriptInfo.label, inline: true },
             { name: "Duration", value: durInfo.label, inline: true },
             { name: "Status", value: "🟢 Unused", inline: true },
         )], ephemeral: true });
     }
     const keyList = generated.map((k, i) => `**${i + 1}.** \`${k}\``).join("\n");
     return interaction.reply({ embeds: [embed(`🔐 ${amount} Keys Generated`, keyList, CLR.key)
-        .addFields({ name: "Duration", value: durInfo.label, inline: true })], ephemeral: true });
+        .addFields({ name: "Script", value: scriptInfo.label, inline: true },
+            { name: "Duration", value: durInfo.label, inline: true })], ephemeral: true });
 }
 
 async function handleRedeem(interaction) {
@@ -317,8 +354,10 @@ async function handleKeyInfo(interaction) {
     let status = "🟢 Unused";
     if (data.expired) status = "🔴 Expired";
     else if (data.redeemedBy) status = "🟡 Redeemed";
+    const scriptLabel = data.scriptLabel || data.script || "Code Sniper";
     const fields = [
         { name: "Key", value: `\`${inputKey}\``, inline: false },
+        { name: "Script", value: scriptLabel, inline: true },
         { name: "Duration", value: data.label, inline: true },
         { name: "Status", value: status, inline: true },
         { name: "HWID", value: data.hwid ? `\`${data.hwid.slice(0, 12)}...\`` : "Not set", inline: true },
@@ -341,7 +380,8 @@ async function handleKeyList(interaction) {
     const recent = filtered.slice(-20).reverse();
     const lines = recent.map(([k, d]) => {
         let s = d.expired ? "🔴" : d.redeemedBy ? "🟡" : "🟢";
-        return `${s} \`${k}\` — ${d.label}${d.redeemedBy ? ` — <@${d.redeemedBy}>` : ""}`;
+        const sl = d.scriptLabel || d.script || "CS";
+        return `${s} \`${k}\` — ${sl} — ${d.label}${d.redeemedBy ? ` — <@${d.redeemedBy}>` : ""}`;
     });
     return interaction.reply({ embeds: [embed(`🔑 Keys (${filter})`, lines.join("\n"), CLR.accent)
         .addFields({ name: "Showing", value: `${recent.length}/${filtered.length}`, inline: true },
@@ -366,6 +406,154 @@ async function handleRevoke(interaction) {
         }
     }
     return interaction.reply({ embeds: [embed("🔴 Revoked", `\`${inputKey}\` revoked.${data.redeemedBy ? ` <@${data.redeemedBy}> access removed.` : ""}`, CLR.error)], ephemeral: true });
+}
+
+async function handleDisableKey(interaction) {
+    if (interaction.user.id !== interaction.guild.ownerId) return interaction.reply({ embeds: [embed("🔒 No Access", "Only the server owner can disable keys.", CLR.error)], ephemeral: true });
+    const scriptFilter = interaction.options.getString("script");
+    const specificKey = interaction.options.getString("key");
+
+    // if a specific key was given, disable it
+    if (specificKey) {
+        const keyUpper = specificKey.trim().toUpperCase();
+        const data = keys[keyUpper];
+        if (!data) return interaction.reply({ embeds: [embed("❌ Not Found", "Key doesn't exist.", CLR.error)], ephemeral: true });
+
+        data.expired = true;
+        saveKeys(keys);
+
+        // remove verified role if no other active keys
+        if (data.redeemedBy) {
+            const verifiedRole = interaction.guild.roles.cache.find(r => r.name === "✅ Verified");
+            if (verifiedRole) {
+                try {
+                    const member = await interaction.guild.members.fetch(data.redeemedBy);
+                    const hasOther = Object.values(keys).some(kd => kd.redeemedBy === data.redeemedBy && !kd.expired && kd !== data);
+                    if (!hasOther) await member.roles.remove(verifiedRole);
+                } catch {}
+            }
+        }
+
+        const scriptLabel = data.scriptLabel || data.script || "Code Sniper";
+        return interaction.reply({ embeds: [embed("🔴 Key Disabled", [
+            `\`${keyUpper}\` has been disabled.`,
+            "",
+            `**Script:** ${scriptLabel}`,
+            `**Duration:** ${data.label}`,
+            data.redeemedBy ? `**User:** <@${data.redeemedBy}>` : "**User:** Unredeemed",
+        ].join("\n"), CLR.error)], ephemeral: true });
+    }
+
+    // no specific key — list all active keys for this category
+    let filtered = Object.entries(keys);
+    if (scriptFilter !== "all") {
+        filtered = filtered.filter(([, d]) => {
+            const keyScript = d.script || "code-sniper"; // default old keys to code-sniper
+            return keyScript === scriptFilter;
+        });
+    }
+
+    // only show redeemed + active keys
+    const active = filtered.filter(([, d]) => d.redeemedBy && !d.expired);
+    const unused = filtered.filter(([, d]) => !d.redeemedBy && !d.expired);
+
+    if (!active.length && !unused.length) {
+        const label = scriptFilter === "all" ? "any category" : (SCRIPTS[scriptFilter]?.label || scriptFilter);
+        return interaction.reply({ embeds: [embed("📭 No Keys", `No keys found for **${label}**.`, CLR.dark)], ephemeral: true });
+    }
+
+    const lines = [];
+
+    if (active.length) {
+        lines.push("**🟡 Active (Redeemed)**");
+        for (const [k, d] of active.slice(0, 15)) {
+            const scriptLabel = d.scriptLabel || d.script || "Code Sniper";
+            const expires = d.expiresAt === "never" ? "♾️" : `<t:${Math.floor(d.expiresAt / 1000)}:R>`;
+            lines.push(`\`${k}\` — <@${d.redeemedBy}> — ${scriptLabel} — ${expires}`);
+        }
+        if (active.length > 15) lines.push(`*...and ${active.length - 15} more*`);
+    }
+
+    if (unused.length) {
+        lines.push("");
+        lines.push("**🟢 Unused**");
+        for (const [k, d] of unused.slice(0, 10)) {
+            const scriptLabel = d.scriptLabel || d.script || "Code Sniper";
+            lines.push(`\`${k}\` — ${scriptLabel} — ${d.label}`);
+        }
+        if (unused.length > 10) lines.push(`*...and ${unused.length - 10} more*`);
+    }
+
+    const filterLabel = scriptFilter === "all" ? "All Scripts" : (SCRIPTS[scriptFilter]?.label || scriptFilter);
+    return interaction.reply({ embeds: [embed(`🔑 Keys — ${filterLabel}`, lines.join("\n"), CLR.accent)
+        .addFields(
+            { name: "Active", value: `${active.length}`, inline: true },
+            { name: "Unused", value: `${unused.length}`, inline: true },
+            { name: "Total", value: `${filtered.length}`, inline: true },
+        )
+        .setFooter({ text: "Use /disable-key script:<type> key:<key> to disable a specific key" })
+    ], ephemeral: true });
+}
+
+async function handleScriptPanel(interaction) {
+    if (interaction.user.id !== interaction.guild.ownerId) return interaction.reply({ embeds: [embed("🔒 No Access", "Only the server owner.", CLR.error)], ephemeral: true });
+    const scriptType = interaction.options.getString("script");
+    const scriptInfo = SCRIPTS[scriptType];
+
+    const titles = {
+        "code-sniper": "👻 PhantomHub Code Sniper",
+        "og-sniper": "🎯 PhantomHub OG Sniper",
+        "auto-joiner": "🔄 PhantomHub Auto Joiner",
+    };
+
+    const descriptions = {
+        "code-sniper": [
+            "Auto code redeemer, riddler solver, and more for Steal a Brainrot.",
+            "",
+            "**Features:**",
+            "• Auto Code Redeemer — snipes every code instantly",
+            "• Auto Riddler — 3,200+ answers + AI fallback",
+            "• Anti-Lag, Anti-Die, Anti-Ragdoll",
+            "• Clean dark-themed GUI",
+        ],
+        "og-sniper": [
+            "Real-time OG brainrot tracker and auto-fleece for Steal a Brainrot.",
+            "",
+            "**Features:**",
+            "• Live spawn feed — see every claim in real time",
+            "• OG detection — highlights rare brainrot claims",
+            "• Player tracking — watch specific users",
+            "• Auto Fleece — auto-trade players who get OGs",
+            "• Server hop for maximum coverage",
+        ],
+        "auto-joiner": [
+            "Auto server joiner for Steal a Brainrot.",
+            "",
+            "**Features:**",
+            "• Auto-join servers on boot",
+            "• Smart server selection",
+            "• Rejoin on disconnect",
+        ],
+    };
+
+    const panelEmbed = embed(titles[scriptType] || scriptInfo.label, [
+        ...(descriptions[scriptType] || ["Premium script for Steal a Brainrot."]),
+        "",
+        "Use the buttons below to get started 👇",
+    ].join("\n"), CLR.dark);
+
+    const row1 = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId("view_script").setLabel("📥 View Script").setStyle(ButtonStyle.Success),
+        new ButtonBuilder().setCustomId("redeem_key").setLabel("🔑 Redeem Key").setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId("key_info").setLabel("ℹ️ Key Info").setStyle(ButtonStyle.Secondary),
+    );
+    const row2 = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId("reset_hwid").setLabel("🔄 Reset HWID").setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId("get_buyer_role").setLabel("🏷️ Buyer Role").setStyle(ButtonStyle.Secondary),
+    );
+
+    await interaction.channel.send({ embeds: [panelEmbed], components: [row1, row2] });
+    return interaction.reply({ content: `${scriptInfo.label} panel sent.`, ephemeral: true });
 }
 
 async function handleBrainrot(interaction) {
@@ -795,6 +983,8 @@ client.on("interactionCreate", async (interaction) => {
             if (n === "ticket-setup") return handleTicketSetup(interaction);
             if (n === "ticket-panel") return handleTicketPanel(interaction);
             if (n === "close") return closeTicket(interaction);
+            if (n === "disable-key") return handleDisableKey(interaction);
+            if (n === "script-panel") return handleScriptPanel(interaction);
         }
 
         if (interaction.isButton()) {
@@ -804,22 +994,31 @@ client.on("interactionCreate", async (interaction) => {
                 const hasVerified = interaction.member.roles.cache.some(r => r.name === "✅ Verified");
                 if (!hasVerified) return interaction.reply({ embeds: [embed("🔒 Access Denied", "You need a valid key.\nClick **Redeem Key** to activate.", CLR.error)], ephemeral: true });
 
-                const userKey = Object.entries(keys).find(([, d]) => d.redeemedBy === interaction.user.id && !d.expired);
-                if (!userKey) return interaction.reply({ embeds: [embed("🔒 No Key", "No active key found.", CLR.error)], ephemeral: true });
+                // find ALL active keys for this user
+                const userKeys = Object.entries(keys).filter(([, d]) => d.redeemedBy === interaction.user.id && !d.expired);
+                if (!userKeys.length) return interaction.reply({ embeds: [embed("🔒 No Key", "No active key found.", CLR.error)], ephemeral: true });
 
-                const [keyStr, data] = userKey;
-                const expiresStr = data.expiresAt === "never" ? "Never (Lifetime)" : `<t:${Math.floor(data.expiresAt / 1000)}:R>`;
+                const sections = [];
+                for (const [keyStr, data] of userKeys) {
+                    const scriptType = data.script || "code-sniper";
+                    const scriptInfo = SCRIPTS[scriptType] || SCRIPTS["code-sniper"];
+                    const loaderUrl = scriptInfo.loader;
+                    const expiresStr = data.expiresAt === "never" ? "Never (Lifetime)" : `<t:${Math.floor(data.expiresAt / 1000)}:R>`;
+                    const userScript = `script_key="${keyStr}"; loadstring(game:HttpGet("${loaderUrl}"))()`;
 
-                // Per-user loadstring — uses the loader, never exposes raw source
-                const userScript = `script_key="${keyStr}"; loadstring(game:HttpGet("https://raw.githubusercontent.com/765632/PhantomHub/master/loader.lua"))()`;
+                    sections.push([
+                        `**${scriptInfo.label}**`,
+                        "```lua", userScript, "```",
+                        `Key: \`${keyStr}\` — Expires: ${expiresStr} — HWID: ${data.hwid ? "Locked" : "Not set"}`,
+                    ].join("\n"));
+                }
 
-                return interaction.reply({ embeds: [embed("📥 PhantomHub Script", [
+                return interaction.reply({ embeds: [embed("📥 Your Scripts", [
                     "Copy and paste into your executor:",
-                    "", "```lua", userScript, "```", "",
-                    `**Key:** \`${keyStr}\``,
-                    `**Expires:** ${expiresStr}`,
-                    `**HWID Locked:** ${data.hwid ? "Yes" : "Locks on first use"}`,
-                    "", "⚠️ Do not share — your HWID is locked to this key.",
+                    "",
+                    ...sections,
+                    "",
+                    "⚠️ Do not share — your HWID is locked to each key.",
                 ].join("\n"), CLR.success)], ephemeral: true });
             }
 

@@ -69,7 +69,7 @@
     "redeemedBy": "1531682962398248960",
     "redeemedAt": 1792631595642,
     "expiresAt": 1792649595642,
-    "expired": false,
+    "expired": true,
     "hwid": null
   },
   "PH-AVUEV-6ZJCA-ULELM": {
