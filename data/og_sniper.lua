@@ -647,10 +647,156 @@ ogLogFrame.Parent = pageOG
 local ogScroll, ogList = makeScrollFeed(ogLogFrame)
 
 local ogWaiting = makeLabel(ogLogFrame, {
-    text = "waiting for logs...", font = Enum.Font.Gotham, size = 12,
+    text = "scanning for OGs...", font = Enum.Font.Gotham, size = 12,
     color = Theme.textMuted, align = Enum.TextXAlignment.Center,
     sz = UDim2.new(1, 0, 0, 30), pos = UDim2.new(0, 0, 0.3, 0), z = 4
 })
+
+local function addOGLogRow(playerName, brainrotName, srcTag)
+    if ogWaiting.Visible then ogWaiting.Visible = false end
+
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, -8, 0, 48)
+    row.BackgroundColor3 = Color3.fromRGB(30, 25, 10)
+    row.BorderSizePixel = 0
+    row.ZIndex = 3
+    row.LayoutOrder = -os.clock() * 1000
+    row.Parent = ogScroll
+    corner(row, 8)
+    stroke(row, Theme.ogGold, 1)
+
+    -- avatar thumbnail
+    local thumb = Instance.new("ImageLabel")
+    thumb.Size = UDim2.new(0, 34, 0, 34)
+    thumb.Position = UDim2.new(0, 7, 0.5, -17)
+    thumb.BackgroundColor3 = Theme.accentDim
+    thumb.BorderSizePixel = 0
+    thumb.ZIndex = 4
+    thumb.Parent = row
+    corner(thumb, 6)
+
+    -- load avatar async
+    spawn(function()
+        pcall(function()
+            local plr = Players:FindFirstChild(playerName)
+            if plr then
+                local content = Players:GetUserThumbnailAsync(plr.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+                thumb.Image = content
+            else
+                -- try by username lookup for cross-server players
+                local uid = nil
+                pcall(function()
+                    uid = Players:GetUserIdFromNameAsync(playerName)
+                end)
+                if uid then
+                    local content = Players:GetUserThumbnailAsync(uid, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+                    thumb.Image = content
+                end
+            end
+        end)
+    end)
+
+    -- username
+    local userLbl = Instance.new("TextLabel")
+    userLbl.Size = UDim2.new(0, 140, 0, 16)
+    userLbl.Position = UDim2.new(0, 48, 0, 5)
+    userLbl.BackgroundTransparency = 1
+    userLbl.Font = Enum.Font.GothamBold
+    userLbl.TextSize = 12
+    userLbl.TextColor3 = Theme.white
+    userLbl.TextXAlignment = Enum.TextXAlignment.Left
+    userLbl.Text = playerName
+    userLbl.TextTruncate = Enum.TextTruncate.AtEnd
+    userLbl.ZIndex = 4
+    userLbl.TextTransparency = 1
+    userLbl.Parent = row
+
+    -- brainrot name + time + source
+    local timeStr = os.date("%H:%M:%S")
+    local subText = "★ " .. brainrotName .. "  ·  " .. timeStr
+    if srcTag and srcTag ~= "" then subText = subText .. "  " .. srcTag end
+
+    local brLbl = Instance.new("TextLabel")
+    brLbl.Size = UDim2.new(0, 200, 0, 12)
+    brLbl.Position = UDim2.new(0, 48, 0, 23)
+    brLbl.BackgroundTransparency = 1
+    brLbl.Font = Enum.Font.Gotham
+    brLbl.TextSize = 9
+    brLbl.TextColor3 = Theme.ogGold
+    brLbl.TextXAlignment = Enum.TextXAlignment.Left
+    brLbl.Text = subText
+    brLbl.TextTruncate = Enum.TextTruncate.AtEnd
+    brLbl.ZIndex = 4
+    brLbl.TextTransparency = 1
+    brLbl.Parent = row
+
+    -- copy username button
+    local copyBtn = Instance.new("TextButton")
+    copyBtn.Size = UDim2.new(0, 42, 0, 22)
+    copyBtn.Position = UDim2.new(1, -50, 0.5, -11)
+    copyBtn.BackgroundColor3 = Theme.accentDim
+    copyBtn.Font = Enum.Font.GothamBold
+    copyBtn.TextSize = 9
+    copyBtn.TextColor3 = Theme.text
+    copyBtn.Text = "COPY"
+    copyBtn.AutoButtonColor = false
+    copyBtn.ZIndex = 4
+    copyBtn.Parent = row
+    corner(copyBtn, 5)
+    hoverFx(copyBtn, Theme.accentDim, Theme.accent)
+
+    copyBtn.MouseButton1Click:Connect(function()
+        pcall(function()
+            if setclipboard then
+                setclipboard(playerName)
+            elseif toclipboard then
+                toclipboard(playerName)
+            elseif Clipboard and Clipboard.set then
+                Clipboard.set(playerName)
+            end
+        end)
+        copyBtn.Text = "✓"
+        copyBtn.BackgroundColor3 = Theme.success
+        copyBtn.TextColor3 = Theme.bg
+        task.delay(1.2, function()
+            pcall(function()
+                copyBtn.Text = "COPY"
+                copyBtn.BackgroundColor3 = Theme.accentDim
+                copyBtn.TextColor3 = Theme.text
+            end)
+        end)
+    end)
+
+    -- fade in everything
+    row.BackgroundTransparency = 1
+    copyBtn.BackgroundTransparency = 1
+    copyBtn.TextTransparency = 1
+    thumb.ImageTransparency = 1
+    thumb.BackgroundTransparency = 1
+    local fadeInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    TweenService:Create(row, fadeInfo, { BackgroundTransparency = 0 }):Play()
+    TweenService:Create(userLbl, fadeInfo, { TextTransparency = 0 }):Play()
+    TweenService:Create(brLbl, fadeInfo, { TextTransparency = 0 }):Play()
+    TweenService:Create(copyBtn, fadeInfo, { BackgroundTransparency = 0, TextTransparency = 0 }):Play()
+    TweenService:Create(thumb, fadeInfo, { ImageTransparency = 0, BackgroundTransparency = 0 }):Play()
+    local rowStroke = row:FindFirstChildWhichIsA("UIStroke")
+    if rowStroke then rowStroke.Transparency = 1; TweenService:Create(rowStroke, fadeInfo, { Transparency = 0 }):Play() end
+
+    -- cap entries at 100
+    local children = ogScroll:GetChildren()
+    local count = 0
+    for _, c in pairs(children) do if c:IsA("Frame") then count = count + 1 end end
+    if count > 100 then
+        local oldest, oldestOrder = nil, math.huge
+        for _, c in pairs(children) do
+            if c:IsA("Frame") and c.LayoutOrder < oldestOrder then
+                oldestOrder = c.LayoutOrder
+                oldest = c
+            end
+        end
+        if oldest then oldest:Destroy() end
+    end
+end
 
 local function addOGCard(playerName, brainrotName)
     local card = Instance.new("Frame")
@@ -1260,7 +1406,7 @@ local function logSpawn(playerName, brainrotName, isOGSpawn, source)
         caughtLabel.Text = state.ogCaught .. " caught"
 
         if ogWaiting.Visible then ogWaiting.Visible = false end
-        addLogEntry(ogScroll, "★ [" .. timestamp .. "]" .. srcTag .. " " .. playerName .. " claimed " .. brainrotName, Theme.ogGold, true)
+        addOGLogRow(playerName, brainrotName, srcTag)
         addOGCard(playerName, brainrotName)
 
         -- add to fleece queue if auto-fleece is on
