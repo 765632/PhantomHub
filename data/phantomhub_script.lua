@@ -6,59 +6,7 @@ local MAINTENANCE_MSG = "PhantomHub is currently under maintenance. Check back s
 
 if MAINTENANCE then
     pcall(function()
-        local sg = Instance.new("ScreenGui")
-        sg.Name = "PhantomMaintenance"
-        sg.ResetOnSpawn = false
-        sg.DisplayOrder = 99999
-        sg.IgnoreGuiInset = true
-        if not pcall(function() sg.Parent = game:GetService("CoreGui") end) then
-            sg.Parent = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-        end
-        local bg = Instance.new("Frame")
-        bg.Size = UDim2.new(1, 0, 1, 0)
-        bg.BackgroundColor3 = Color3.fromRGB(4, 4, 4)
-        bg.BorderSizePixel = 0
-        bg.Parent = sg
-        local title = Instance.new("TextLabel")
-        title.Size = UDim2.new(0.8, 0, 0, 40)
-        title.Position = UDim2.new(0.1, 0, 0.38, 0)
-        title.BackgroundTransparency = 1
-        title.Text = "PHANTOMHUB"
-        title.TextColor3 = Color3.fromRGB(255, 255, 255)
-        title.Font = Enum.Font.GothamBlack
-        title.TextSize = 32
-        title.Parent = bg
-        local msg = Instance.new("TextLabel")
-        msg.Size = UDim2.new(0.8, 0, 0, 30)
-        msg.Position = UDim2.new(0.1, 0, 0.46, 0)
-        msg.BackgroundTransparency = 1
-        msg.Text = MAINTENANCE_MSG
-        msg.TextColor3 = Color3.fromRGB(180, 180, 180)
-        msg.Font = Enum.Font.GothamMedium
-        msg.TextSize = 16
-        msg.TextWrapped = true
-        msg.Parent = bg
-        local dot = Instance.new("Frame")
-        dot.Size = UDim2.fromOffset(10, 10)
-        dot.Position = UDim2.new(0.5, -5, 0.54, 0)
-        dot.BackgroundColor3 = Color3.fromRGB(255, 60, 60)
-        dot.BorderSizePixel = 0
-        dot.Parent = bg
-        local c = Instance.new("UICorner")
-        c.CornerRadius = UDim.new(1, 0)
-        c.Parent = dot
-        -- pulse the dot
-        task.spawn(function()
-            local ts = game:GetService("TweenService")
-            while dot and dot.Parent do
-                ts:Create(dot, TweenInfo.new(0.8), { BackgroundTransparency = 0.7 }):Play()
-                task.wait(0.8)
-                ts:Create(dot, TweenInfo.new(0.8), { BackgroundTransparency = 0 }):Play()
-                task.wait(0.8)
-            end
-        end)
-        -- auto-dismiss after 8 seconds
-        task.delay(8, function() pcall(function() sg:Destroy() end) end)
+        game:GetService("Players").LocalPlayer:Kick("\n\n⚙️ PhantomHub is currently updating.\n\nPlease rejoin in a few minutes.\n")
     end)
     return
 end
