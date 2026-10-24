@@ -30,7 +30,8 @@ local CONFIG = {
     PERSIST          = true,    -- queue_on_teleport for persistence
 }
 
--- ════════════════════ KEY SYSTEM ════════════════════
+-- ════════════════════ KEY + HTTP ════════════════════
+-- loader already validated the key — just grab it for persistence
 local USER_KEY = getgenv().phantom_key or getgenv().script_key or ""
 
 local function httpReq(url, method, payload)
@@ -62,104 +63,28 @@ local function httpReq(url, method, payload)
     return nil
 end
 
-local function getHWID()
-    local hwid = ""
-    pcall(function() hwid = game:GetService("RbxAnalyticsService"):GetClientId() end)
-    if hwid == "" then pcall(function() hwid = tostring(LP.UserId) end) end
-    return hwid
-end
-
 local function getRegion()
     local code = "US"
     pcall(function() code = LocalizationService:GetCountryRegionForPlayerAsync(LP) end)
     return code
 end
 
-local keyValid = false
-local keyPlan = "UNKNOWN"
-local keyExpiry = 0
-
-local function validateKey()
-    if USER_KEY == "" then return false end
-
-    -- fetch keys.json from GitHub raw
-    local KEYS_URL = CONFIG.GITHUB_RAW .. "/data/keys.json?v=" .. tostring(tick())
-    local keysRaw = nil
-    local fetchOk = false
-
-    fetchOk = pcall(function() keysRaw = game:HttpGet(KEYS_URL, true) end)
-    if not fetchOk or not keysRaw or keysRaw == "" then
-        fetchOk = pcall(function() keysRaw = game:HttpGet(KEYS_URL) end)
-    end
-    if not fetchOk or not keysRaw or keysRaw == "" then
-        fetchOk = pcall(function() keysRaw = HttpService:GetAsync(KEYS_URL) end)
-    end
-    if not fetchOk or not keysRaw or keysRaw == "" then
-        fetchOk = pcall(function() local resp = httpReq(KEYS_URL) keysRaw = resp end)
-    end
-
-    if not keysRaw or keysRaw == "" then return false end
-
-    local keysOk, keysData
-    if type(keysRaw) == "string" then
-        keysOk, keysData = pcall(function() return HttpService:JSONDecode(keysRaw) end)
-    else
-        keysOk = true; keysData = keysRaw
-    end
-    if not keysOk or not keysData then return false end
-
-    local keyInfo = keysData[USER_KEY]
-    if not keyInfo then return false end
-    if keyInfo.expired == true then return false end
-    if keyInfo.redeemedBy == nil then return false end
-
-    if keyInfo.expiresAt ~= nil and keyInfo.expiresAt ~= "never" then
-        local expiresAtSec = tonumber(keyInfo.expiresAt)
-        if expiresAtSec then
-            expiresAtSec = expiresAtSec / 1000
-            if os.time() > expiresAtSec then return false end
-            keyExpiry = math.floor(expiresAtSec)
-        end
-    else
-        keyExpiry = 0 -- lifetime
-    end
-
-    keyPlan = (keyInfo.label or keyInfo.duration or "LIFETIME"):upper()
-    keyValid = true
-    return true
-end
-
-if not validateKey() then
-    LP:Kick("\n[PhantomHub AJ] Invalid or expired key.\nGet a key from the PhantomHub Discord.\ndiscord.gg/RvDUEm7hE")
-    return
-end
-
-local function getKeyTimeStr()
-    if keyExpiry == 0 then return "LIFETIME" end
-    local rem = keyExpiry - os.time()
-    if rem <= 0 then return "EXPIRED" end
-    local h = math.floor(rem / 3600)
-    local m = math.floor((rem % 3600) / 60)
-    return h > 0 and string.format("%dh %dm", h, m) or string.format("%dm", m)
-end
-
 -- ════════════════════ PERSISTENCE (queue_on_teleport) ════════════════════
-if CONFIG.PERSIST then
+local function queuePersist()
+    if not CONFIG.PERSIST then return end
     pcall(function()
         local persistSrc = 'getgenv().phantom_key = "' .. USER_KEY .. '"\n'
             .. 'getgenv().aj_auto_hop = true\n'
             .. 'getgenv().aj_servers_checked = ' .. tostring(getgenv().aj_servers_checked or 0) .. '\n'
             .. 'getgenv().aj_ogs_found = ' .. tostring(getgenv().aj_ogs_found or 0) .. '\n'
             .. 'loadstring(game:HttpGet("' .. CONFIG.GITHUB_RAW .. '/aj_loader.lua?v=" .. tostring(tick())))()\n'
-        if queue_on_teleport then
-            queue_on_teleport(persistSrc)
-        elseif (syn and syn.queue_on_teleport) then
-            syn.queue_on_teleport(persistSrc)
-        elseif (fluxus and fluxus.queue_on_teleport) then
-            fluxus.queue_on_teleport(persistSrc)
-        end
+        if queue_on_teleport then queue_on_teleport(persistSrc)
+        elseif (syn and syn.queue_on_teleport) then syn.queue_on_teleport(persistSrc)
+        elseif (fluxus and fluxus.queue_on_teleport) then fluxus.queue_on_teleport(persistSrc) end
     end)
 end
+
+queuePersist()
 
 -- ════════════════════ CLEANUP OLD GUI ════════════════════
 for _, g in ipairs(PG:GetChildren()) do
@@ -389,7 +314,7 @@ screenGui.Parent = PG
 local main = Instance.new("Frame")
 main.Name = "Main"
 main.AnchorPoint = Vector2.new(0.5, 0.5)
-main.Size = UDim2.new(0, 420, 0, 480)
+main.Size = UDim2.new(0, 560, 0, 580)
 main.Position = UDim2.new(0.5, 0, 0.5, 0)
 main.BackgroundColor3 = T.bg
 main.BorderSizePixel = 0
@@ -440,7 +365,7 @@ titleLbl.BackgroundTransparency = 1
 titleLbl.Text = "PHANTOMHUB"
 titleLbl.TextColor3 = T.accent
 titleLbl.Font = Enum.Font.GothamBlack
-titleLbl.TextSize = 14
+titleLbl.TextSize = 16
 titleLbl.TextXAlignment = Enum.TextXAlignment.Left
 titleLbl.Parent = topBar
 
@@ -457,8 +382,8 @@ subtitleLbl.Parent = topBar
 
 -- top bar pills (right side)
 local pillContainer = Instance.new("Frame")
-pillContainer.Size = UDim2.new(0, 250, 0, 24)
-pillContainer.Position = UDim2.new(1, -260, 0.5, -12)
+pillContainer.Size = UDim2.new(0, 320, 0, 24)
+pillContainer.Position = UDim2.new(1, -330, 0.5, -12)
 pillContainer.BackgroundTransparency = 1
 pillContainer.Parent = topBar
 
@@ -490,7 +415,7 @@ local function makePill(text, col)
     return pill, lbl
 end
 
-local keyPill, keyPillLbl = makePill(keyPlan .. " · " .. getKeyTimeStr(), T.ogGold)
+local keyPill, keyPillLbl = makePill("LIFETIME", T.ogGold)
 local regionPill = makePill(getRegion(), T.textMid)
 
 -- minimize button
@@ -577,9 +502,10 @@ end
 
 local statServers = statLbl("Servers: 0", 12, 44)
 local statOGs     = statLbl("OGs Found: 0", 12, 60, T.ogGold)
-local statPlayers = statLbl("Players: " .. #Players:GetPlayers() .. "/??", 140, 44)
-local statSession = statLbl("Session: 0m", 140, 60)
-local statJobId   = statLbl("Job: " .. game.JobId:sub(1, 8) .. "...", 270, 44, T.textDim)
+local statPlayers = statLbl("Players: " .. #Players:GetPlayers() .. "/??", 160, 44)
+local statSession = statLbl("Session: 0m", 160, 60)
+local statJobId   = statLbl("Job: " .. game.JobId:sub(1, 12) .. "...", 320, 44, T.textDim)
+local statRegion  = statLbl("Region: " .. getRegion(), 320, 60, T.textMid)
 
 -- control buttons row
 local ctrlRow = Instance.new("Frame")
@@ -636,10 +562,11 @@ local function colHeader(text, xOff, width)
     lbl.Parent = feedHeader
 end
 
-colHeader("BRAINROT", 4, 140)
-colHeader("OWNER", 150, 90)
-colHeader("RATE", 248, 70)
-colHeader("AGE", 326, 50)
+colHeader("BRAINROT", 4, 180)
+colHeader("OWNER", 195, 120)
+colHeader("RATE", 330, 80)
+colHeader("AGE", 430, 60)
+colHeader("SERVER", 495, 50)
 
 local feedScroll = Instance.new("ScrollingFrame")
 feedScroll.Size = UDim2.new(1, -20, 1, -185)
@@ -683,7 +610,7 @@ local function buildFeedEntry(det)
     local hl = isHighlighted(det.pet)
 
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, 0, 0, 36)
+    row.Size = UDim2.new(1, 0, 0, 40)
     row.BackgroundColor3 = T.bgCard
     row.BorderSizePixel = 0
     row.LayoutOrder = -(det.time or os.time())
@@ -704,52 +631,63 @@ local function buildFeedEntry(det)
 
     -- pet name
     local petLbl = Instance.new("TextLabel")
-    petLbl.Size = UDim2.new(0, 140, 1, 0)
+    petLbl.Size = UDim2.new(0, 180, 1, 0)
     petLbl.Position = UDim2.new(0, isOg and 12 or 8, 0, 0)
     petLbl.BackgroundTransparency = 1
     petLbl.Text = det.pet
     petLbl.TextColor3 = isOg and T.ogGold or T.text
     petLbl.Font = isOg and Enum.Font.GothamBold or Enum.Font.GothamMedium
-    petLbl.TextSize = 11
+    petLbl.TextSize = 12
     petLbl.TextXAlignment = Enum.TextXAlignment.Left
     petLbl.TextTruncate = Enum.TextTruncate.AtEnd
     petLbl.Parent = row
 
     -- owner
     local ownerLbl = Instance.new("TextLabel")
-    ownerLbl.Size = UDim2.new(0, 90, 1, 0)
-    ownerLbl.Position = UDim2.new(0, 150, 0, 0)
+    ownerLbl.Size = UDim2.new(0, 120, 1, 0)
+    ownerLbl.Position = UDim2.new(0, 195, 0, 0)
     ownerLbl.BackgroundTransparency = 1
     ownerLbl.Text = det.owner
     ownerLbl.TextColor3 = T.textMid
     ownerLbl.Font = Enum.Font.GothamMedium
-    ownerLbl.TextSize = 11
+    ownerLbl.TextSize = 12
     ownerLbl.TextXAlignment = Enum.TextXAlignment.Left
     ownerLbl.TextTruncate = Enum.TextTruncate.AtEnd
     ownerLbl.Parent = row
 
     -- rate
     local rateLbl = Instance.new("TextLabel")
-    rateLbl.Size = UDim2.new(0, 70, 1, 0)
-    rateLbl.Position = UDim2.new(0, 248, 0, 0)
+    rateLbl.Size = UDim2.new(0, 80, 1, 0)
+    rateLbl.Position = UDim2.new(0, 330, 0, 0)
     rateLbl.BackgroundTransparency = 1
     rateLbl.Text = det.rate
     rateLbl.TextColor3 = isOg and T.ogGold or T.textDim
     rateLbl.Font = Enum.Font.GothamMedium
-    rateLbl.TextSize = 10
+    rateLbl.TextSize = 11
     rateLbl.TextXAlignment = Enum.TextXAlignment.Left
     rateLbl.Parent = row
 
     -- age
     local ageLbl = Instance.new("TextLabel")
-    ageLbl.Size = UDim2.new(0, 50, 1, 0)
-    ageLbl.Position = UDim2.new(0, 326, 0, 0)
+    ageLbl.Size = UDim2.new(0, 60, 1, 0)
+    ageLbl.Position = UDim2.new(0, 430, 0, 0)
     ageLbl.BackgroundTransparency = 1
     ageLbl.Text = formatAge(os.time() - det.time)
     ageLbl.TextColor3 = T.textDim
     ageLbl.Font = Enum.Font.GothamMedium
-    ageLbl.TextSize = 10
+    ageLbl.TextSize = 11
     ageLbl.Parent = row
+
+    -- server indicator
+    local srvLbl = Instance.new("TextLabel")
+    srvLbl.Size = UDim2.new(0, 50, 1, 0)
+    srvLbl.Position = UDim2.new(0, 495, 0, 0)
+    srvLbl.BackgroundTransparency = 1
+    srvLbl.Text = (det.jobId == game.JobId) and "HERE" or det.jobId:sub(1, 6)
+    srvLbl.TextColor3 = (det.jobId == game.JobId) and T.success or T.textDim
+    srvLbl.Font = Enum.Font.GothamMedium
+    srvLbl.TextSize = 9
+    srvLbl.Parent = row
 
     -- hover
     row.MouseEnter:Connect(function() tween(row, {BackgroundColor3 = T.bgPill}) end)
@@ -776,7 +714,7 @@ end
 
 -- ════════════════════ SETTINGS PANEL (overlay) ════════════════════
 local settingsPanel = Instance.new("Frame")
-settingsPanel.Size = UDim2.new(1, -20, 0, 200)
+settingsPanel.Size = UDim2.new(1, -20, 0, 220)
 settingsPanel.Position = UDim2.new(0, 10, 0, 158)
 settingsPanel.BackgroundColor3 = T.bg
 settingsPanel.BorderSizePixel = 0
@@ -916,8 +854,8 @@ end)
 
 -- ════════════════════ MINIMIZED PILL ════════════════════
 local minPill = Instance.new("TextButton")
-minPill.Size = UDim2.new(0, 280, 0, 36)
-minPill.Position = UDim2.new(0.5, -140, 0, 12)
+minPill.Size = UDim2.new(0, 340, 0, 38)
+minPill.Position = UDim2.new(0.5, -170, 0, 12)
 minPill.BackgroundColor3 = T.bg
 minPill.Text = ""
 minPill.AutoButtonColor = false
@@ -987,11 +925,11 @@ local function minimizeUI()
     }):Play()
     task.wait(0.3)
     main.Visible = false
-    main.Size = UDim2.new(0, 420, 0, 480)
+    main.Size = UDim2.new(0, 560, 0, 580)
     minPill.Visible = true
     minPill.Size = UDim2.new(0, 0, 0, 36)
     TweenService:Create(minPill, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 280, 0, 36)
+        Size = UDim2.new(0, 340, 0, 38)
     }):Play()
 end
 
@@ -1001,11 +939,11 @@ local function restoreUI()
     TweenService:Create(minPill, TwnFast, {Size = UDim2.new(0, 0, 0, 36)}):Play()
     task.wait(0.15)
     minPill.Visible = false
-    minPill.Size = UDim2.new(0, 280, 0, 36)
+    minPill.Size = UDim2.new(0, 340, 0, 38)
     main.Size = UDim2.new(0, 0, 0, 0)
     main.Visible = true
     TweenService:Create(main, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 420, 0, 480),
+        Size = UDim2.new(0, 560, 0, 580),
     }):Play()
 end
 
@@ -1262,25 +1200,10 @@ end
 
 local function hopToServer(jobId)
     pcall(function()
-        -- update persistence globals before hop
         getgenv().aj_servers_checked = state.serversChecked
         getgenv().aj_ogs_found = state.ogsFound
         getgenv().aj_auto_hop = true
-
-        -- re-queue persistence script
-        if CONFIG.PERSIST then
-            pcall(function()
-                local persistSrc = 'getgenv().phantom_key = "' .. USER_KEY .. '"\n'
-                    .. 'getgenv().aj_auto_hop = true\n'
-                    .. 'getgenv().aj_servers_checked = ' .. tostring(state.serversChecked) .. '\n'
-                    .. 'getgenv().aj_ogs_found = ' .. tostring(state.ogsFound) .. '\n'
-                    .. 'loadstring(game:HttpGet("' .. CONFIG.GITHUB_RAW .. '/aj_loader.lua?v=" .. tostring(tick())))()\n'
-                if queue_on_teleport then queue_on_teleport(persistSrc)
-                elseif (syn and syn.queue_on_teleport) then syn.queue_on_teleport(persistSrc)
-                elseif (fluxus and fluxus.queue_on_teleport) then fluxus.queue_on_teleport(persistSrc) end
-            end)
-        end
-
+        queuePersist()
         TeleportService:TeleportToPlaceInstance(PLACE_ID, jobId, LP)
     end)
 end
@@ -1290,20 +1213,7 @@ local function hopRandom()
         getgenv().aj_servers_checked = state.serversChecked
         getgenv().aj_ogs_found = state.ogsFound
         getgenv().aj_auto_hop = state.hopping
-
-        if CONFIG.PERSIST then
-            pcall(function()
-                local persistSrc = 'getgenv().phantom_key = "' .. USER_KEY .. '"\n'
-                    .. 'getgenv().aj_auto_hop = ' .. tostring(state.hopping) .. '\n'
-                    .. 'getgenv().aj_servers_checked = ' .. tostring(state.serversChecked) .. '\n'
-                    .. 'getgenv().aj_ogs_found = ' .. tostring(state.ogsFound) .. '\n'
-                    .. 'loadstring(game:HttpGet("' .. CONFIG.GITHUB_RAW .. '/aj_loader.lua?v=" .. tostring(tick())))()\n'
-                if queue_on_teleport then queue_on_teleport(persistSrc)
-                elseif (syn and syn.queue_on_teleport) then syn.queue_on_teleport(persistSrc)
-                elseif (fluxus and fluxus.queue_on_teleport) then fluxus.queue_on_teleport(persistSrc) end
-            end)
-        end
-
+        queuePersist()
         TeleportService:Teleport(PLACE_ID, LP)
     end)
 end
@@ -1322,7 +1232,7 @@ local function updateStats()
     local mins = math.floor((os.time() - state.sessionStart) / 60)
     statSession.Text = "Session: " .. mins .. "m"
     minOGLbl.Text = tostring(state.ogsFound)
-    keyPillLbl.Text = keyPlan .. " · " .. getKeyTimeStr()
+    -- keyPillLbl updated by loader if needed
 
     -- update feed ages
     for _, e in ipairs(feedEntries) do
