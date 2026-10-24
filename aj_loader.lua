@@ -1,7 +1,10 @@
--- PhantomHub Auto Joiner Loader v1 (key validation + expiry check)
+-- PhantomHub Auto Joiner Loader v2 (API-first key validation)
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local LP = Players.LocalPlayer
+
+local API_BASE = "https://phantomhub.onrender.com"
+local GITHUB_RAW = "https://raw.githubusercontent.com/765632/PhantomHub/master"
 
 local function showMsg(text, color)
     pcall(function()
@@ -41,6 +44,23 @@ local function clearLoader()
     end)
 end
 
+local function httpGet(url)
+    local body = nil
+    pcall(function() body = game:HttpGet(url, true) end)
+    if not body or body == "" then pcall(function() body = game:HttpGet(url) end) end
+    if not body or body == "" then pcall(function() body = HttpService:GetAsync(url) end) end
+    if not body or body == "" then pcall(function() local r = request({Url = url, Method = "GET"}) body = r.Body end) end
+    if not body or body == "" then pcall(function() local r = http_request({Url = url, Method = "GET"}) body = r.Body end) end
+    return body
+end
+
+local function getHWID()
+    local hwid = ""
+    pcall(function() hwid = game:GetService("RbxAnalyticsService"):GetClientId() end)
+    if hwid == "" then pcall(function() hwid = tostring(LP.UserId) end) end
+    return hwid
+end
+
 -- ═══ KEY CHECK ═══
 local userKey = getgenv().phantom_key or getgenv().script_key or script_key or ""
 if userKey == "" then
@@ -50,59 +70,44 @@ end
 
 showMsg("[Auto Joiner] Validating key...", Color3.fromRGB(100, 200, 255))
 
-local KEYS_URL = "https://raw.githubusercontent.com/765632/PhantomHub/master/data/keys.json?v=" .. tostring(tick())
-local keysRaw = nil
-local fetchOk = false
-
-fetchOk = pcall(function() keysRaw = game:HttpGet(KEYS_URL, true) end)
-if not fetchOk or not keysRaw or keysRaw == "" then
-    fetchOk = pcall(function() keysRaw = game:HttpGet(KEYS_URL) end)
-end
-if not fetchOk or not keysRaw or keysRaw == "" then
-    fetchOk = pcall(function() keysRaw = HttpService:GetAsync(KEYS_URL) end)
-end
-if not fetchOk or not keysRaw or keysRaw == "" then
-    fetchOk = pcall(function() local resp = request({Url = KEYS_URL, Method = "GET"}) keysRaw = resp.Body end)
-end
-if not fetchOk or not keysRaw or keysRaw == "" then
-    fetchOk = pcall(function() local resp = http_request({Url = KEYS_URL, Method = "GET"}) keysRaw = resp.Body end)
-end
-
-if not keysRaw or keysRaw == "" then
-    showMsg("[Auto Joiner] Can't reach key server", Color3.fromRGB(255, 50, 50))
-    return
-end
-
-local keysOk, keysData = pcall(function() return HttpService:JSONDecode(keysRaw) end)
-if not keysOk or not keysData then
-    showMsg("[Auto Joiner] Key validation error", Color3.fromRGB(255, 50, 50))
-    return
-end
-
-local keyInfo = keysData[userKey]
-if not keyInfo then
-    LP:Kick("\n\n[PhantomHub Auto Joiner] Invalid key.\n\nGet a valid key at discord.gg/RvDUEm7hE\n")
-    return
-end
-
-if keyInfo.expired == true then
-    LP:Kick("\n\n[PhantomHub Auto Joiner] Key expired!\n\nGet a new key at discord.gg/RvDUEm7hE\n")
-    return
-end
-
-if keyInfo.expiresAt ~= nil and keyInfo.expiresAt ~= "never" then
-    local expiresAtSec = tonumber(keyInfo.expiresAt)
-    if expiresAtSec then
-        expiresAtSec = expiresAtSec / 1000
-        if os.time() > expiresAtSec then
-            LP:Kick("\n\n[PhantomHub Auto Joiner] Key expired!\n\nGet a new key at discord.gg/RvDUEm7hE\n")
-            return
+-- Method 1: Bot API (instant, no cache)
+local keyValid = false
+pcall(function()
+    local apiUrl = API_BASE .. "/api/validate?key=" .. userKey .. "&hwid=" .. getHWID()
+    local raw = httpGet(apiUrl)
+    if raw and raw ~= "" then
+        local ok, data = pcall(function() return HttpService:JSONDecode(raw) end)
+        if ok and data and data.valid then
+            keyValid = true
         end
     end
+end)
+
+-- Method 2: GitHub raw fallback
+if not keyValid then
+    pcall(function()
+        local keysRaw = httpGet(GITHUB_RAW .. "/data/keys.json?v=" .. tostring(tick()))
+        if keysRaw and keysRaw ~= "" then
+            local ok, keysData = pcall(function() return HttpService:JSONDecode(keysRaw) end)
+            if ok and keysData then
+                local keyInfo = keysData[userKey]
+                if keyInfo and keyInfo.redeemedBy and not keyInfo.expired then
+                    if keyInfo.expiresAt == nil or keyInfo.expiresAt == "never" then
+                        keyValid = true
+                    else
+                        local expiresAtSec = tonumber(keyInfo.expiresAt)
+                        if expiresAtSec then
+                            if os.time() < (expiresAtSec / 1000) then keyValid = true end
+                        end
+                    end
+                end
+            end
+        end
+    end)
 end
 
-if keyInfo.redeemedBy == nil then
-    LP:Kick("\n\n[PhantomHub Auto Joiner] Key not redeemed yet.\n\nRedeem it in the PhantomHub Discord first.\ndiscord.gg/RvDUEm7hE\n")
+if not keyValid then
+    LP:Kick("\n\n[PhantomHub Auto Joiner] Invalid or expired key.\n\nGet a key at discord.gg/RvDUEm7hE\n")
     return
 end
 
@@ -110,31 +115,20 @@ end
 clearLoader()
 showMsg("[Auto Joiner] Key valid — loading...", Color3.fromRGB(255, 190, 60))
 
-local SCRIPT_URL = "https://raw.githubusercontent.com/765632/PhantomHub/master/auto_joiner.lua?v=" .. tostring(tick())
-local src = nil
-local method = "none"
+local SCRIPT_URL = GITHUB_RAW .. "/auto_joiner.lua?v=" .. tostring(tick())
+local src = httpGet(SCRIPT_URL)
 
-local ok = pcall(function() src = game:HttpGet(SCRIPT_URL, true) method = "HttpGet" end)
-if not ok or not src or src == "" then
-    ok = pcall(function() src = game:HttpGet(SCRIPT_URL) method = "HttpGet(2)" end)
-end
-if not ok or not src or src == "" then
-    ok = pcall(function() src = HttpService:GetAsync(SCRIPT_URL) method = "HttpService" end)
-end
-if not ok or not src or src == "" then
-    ok = pcall(function() local resp = request({Url = SCRIPT_URL, Method = "GET"}) src = resp.Body method = "request()" end)
-end
-if not ok or not src or src == "" then
-    ok = pcall(function() local resp = http_request({Url = SCRIPT_URL, Method = "GET"}) src = resp.Body method = "http_request()" end)
+if not src or src == "" then
+    -- fallback: try bot API
+    src = httpGet(API_BASE .. "/aj.lua")
 end
 
 if not src or src == "" then
-    showMsg("[Auto Joiner] HTTP failed — executor can't reach GitHub", Color3.fromRGB(255, 50, 50))
+    showMsg("[Auto Joiner] HTTP failed — can't reach GitHub or API", Color3.fromRGB(255, 50, 50))
     return
 end
 
 clearLoader()
-showMsg("[Auto Joiner] Loaded (" .. method .. ") — starting...", Color3.fromRGB(255, 190, 60))
 
 local fn, err = loadstring(src)
 if fn then
