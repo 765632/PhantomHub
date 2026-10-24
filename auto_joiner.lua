@@ -1650,3 +1650,4 @@ end) -- end main pcall
 if not ok then
     warn("[PhantomHub AJ] Error: " .. tostring(err))
 end
+-- PhantomHub Auto Joiner v1.0
