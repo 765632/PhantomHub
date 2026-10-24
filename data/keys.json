@@ -183,5 +183,18 @@
     "expiresAt": "never",
     "expired": false,
     "hwid": null
+  },
+  "PH-KCA3A-TTKRU-53KLN": {
+    "duration": "lifetime",
+    "label": "Lifetime",
+    "script": "auto-joiner",
+    "scriptLabel": "Auto Joiner",
+    "createdAt": 1792900000000,
+    "createdBy": "1532174717124087905",
+    "redeemedBy": "1532174717124087905",
+    "redeemedAt": 1792900000000,
+    "expiresAt": "never",
+    "expired": false,
+    "hwid": null
   }
 }
