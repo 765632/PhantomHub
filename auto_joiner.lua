@@ -535,19 +535,80 @@ end
 
 local hopToggleBtn = makeBtn("START", T.accent, T.bg, 80)
 local hopNowBtn    = makeBtn("HOP NOW", T.bgPill, T.hop, 80)
-local settingsBtn  = makeBtn("SETTINGS", T.bgPill, T.textMid, 75)
 
 hoverFx(hopNowBtn, T.bgPill, T.hopDim)
-hoverFx(settingsBtn, T.bgPill, T.strokeLit)
 strokeB(hopNowBtn, T.stroke)
-strokeB(settingsBtn, T.stroke)
 
--- ════════════════════ DETECTION FEED ════════════════════
+-- ════════════════════ TAB BAR ════════════════════
+local TAB_Y = 158
+local TAB_H = 28
+local CONTENT_Y = TAB_Y + TAB_H + 4
+
+local tabBar = Instance.new("Frame")
+tabBar.Size = UDim2.new(1, -20, 0, TAB_H)
+tabBar.Position = UDim2.new(0, 10, 0, TAB_Y)
+tabBar.BackgroundTransparency = 1
+tabBar.Parent = main
+
+local tabBarLayout = Instance.new("UIListLayout")
+tabBarLayout.FillDirection = Enum.FillDirection.Horizontal
+tabBarLayout.Padding = UDim.new(0, 4)
+tabBarLayout.Parent = tabBar
+
+local currentTab = "Main"
+local tabBtns = {}
+local tabFrames = {}
+
+local function makeTabBtn(name)
+    local active = (name == currentTab)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, 80, 1, 0)
+    btn.BackgroundColor3 = active and T.accent or T.bgPill
+    btn.Text = name
+    btn.TextColor3 = active and T.bg or T.textMid
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 11
+    btn.AutoButtonColor = false
+    btn.Parent = tabBar
+    corner(btn, 6)
+    if not active then strokeB(btn, T.stroke) end
+    tabBtns[name] = btn
+    return btn
+end
+
+makeTabBtn("Main")
+makeTabBtn("Logs")
+makeTabBtn("Settings")
+
+local function switchTab(name)
+    currentTab = name
+    for tabName, btn in pairs(tabBtns) do
+        local active = (tabName == name)
+        tween(btn, {BackgroundColor3 = active and T.accent or T.bgPill})
+        btn.TextColor3 = active and T.bg or T.textMid
+    end
+    for tabName, frame in pairs(tabFrames) do
+        frame.Visible = (tabName == name)
+    end
+end
+
+for name, btn in pairs(tabBtns) do
+    btn.MouseButton1Click:Connect(function() switchTab(name) end)
+end
+
+-- ════════════════════ TAB: MAIN (Detection Feed) ════════════════════
+local mainTab = Instance.new("Frame")
+mainTab.Size = UDim2.new(1, -20, 1, -(CONTENT_Y + 6))
+mainTab.Position = UDim2.new(0, 10, 0, CONTENT_Y)
+mainTab.BackgroundTransparency = 1
+mainTab.Visible = true
+mainTab.Parent = main
+tabFrames["Main"] = mainTab
+
 local feedHeader = Instance.new("Frame")
-feedHeader.Size = UDim2.new(1, -20, 0, 20)
-feedHeader.Position = UDim2.new(0, 10, 0, 158)
+feedHeader.Size = UDim2.new(1, 0, 0, 18)
 feedHeader.BackgroundTransparency = 1
-feedHeader.Parent = main
+feedHeader.Parent = mainTab
 
 local function colHeader(text, xOff, width)
     local lbl = Instance.new("TextLabel")
@@ -569,14 +630,14 @@ colHeader("AGE", 430, 60)
 colHeader("SERVER", 495, 50)
 
 local feedScroll = Instance.new("ScrollingFrame")
-feedScroll.Size = UDim2.new(1, -20, 1, -185)
-feedScroll.Position = UDim2.new(0, 10, 0, 180)
+feedScroll.Size = UDim2.new(1, 0, 1, -22)
+feedScroll.Position = UDim2.new(0, 0, 0, 20)
 feedScroll.BackgroundTransparency = 1
 feedScroll.BorderSizePixel = 0
 feedScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 feedScroll.ScrollBarThickness = 3
 feedScroll.ScrollBarImageColor3 = T.accentDim
-feedScroll.Parent = main
+feedScroll.Parent = mainTab
 
 local feedLayout = Instance.new("UIListLayout")
 feedLayout.Padding = UDim.new(0, 4)
@@ -586,7 +647,6 @@ feedLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
     feedScroll.CanvasSize = UDim2.new(0, 0, 0, feedLayout.AbsoluteContentSize.Y + 8)
 end)
 
--- empty state label
 local emptyLbl = Instance.new("TextLabel")
 emptyLbl.Size = UDim2.new(1, 0, 0, 40)
 emptyLbl.Position = UDim2.new(0, 0, 0.3, 0)
@@ -596,6 +656,71 @@ emptyLbl.TextColor3 = T.textDim
 emptyLbl.Font = Enum.Font.Gotham
 emptyLbl.TextSize = 12
 emptyLbl.Parent = feedScroll
+
+-- ════════════════════ TAB: LOGS ════════════════════
+local logsTab = Instance.new("Frame")
+logsTab.Size = UDim2.new(1, -20, 1, -(CONTENT_Y + 6))
+logsTab.Position = UDim2.new(0, 10, 0, CONTENT_Y)
+logsTab.BackgroundTransparency = 1
+logsTab.Visible = false
+logsTab.Parent = main
+tabFrames["Logs"] = logsTab
+
+local logScroll = Instance.new("ScrollingFrame")
+logScroll.Size = UDim2.new(1, 0, 1, 0)
+logScroll.BackgroundTransparency = 1
+logScroll.BorderSizePixel = 0
+logScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+logScroll.ScrollBarThickness = 3
+logScroll.ScrollBarImageColor3 = T.accentDim
+logScroll.Parent = logsTab
+
+local logLayout = Instance.new("UIListLayout")
+logLayout.Padding = UDim.new(0, 2)
+logLayout.SortOrder = Enum.SortOrder.LayoutOrder
+logLayout.Parent = logScroll
+
+logLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    logScroll.CanvasSize = UDim2.new(0, 0, 0, logLayout.AbsoluteContentSize.Y + 8)
+end)
+
+local logEntryCount = 0
+
+local function addLog(text, color)
+    logEntryCount = logEntryCount + 1
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, 0, 0, 18)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = "[" .. os.date("%H:%M:%S") .. "] " .. text
+    lbl.TextColor3 = color or T.textMid
+    lbl.Font = Enum.Font.Code
+    lbl.TextSize = 11
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.TextWrapped = true
+    lbl.AutomaticSize = Enum.AutomaticSize.Y
+    lbl.LayoutOrder = logEntryCount
+    lbl.Parent = logScroll
+    -- auto-scroll to bottom
+    task.defer(function()
+        logScroll.CanvasPosition = Vector2.new(0, logScroll.AbsoluteCanvasSize.Y)
+    end)
+end
+
+local logEmptyLbl = Instance.new("TextLabel")
+logEmptyLbl.Size = UDim2.new(1, 0, 0, 40)
+logEmptyLbl.Position = UDim2.new(0, 0, 0.3, 0)
+logEmptyLbl.BackgroundTransparency = 1
+logEmptyLbl.Text = "no events yet..."
+logEmptyLbl.TextColor3 = T.textDim
+logEmptyLbl.Font = Enum.Font.Gotham
+logEmptyLbl.TextSize = 12
+logEmptyLbl.Parent = logScroll
+
+addLog("PhantomHub Auto Joiner loaded", T.accent)
+addLog("Key: " .. USER_KEY:sub(1, 12) .. "...", T.textDim)
+addLog("Region: " .. getRegion(), T.textDim)
+addLog("Server: " .. game.JobId:sub(1, 16) .. "...", T.textDim)
+logEmptyLbl.Visible = false
 
 local function formatAge(sec)
     if sec < 60 then return math.floor(sec) .. "s" end
@@ -712,37 +837,29 @@ local function buildFeedEntry(det)
     return row
 end
 
--- ════════════════════ SETTINGS PANEL (overlay) ════════════════════
-local settingsPanel = Instance.new("Frame")
-settingsPanel.Size = UDim2.new(1, -20, 0, 220)
-settingsPanel.Position = UDim2.new(0, 10, 0, 158)
-settingsPanel.BackgroundColor3 = T.bg
-settingsPanel.BorderSizePixel = 0
-settingsPanel.Visible = false
-settingsPanel.ZIndex = 50
-settingsPanel.Parent = main
-corner(settingsPanel, 10)
-strokeB(settingsPanel, T.stroke)
+-- ════════════════════ TAB: SETTINGS ════════════════════
+local settingsTab = Instance.new("Frame")
+settingsTab.Size = UDim2.new(1, -20, 1, -(CONTENT_Y + 6))
+settingsTab.Position = UDim2.new(0, 10, 0, CONTENT_Y)
+settingsTab.BackgroundTransparency = 1
+settingsTab.Visible = false
+settingsTab.Parent = main
+tabFrames["Settings"] = settingsTab
 
-local settingsTitle = Instance.new("TextLabel")
-settingsTitle.Size = UDim2.new(1, -20, 0, 24)
-settingsTitle.Position = UDim2.new(0, 10, 0, 6)
-settingsTitle.BackgroundTransparency = 1
-settingsTitle.Text = "SETTINGS"
-settingsTitle.TextColor3 = T.accent
-settingsTitle.Font = Enum.Font.GothamBold
-settingsTitle.TextSize = 12
-settingsTitle.TextXAlignment = Enum.TextXAlignment.Left
-settingsTitle.ZIndex = 51
-settingsTitle.Parent = settingsPanel
+local settingsInner = Instance.new("Frame")
+settingsInner.Size = UDim2.new(1, 0, 1, 0)
+settingsInner.BackgroundColor3 = T.bgCard
+settingsInner.BorderSizePixel = 0
+settingsInner.Parent = settingsTab
+corner(settingsInner, 10)
+strokeB(settingsInner, T.stroke)
 
-local function makeToggle(label, yPos, default, onToggle)
+local function makeToggle(parent, label, yPos, default, onToggle)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, -20, 0, 26)
-    row.Position = UDim2.new(0, 10, 0, yPos)
+    row.Size = UDim2.new(1, -24, 0, 30)
+    row.Position = UDim2.new(0, 12, 0, yPos)
     row.BackgroundTransparency = 1
-    row.ZIndex = 51
-    row.Parent = settingsPanel
+    row.Parent = parent
 
     local lbl = Instance.new("TextLabel")
     lbl.Size = UDim2.new(1, -50, 1, 0)
@@ -750,27 +867,24 @@ local function makeToggle(label, yPos, default, onToggle)
     lbl.Text = label
     lbl.TextColor3 = T.text
     lbl.Font = Enum.Font.GothamMedium
-    lbl.TextSize = 11
+    lbl.TextSize = 12
     lbl.TextXAlignment = Enum.TextXAlignment.Left
-    lbl.ZIndex = 51
     lbl.Parent = row
 
     local toggleBg = Instance.new("TextButton")
-    toggleBg.Size = UDim2.new(0, 36, 0, 18)
-    toggleBg.Position = UDim2.new(1, -36, 0.5, -9)
+    toggleBg.Size = UDim2.new(0, 38, 0, 20)
+    toggleBg.Position = UDim2.new(1, -38, 0.5, -10)
     toggleBg.BackgroundColor3 = default and T.accent or T.accentDim
     toggleBg.Text = ""
     toggleBg.AutoButtonColor = false
-    toggleBg.ZIndex = 51
     toggleBg.Parent = row
     corner(toggleBg, 99)
 
     local circle = Instance.new("Frame")
-    circle.Size = UDim2.new(0, 12, 0, 12)
-    circle.Position = default and UDim2.new(1, -15, 0.5, -6) or UDim2.new(0, 3, 0.5, -6)
+    circle.Size = UDim2.new(0, 14, 0, 14)
+    circle.Position = default and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
     circle.BackgroundColor3 = default and T.bg or T.textDim
     circle.BorderSizePixel = 0
-    circle.ZIndex = 52
     circle.Parent = toggleBg
     corner(circle, 99)
 
@@ -780,59 +894,76 @@ local function makeToggle(label, yPos, default, onToggle)
         onToggle(isOn)
         tween(toggleBg, {BackgroundColor3 = isOn and T.accent or T.accentDim})
         tween(circle, {
-            Position = isOn and UDim2.new(1, -15, 0.5, -6) or UDim2.new(0, 3, 0.5, -6),
+            Position = isOn and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7),
             BackgroundColor3 = isOn and T.bg or T.textDim
         })
     end)
 end
 
-makeToggle("Sound Alerts", 34, state.soundAlerts, function(v) state.soundAlerts = v end)
-makeToggle("Auto Xenhub Target", 62, state.autoXenhub, function(v) state.autoXenhub = v end)
-makeToggle("Copy Owner Name", 90, state.autoCopyOwner, function(v) state.autoCopyOwner = v end)
-makeToggle("Anti-AFK", 118, state.antiAfk, function(v) state.antiAfk = v end)
+-- section header
+local function settingsSection(text, yPos)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -24, 0, 16)
+    lbl.Position = UDim2.new(0, 12, 0, yPos)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = T.accentDim
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 9
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = settingsInner
+end
 
--- scan time slider label
+settingsSection("ALERTS", 8)
+makeToggle(settingsInner, "Sound Alerts", 26, state.soundAlerts, function(v) state.soundAlerts = v end)
+
+settingsSection("JOINING", 62)
+makeToggle(settingsInner, "Auto Xenhub Target", 80, state.autoXenhub, function(v) state.autoXenhub = v end)
+makeToggle(settingsInner, "Copy Owner Name", 112, state.autoCopyOwner, function(v) state.autoCopyOwner = v end)
+
+settingsSection("UTILITY", 150)
+makeToggle(settingsInner, "Anti-AFK", 168, state.antiAfk, function(v) state.antiAfk = v end)
+
+-- scan time
+settingsSection("SCAN TIME PER SERVER", 206)
+
 local scanTimeLbl = Instance.new("TextLabel")
-scanTimeLbl.Size = UDim2.new(1, -20, 0, 20)
-scanTimeLbl.Position = UDim2.new(0, 10, 0, 148)
+scanTimeLbl.Size = UDim2.new(0, 100, 0, 16)
+scanTimeLbl.Position = UDim2.new(1, -112, 0, 206)
 scanTimeLbl.BackgroundTransparency = 1
-scanTimeLbl.Text = "Scan Time: " .. state.scanTime .. "s per server"
-scanTimeLbl.TextColor3 = T.textDim
+scanTimeLbl.Text = state.scanTime .. " seconds"
+scanTimeLbl.TextColor3 = T.textMid
 scanTimeLbl.Font = Enum.Font.GothamMedium
-scanTimeLbl.TextSize = 10
-scanTimeLbl.TextXAlignment = Enum.TextXAlignment.Left
-scanTimeLbl.ZIndex = 51
-scanTimeLbl.Parent = settingsPanel
+scanTimeLbl.TextSize = 9
+scanTimeLbl.TextXAlignment = Enum.TextXAlignment.Right
+scanTimeLbl.Parent = settingsInner
 
--- scan time buttons
 local scanTimeRow = Instance.new("Frame")
-scanTimeRow.Size = UDim2.new(1, -20, 0, 22)
-scanTimeRow.Position = UDim2.new(0, 10, 0, 168)
+scanTimeRow.Size = UDim2.new(1, -24, 0, 26)
+scanTimeRow.Position = UDim2.new(0, 12, 0, 224)
 scanTimeRow.BackgroundTransparency = 1
-scanTimeRow.ZIndex = 51
-scanTimeRow.Parent = settingsPanel
+scanTimeRow.Parent = settingsInner
 
 local scanTimeLayout = Instance.new("UIListLayout")
 scanTimeLayout.FillDirection = Enum.FillDirection.Horizontal
-scanTimeLayout.Padding = UDim.new(0, 4)
+scanTimeLayout.Padding = UDim.new(0, 5)
 scanTimeLayout.Parent = scanTimeRow
 
 for _, sec in ipairs({10, 15, 18, 25, 30}) do
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 40, 1, 0)
+    btn.Size = UDim2.new(0, 48, 1, 0)
     btn.BackgroundColor3 = sec == state.scanTime and T.accent or T.bgPill
     btn.Text = sec .. "s"
     btn.TextColor3 = sec == state.scanTime and T.bg or T.textMid
     btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 10
+    btn.TextSize = 11
     btn.AutoButtonColor = false
-    btn.ZIndex = 52
     btn.Parent = scanTimeRow
-    corner(btn, 5)
+    corner(btn, 6)
 
     btn.MouseButton1Click:Connect(function()
         state.scanTime = sec
-        scanTimeLbl.Text = "Scan Time: " .. sec .. "s per server"
+        scanTimeLbl.Text = sec .. " seconds"
         for _, c in ipairs(scanTimeRow:GetChildren()) do
             if c:IsA("TextButton") then
                 local active = (c.Text == sec .. "s")
@@ -842,15 +973,6 @@ for _, sec in ipairs({10, 15, 18, 25, 30}) do
         end
     end)
 end
-
--- settings toggle
-local settingsVisible = false
-settingsBtn.MouseButton1Click:Connect(function()
-    settingsVisible = not settingsVisible
-    settingsPanel.Visible = settingsVisible
-    feedScroll.Visible = not settingsVisible
-    feedHeader.Visible = not settingsVisible
-end)
 
 -- ════════════════════ MINIMIZED PILL ════════════════════
 local minPill = Instance.new("TextButton")
@@ -1247,6 +1369,7 @@ local function autoJoinLoop()
     state.scanning = true
     state.serversChecked = state.serversChecked + 1
     updateStatusUI("SCANNING", T.success)
+    addLog("Scanning server #" .. state.serversChecked .. " (" .. game.JobId:sub(1,8) .. ")", T.textMid)
 
     -- animate progress bar
     progressFill.Size = UDim2.new(0, 0, 1, 0)
@@ -1278,6 +1401,7 @@ local function autoJoinLoop()
                 if isOG(data.pet) then
                     playOGAlert()
                     ogFoundThisServer = true
+                    addLog("OG DETECTED: " .. data.pet .. " (owner: " .. data.owner .. ")", T.ogGold)
 
                     updateStatusUI("OG FOUND: " .. data.pet, T.ogGold)
                     tween(scanDot, {BackgroundColor3 = T.ogGold})
@@ -1292,6 +1416,7 @@ local function autoJoinLoop()
                     end
                 else
                     playAlert()
+                    addLog("Highlighted pet: " .. data.pet .. " (owner: " .. data.owner .. ")", T.success)
                 end
             end
         end
@@ -1300,6 +1425,7 @@ local function autoJoinLoop()
     end
 
     state.scanning = false
+    addLog("Scan complete — " .. (ogFoundThisServer and "OG found!" or "no OGs"), ogFoundThisServer and T.ogGold or T.textDim)
 
     -- if OG found, stop hopping and stay
     if ogFoundThisServer then
@@ -1324,6 +1450,7 @@ local function startHopping()
     hopToggleBtn.Text = "STOP"
     hopToggleBtn.BackgroundColor3 = T.danger
     hopToggleBtn.TextColor3 = T.text
+    addLog("Auto-hop started", T.accent)
 
     hopThread = task.spawn(function()
         while state.running and state.hopping do
@@ -1343,16 +1470,19 @@ local function startHopping()
             if #serverQueue == 0 then
                 updateStatusUI("FETCHING SERVERS...", T.hop)
                 serverQueue = fetchServers()
+                addLog("Fetched " .. #serverQueue .. " servers", T.textMid)
             end
 
             -- hop to next server
             if #serverQueue > 0 then
                 local next = table.remove(serverQueue, 1)
+                addLog("Hopping to " .. next.jobId:sub(1,8) .. " (" .. next.players .. " players)", T.hop)
                 updateStatusUI("JOINING " .. next.jobId:sub(1, 8) .. "...", T.hop)
                 hopToServer(next.jobId)
                 task.wait(10) -- wait for teleport
             else
                 -- fallback: random hop
+                addLog("No queued servers — random hop", T.hop)
                 updateStatusUI("RANDOM HOP...", T.hop)
                 hopRandom()
                 task.wait(10)
@@ -1373,6 +1503,7 @@ local function stopHopping()
     hopToggleBtn.Text = "START"
     hopToggleBtn.BackgroundColor3 = T.accent
     hopToggleBtn.TextColor3 = T.bg
+    addLog("Auto-hop stopped", T.danger)
 end
 
 -- button handlers
@@ -1425,6 +1556,7 @@ end)
 
 -- ════════════════════ TELEPORT FAILED HANDLER ════════════════════
 TeleportService.TeleportInitFailed:Connect(function(_, result, errMsg)
+    addLog("Teleport failed: " .. tostring(errMsg), T.danger)
     updateStatusUI("TELEPORT FAILED", T.danger)
     task.wait(3)
     if state.hopping then
@@ -1457,6 +1589,7 @@ task.spawn(function()
     task.wait(2)
 
     -- do an initial scan of the server we landed in
+    addLog("Running initial scan...", T.textMid)
     updateStatusUI("INITIAL SCAN...", T.success)
     local found = scanCurrentServer()
     local ogHere = false
@@ -1479,9 +1612,11 @@ task.spawn(function()
     end
 
     if ogHere then
+        addLog("OG found in current server!", T.ogGold)
         updateStatusUI("OG IN SERVER!", T.ogGold)
         tween(scanDot, {BackgroundColor3 = T.ogGold})
     else
+        addLog("Initial scan clean — no OGs here", T.textDim)
         updateStatusUI("IDLE", T.textDim)
     end
 
