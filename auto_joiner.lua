@@ -116,6 +116,7 @@ local state = {
     soundAlerts    = true,
     autoXenhub     = true,
     autoCopyOwner  = false,
+    autoLogSteal   = false,
     antiAfk        = true,
     scanTime       = CONFIG.SCAN_TIME,
 }
@@ -207,6 +208,32 @@ local function setXenhubTarget(ownerName, petName)
     pcall(function() getgenv().TargetPet = petName end)
     pcall(function() if getgenv().Xenhub and getgenv().Xenhub.SetTarget then getgenv().Xenhub.SetTarget(ownerName) end end)
     pcall(function() if getgenv().XenHub and getgenv().XenHub.Target then getgenv().XenHub.Target = ownerName end end)
+end
+
+-- ════════════════════ STEAL LOGGER ════════════════════
+local API_BASE = "https://phantomhub.onrender.com"
+
+local function logSteal(petName, ownerName, serverId)
+    task.spawn(function()
+        pcall(function()
+            local payload = HttpService:JSONEncode({
+                pet = petName,
+                owner = ownerName or "???",
+                player = LP.Name,
+                server_id = serverId or game.JobId,
+            })
+            local reqFn = request or (syn and syn.request) or (fluxus and fluxus.request)
+                or http_request or (typeof(http) == "table" and http.request)
+            if reqFn then
+                reqFn({
+                    Url = API_BASE .. "/api/log-steal",
+                    Method = "POST",
+                    Headers = {["Content-Type"] = "application/json"},
+                    Body = payload,
+                })
+            end
+        end)
+    end)
 end
 
 -- ════════════════════ SOUND ════════════════════
@@ -403,7 +430,7 @@ local mainTab = Instance.new("Frame"); mainTab.Size = UDim2.new(1, -24, 1, -(BOD
 tabFrames["Main"] = mainTab
 
 -- column headers
-local colDefs = {{"BRAINROT", 0, 0.34}, {"OWNER", 0.34, 0.24}, {"RATE", 0.58, 0.14}, {"AGE", 0.72, 0.1}, {"SERVER", 0.82, 0.18}}
+local colDefs = {{"BRAINROT", 0, 0.30}, {"OWNER", 0.30, 0.20}, {"RATE", 0.50, 0.12}, {"AGE", 0.62, 0.08}, {"", 0.72, 0.28}}
 local colRow = Instance.new("Frame"); colRow.Size = UDim2.new(1, 0, 0, 16); colRow.BackgroundTransparency = 1; colRow.Parent = mainTab
 for _, d in ipairs(colDefs) do
     local l = Instance.new("TextLabel"); l.Size = UDim2.new(d[3], 0, 1, 0); l.Position = UDim2.new(d[2], d[2] == 0 and 6 or 0, 0, 0); l.BackgroundTransparency = 1; l.Text = d[1]; l.TextColor3 = C.textDim; l.Font = Enum.Font.GothamBold; l.TextSize = 8; l.TextXAlignment = Enum.TextXAlignment.Left; l.Parent = colRow
@@ -465,15 +492,16 @@ toggle("Sound Alerts", 24, state.soundAlerts, function(v) state.soundAlerts = v 
 section("ACTIONS", 60)
 toggle("Auto Xenhub Target", 76, state.autoXenhub, function(v) state.autoXenhub = v end)
 toggle("Copy Owner Name", 106, state.autoCopyOwner, function(v) state.autoCopyOwner = v end)
+toggle("Auto Log Steal", 136, state.autoLogSteal, function(v) state.autoLogSteal = v end)
 
-section("UTILITY", 142)
-toggle("Anti-AFK", 158, state.antiAfk, function(v) state.antiAfk = v end)
+section("UTILITY", 172)
+toggle("Anti-AFK", 188, state.antiAfk, function(v) state.antiAfk = v end)
 
-section("SCAN TIME", 194)
+section("SCAN TIME", 224)
 
-local stLbl = Instance.new("TextLabel"); stLbl.Size = UDim2.new(0, 80, 0, 14); stLbl.Position = UDim2.new(1, -94, 0, 194); stLbl.BackgroundTransparency = 1; stLbl.Text = state.scanTime .. "s"; stLbl.TextColor3 = C.textMid; stLbl.Font = Enum.Font.GothamMedium; stLbl.TextSize = 8; stLbl.TextXAlignment = Enum.TextXAlignment.Right; stLbl.Parent = setBox
+local stLbl = Instance.new("TextLabel"); stLbl.Size = UDim2.new(0, 80, 0, 14); stLbl.Position = UDim2.new(1, -94, 0, 224); stLbl.BackgroundTransparency = 1; stLbl.Text = state.scanTime .. "s"; stLbl.TextColor3 = C.textMid; stLbl.Font = Enum.Font.GothamMedium; stLbl.TextSize = 8; stLbl.TextXAlignment = Enum.TextXAlignment.Right; stLbl.Parent = setBox
 
-local stRow = Instance.new("Frame"); stRow.Size = UDim2.new(1, -28, 0, 24); stRow.Position = UDim2.new(0, 14, 0, 210); stRow.BackgroundTransparency = 1; stRow.Parent = setBox
+local stRow = Instance.new("Frame"); stRow.Size = UDim2.new(1, -28, 0, 24); stRow.Position = UDim2.new(0, 14, 0, 240); stRow.BackgroundTransparency = 1; stRow.Parent = setBox
 local stLay = Instance.new("UIListLayout"); stLay.FillDirection = Enum.FillDirection.Horizontal; stLay.Padding = UDim.new(0, 4); stLay.Parent = stRow
 
 for _, sec in ipairs({10, 15, 18, 25, 30}) do
@@ -537,11 +565,48 @@ local function buildFeedEntry(det)
         local l = Instance.new("TextLabel"); l.Size = UDim2.new(wScale, 0, 1, 0); l.Position = UDim2.new(xScale, xScale == 0 and (og and 10 or 6) or 0, 0, 0); l.BackgroundTransparency = 1; l.Text = text; l.TextColor3 = col or C.textMid; l.Font = font or Enum.Font.GothamMedium; l.TextSize = sz or 11; l.TextXAlignment = Enum.TextXAlignment.Left; l.TextTruncate = Enum.TextTruncate.AtEnd; l.Parent = row; return l
     end
 
-    cell(det.pet, 0, 0.34, og and C.gold or C.text, og and Enum.Font.GothamBold or Enum.Font.GothamMedium, 11)
-    cell(det.owner, 0.34, 0.24, C.textMid, nil, 11)
-    cell(det.rate, 0.58, 0.14, og and C.gold or C.textDim, nil, 10)
-    local ageLbl = cell(formatAge(os.time() - det.time), 0.72, 0.1, C.textDim, nil, 10)
-    cell((det.jobId == game.JobId) and "HERE" or det.jobId:sub(1,6), 0.82, 0.18, (det.jobId == game.JobId) and C.green or C.textDim, nil, 9)
+    cell(det.pet, 0, 0.30, og and C.gold or C.text, og and Enum.Font.GothamBold or Enum.Font.GothamMedium, 11)
+    cell(det.owner, 0.30, 0.20, C.textMid, nil, 11)
+    cell(det.rate, 0.50, 0.12, og and C.gold or C.textDim, nil, 10)
+    local ageLbl = cell(formatAge(os.time() - det.time), 0.62, 0.08, C.textDim, nil, 10)
+
+    local isCurrent = (det.jobId == game.JobId)
+
+    if isCurrent then
+        -- Log Steal button
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0.28, -8, 0, 24)
+        btn.Position = UDim2.new(0.72, 0, 0.5, -12)
+        btn.BackgroundColor3 = og and C.gold or C.white
+        btn.Text = "Log Steal"
+        btn.TextColor3 = C.bg
+        btn.Font = Enum.Font.GothamBold
+        btn.TextSize = 10
+        btn.AutoButtonColor = false
+        btn.Parent = row
+        corner(btn, 5)
+
+        -- auto log on detection
+        if state.autoLogSteal then
+            logSteal(det.pet, det.owner, det.jobId)
+            btn.Text = "Logged ✓"
+            btn.BackgroundColor3 = C.green
+            task.delay(2, function() btn.Text = "Log Steal"; btn.BackgroundColor3 = og and C.gold or C.white end)
+        end
+
+        btn.MouseButton1Click:Connect(function()
+            btn.Text = "Logged ✓"
+            btn.BackgroundColor3 = C.green
+            logSteal(det.pet, det.owner, det.jobId)
+            addLog("Steal logged: " .. det.pet .. " from " .. det.owner, C.gold)
+            task.delay(2, function()
+                if btn.Parent then btn.Text = "Log Steal"; btn.BackgroundColor3 = og and C.gold or C.white end
+            end)
+        end)
+    else
+        -- server ID label for remote detections
+        cell(det.jobId:sub(1,6), 0.72, 0.28, C.textDim, nil, 9)
+    end
 
     row.MouseEnter:Connect(function() tw(row, {BackgroundColor3 = C.bgEl}) end)
     row.MouseLeave:Connect(function() tw(row, {BackgroundColor3 = C.bgCard}) end)
