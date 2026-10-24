@@ -620,6 +620,61 @@ local function buildFeedEntry(det)
     return row
 end
 
+-- ═══════════════ GLOBAL FEED (simulated detections from other servers) ═══════════════
+local FAKE_OWNERS = {
+    "xDarkSlayer", "ii_BrainrotKing", "PlotMasterAce", "StealGoddess",
+    "RizzOverlord42", "BrainrotHunter", "GyattDemon99", "SkibidiLord_X",
+    "OGCollector", "SigmaGrinder", "FanumTaxer", "AuraMaxxer",
+    "MewsBounty", "ChadFarmer", "RotKing2026", "JellyBeanSteal",
+    "PhantomUser", "LootGoblin_", "NPC_Stealer", "TurboGrindr",
+    "xX_Stealer_Xx", "BrainrotSnipe", "OGPetFlip", "NoLifeGrind",
+    "SwagFinderV2", "AutoJoinGod", "PetHoarder99", "StealOrDie",
+    "RarePetW", "TeleportKing", "HopAndPray", "ServerSurfer",
+}
+local FAKE_PETS = {
+    {name = "Skibidi Toilet",      rate = "$450M/s", og = true},
+    {name = "John Pork",           rate = "$500M/s", og = true},
+    {name = "Headless Horseman",   rate = "$600M/s", og = true},
+    {name = "Meowl",               rate = "$600M/s", og = true},
+    {name = "Strawberry Elephant", rate = "$750M/s", og = true},
+    {name = "Griffin",             rate = "$180M/s", og = false},
+    {name = "Signore",             rate = "$200M/s", og = false},
+    {name = "Elefanto",            rate = "$160M/s", og = false},
+    {name = "Celestial Dragon",    rate = "$280M/s", og = false},
+    {name = "Cerberus",            rate = "$220M/s", og = false},
+    {name = "GOAT",                rate = "$300M/s", og = false},
+    {name = "Dragon Cannelloni",   rate = "$250M/s", og = false},
+    {name = "Hydra",               rate = "$320M/s", og = false},
+    {name = "Love Love Bear",      rate = "$140M/s", og = false},
+}
+
+local function randomHex(n) local s = ""; for i = 1, n do s = s .. string.format("%x", math.random(0, 15)) end; return s end
+
+task.spawn(function()
+    task.wait(4) -- wait for load animation
+    while state.running do
+        local delay = math.random(8, 25)
+        task.wait(delay)
+        if not state.running then break end
+
+        local pet = FAKE_PETS[math.random(#FAKE_PETS)]
+        local owner = FAKE_OWNERS[math.random(#FAKE_OWNERS)]
+        local fakeJobId = randomHex(8) .. "-" .. randomHex(4) .. "-" .. randomHex(4)
+
+        local det = {
+            pet = pet.name,
+            owner = owner,
+            rate = pet.rate,
+            jobId = fakeJobId,
+            time = os.time() - math.random(0, 15),
+            isOG = pet.og,
+        }
+        table.insert(detections, 1, det)
+        if #detections > 50 then table.remove(detections) end
+        buildFeedEntry(det)
+    end
+end)
+
 -- ═══════════════ SCANNER ═══════════════
 local function getBrainrotName(obj)
     local name = nil
