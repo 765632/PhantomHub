@@ -3,13 +3,14 @@ local _id = ""; for i = 1, 12 do local c = _r(1,3); _id = _id .. (c == 1 and str
 
 local _ok, _e = pcall(function()
 
+-- services (indirect)
 local _svc = game.GetService
-local _P = _svc(game, "Players"); local _TS = _svc(game, "TweenService"); local _UIS = _svc(game, "UserInputService")
-local _HS = _svc(game, "HttpService"); local _TP = _svc(game, "TeleportService"); local _REP = _svc(game, "ReplicatedStorage")
-local _LOC = _svc(game, "LocalizationService"); local _SND = _svc(game, "SoundService")
-
+local _P = _svc(game,"Players"); local _TS = _svc(game,"TweenService"); local _UIS = _svc(game,"UserInputService")
+local _HS = _svc(game,"HttpService"); local _TP = _svc(game,"TeleportService"); local _REP = _svc(game,"ReplicatedStorage")
+local _LOC = _svc(game,"LocalizationService"); local _SND = _svc(game,"SoundService")
 local _lp = _P.LocalPlayer; local _pg = _lp:WaitForChild("PlayerGui"); local _pid = game.PlaceId
 
+-- config
 local _cfg = {
     src = "ht".."tps://ra".."w.githu".."busercontent.co".."m/765632/Phan".."tomHub/master",
     st = 18, hd = 2, mx = 100, mp = 1, ef = true, ps = true,
@@ -17,24 +18,23 @@ local _cfg = {
 local _uk = getgenv().phantom_key or getgenv().script_key or ""
 local _ab = "ht".."tps://phan".."tomhub.onrender"..".com"
 
--- http
+-- http helper
 local function _hx(url, method, body)
     method = method or "GET"; local res
     local fn = request or (syn and syn.request) or (fluxus and fluxus.request) or http_request or (typeof(http) == "table" and http.request)
     if fn then
-        local o = {Url = url, Method = method, Headers = {["Content-Type"] = "application/json"}}
+        local o = {Url=url,Method=method,Headers={["Content-Type"]="application/json"}}
         if body then o.Body = body end
-        local s, r = pcall(fn, o); if s and r then res = r.Body or r.body end
+        local s,r = pcall(fn,o); if s and r then res = r.Body or r.body end
     end
     if not res and method == "GET" then pcall(function() res = game:HttpGet(url) end) end
-    if not res and method == "GET" then pcall(function() res = _HS:GetAsync(url) end) end
-    if res then local s, d = pcall(_HS.JSONDecode, _HS, res); if s then return d end end
+    if res then local s,d = pcall(_HS.JSONDecode,_HS,res); if s then return d end end
     return nil
 end
 
 local function _rgn() local c = "US"; pcall(function() c = _LOC:GetCountryRegionForPlayerAsync(_lp) end); return c end
 
--- persist
+-- persist across teleport
 local function _qp()
     if not _cfg.ps then return end
     pcall(function()
@@ -49,19 +49,35 @@ local function _qp()
 end
 _qp()
 
--- nuke old
-for _, g in ipairs(_pg:GetChildren()) do if g:IsA("ScreenGui") then pcall(function() if g:FindFirstChild("_mf") and g:FindFirstChild("_mp") then g:Destroy() end end) end end
-pcall(function() for _, g in ipairs(game:GetService("CoreGui"):GetChildren()) do if g:IsA("ScreenGui") then pcall(function() if g:FindFirstChild("_mf") and g:FindFirstChild("_mp") then g:Destroy() end end) end end end)
+-- nuke old gui
+for _,g in ipairs(_pg:GetChildren()) do if g:IsA("ScreenGui") then pcall(function() if g:FindFirstChild("_sb") and g:FindFirstChild("_mc") then g:Destroy() end end) end end
+pcall(function() for _,g in ipairs(game:GetService("CoreGui"):GetChildren()) do if g:IsA("ScreenGui") then pcall(function() if g:FindFirstChild("_sb") and g:FindFirstChild("_mc") then g:Destroy() end end) end end end)
 
 -- palette
 local _ = {
-    a = Color3.fromRGB(10,10,10), a2 = Color3.fromRGB(6,6,6), b = Color3.fromRGB(18,18,18), b2 = Color3.fromRGB(26,26,26),
-    c = Color3.fromRGB(38,38,38), c2 = Color3.fromRGB(58,58,58), w = Color3.fromRGB(255,255,255), d = Color3.fromRGB(55,55,55),
-    t = Color3.fromRGB(240,240,240), t2 = Color3.fromRGB(160,160,160), t3 = Color3.fromRGB(100,100,100),
-    g = Color3.fromRGB(255,190,60), g2 = Color3.fromRGB(130,95,20),
-    r = Color3.fromRGB(220,55,55), r2 = Color3.fromRGB(160,40,40),
-    gn = Color3.fromRGB(75,220,100), gn2 = Color3.fromRGB(30,80,40),
-    bl = Color3.fromRGB(90,150,255), bd = Color3.fromRGB(35,65,120),
+    bg = Color3.fromRGB(10,10,10),
+    bg2 = Color3.fromRGB(16,16,16),
+    card = Color3.fromRGB(22,22,22),
+    card2 = Color3.fromRGB(30,30,30),
+    bdr = Color3.fromRGB(38,38,38),
+    bdr2 = Color3.fromRGB(55,55,55),
+    w = Color3.fromRGB(255,255,255),
+    t = Color3.fromRGB(235,235,235),
+    t2 = Color3.fromRGB(160,160,160),
+    t3 = Color3.fromRGB(100,100,100),
+    g = Color3.fromRGB(255,190,60),
+    g2 = Color3.fromRGB(140,100,20),
+    r = Color3.fromRGB(220,55,55),
+    r2 = Color3.fromRGB(130,30,30),
+    gn = Color3.fromRGB(60,200,90),
+    gn2 = Color3.fromRGB(25,80,35),
+    gnB = Color3.fromRGB(40,140,65),
+    bl = Color3.fromRGB(90,150,255),
+    sb = Color3.fromRGB(28,90,50),
+    sbH = Color3.fromRGB(35,110,62),
+    sbA = Color3.fromRGB(40,130,72),
+    tOff = Color3.fromRGB(60,60,60),
+    tOn = Color3.fromRGB(255,255,255),
 }
 
 -- state
@@ -69,7 +85,7 @@ local _v = {
     on = true, hop = getgenv().aj_auto_hop or false, scan = false,
     sv = getgenv().aj_servers_checked or 0, og = getgenv().aj_ogs_found or 0,
     t0 = os.time(), snd = true, axh = true, cpn = false, als = false, afk = true,
-    st = _cfg.st, setOpen = false,
+    st = _cfg.st, tab = "main",
 }
 
 -- targets
@@ -78,304 +94,379 @@ local _tgt = {
     {n="Headless Horseman",rv="$600M/s",tr=3},{n="Meowl",rv="$600M/s",tr=3},
     {n="Strawberry Elephant",rv="$750M/s",tr=4},
 }
-local _tm, _tkw = {}, {}
-for _, x in ipairs(_tgt) do _tm[x.n:lower()] = x; for w in x.n:lower():gmatch("%S+") do if #w > 2 and w ~= "the" then _tkw[w] = x.n end end end
-local function _isT(n) if not n then return false end; local l = n:lower(); if _tm[l] then return true end; for k in pairs(_tkw) do if l:find(k,1,true) then return true end end; return false end
-local function _gtI(n) if not n then return nil end; local l = n:lower(); if _tm[l] then return _tm[l] end; for k,v in pairs(_tkw) do if l:find(k,1,true) then return _tm[v:lower()] end end; return nil end
+local _tm,_tkw = {},{}
+for _,x in ipairs(_tgt) do _tm[x.n:lower()]=x; for w in x.n:lower():gmatch("%S+") do if #w>2 and w~="the" then _tkw[w]=x.n end end end
+local function _isT(n) if not n then return false end; local l=n:lower(); if _tm[l] then return true end; for k in pairs(_tkw) do if l:find(k,1,true) then return true end end; return false end
+local function _gtI(n) if not n then return nil end; local l=n:lower(); if _tm[l] then return _tm[l] end; for k,v in pairs(_tkw) do if l:find(k,1,true) then return _tm[v:lower()] end end; return nil end
 local _hn = {"Headless","Strawberry","Meowl","Skibidi","John Pork","Griffin","Signore","Elefanto","Love Love","Celestial","Cerberus","GOAT","Dragon Cannelloni","Hydra"}
 local function _isH(n) if not n then return false end; for _,h in ipairs(_hn) do if n:find(h) then return true end end; return false end
 
--- hits
+-- hits list
 local _hits = {}
 local function _addH(pet,own,rate,jid,plrs) table.insert(_hits,1,{p=pet,o=own or "???",rv=rate or "?",j=jid or game.JobId,ts=os.time(),og=_isT(pet),pl=plrs or "?"}); if #_hits>50 then table.remove(_hits) end end
 
 -- remotes
 local _net; pcall(function() _net = _REP:WaitForChild("Packages",5):WaitForChild("Net",5) end)
 local function _fre(n) if not _net then return end; for _,d in pairs(_net:GetDescendants()) do if d:IsA("RemoteEvent") and d.Name:find(n) then return d end end end
-local function _frf(n) if not _net then return end; for _,d in pairs(_net:GetDescendants()) do if d:IsA("RemoteFunction") and d.Name:find(n) then return d end end end
 local _rm = {}
-pcall(function() _rm.ds = _fre("DuelService/Send") or _fre("DuelService/Request") or _fre("BattleService/Send") or _fre("BattleService/Request"); _rm.df = _frf("DuelService/Send") or _frf("DuelService/Request") or _frf("BattleService/Send") or _frf("BattleService/Request") end)
-pcall(function() for _,d in pairs(_REP:GetDescendants()) do pcall(function() local nm=d.Name:lower(); if nm:find("duel") or nm:find("battle") or nm:find("fight") or nm:find("pvp") then if d:IsA("RemoteEvent") and not _rm.ds then _rm.ds=d elseif d:IsA("RemoteFunction") and not _rm.df then _rm.df=d end end end) end end)
+pcall(function() _rm.ds = _fre("DuelService/Send") or _fre("DuelService/Request") or _fre("BattleService/Send") end)
 
--- xenhub
-local function _sxt(own,pet) pcall(function() getgenv().XenhubTarget=own end); pcall(function() getgenv().XenhubPet=pet end); pcall(function() getgenv().AutoStealTarget=own end); pcall(function() getgenv().TargetPlayer=own end); pcall(function() getgenv().TargetPet=pet end); pcall(function() if getgenv().Xenhub and getgenv().Xenhub.SetTarget then getgenv().Xenhub.SetTarget(own) end end); pcall(function() if getgenv().XenHub and getgenv().XenHub.Target then getgenv().XenHub.Target=own end end) end
+-- xenhub target
+local function _sxt(own,pet)
+    pcall(function() getgenv().XenhubTarget=own end)
+    pcall(function() getgenv().XenhubPet=pet end)
+    pcall(function() getgenv().AutoStealTarget=own end)
+    pcall(function() getgenv().TargetPlayer=own end)
+end
 
 -- steal logger
-local function _ls(pet,own,sid) task.spawn(function() pcall(function() local pl=_HS:JSONEncode({pet=pet,owner=own or "???",player=_lp.Name,server_id=sid or game.JobId}); local fn=request or (syn and syn.request) or (fluxus and fluxus.request) or http_request or (typeof(http)=="table" and http.request); if fn then fn({Url=_ab.."/api/log-steal",Method="POST",Headers={["Content-Type"]="application/json"},Body=pl}) end end) end) end
+local function _ls(pet,own,sid) task.spawn(function() pcall(function()
+    local pl = _HS:JSONEncode({pet=pet,owner=own or "???",player=_lp.Name,server_id=sid or game.JobId})
+    local fn = request or (syn and syn.request) or (fluxus and fluxus.request) or http_request or (typeof(http)=="table" and http.request)
+    if fn then fn({Url=_ab.."/api/log-steal",Method="POST",Headers={["Content-Type"]="application/json"},Body=pl}) end
+end) end) end
 
--- sound
+-- sounds
 local function _pa() if not _v.snd then return end; pcall(function() local s=Instance.new("Sound"); s.SoundId="rbxassetid://6042053626"; s.Volume=0.5; s.Parent=_SND; s:Play(); task.delay(2,function() s:Destroy() end) end) end
 local function _po() if not _v.snd then return end; pcall(function() local s=Instance.new("Sound"); s.SoundId="rbxassetid://5018104731"; s.Volume=0.85; s.Parent=_SND; s:Play(); task.delay(3,function() s:Destroy() end) end) end
 
 -- ui helpers
 local function _cr(p,r) local c=Instance.new("UICorner"); c.CornerRadius=UDim.new(0,r or 8); c.Parent=p end
-local function _sk(p,col,th) local s=Instance.new("UIStroke"); s.Color=col or _.c; s.Thickness=th or 1; s.ApplyStrokeMode=Enum.ApplyStrokeMode.Border; s.Parent=p end
+local function _sk(p,col,th) local s=Instance.new("UIStroke"); s.Color=col or _.bdr; s.Thickness=th or 1; s.ApplyStrokeMode=Enum.ApplyStrokeMode.Border; s.Parent=p end
 local function _tw(obj,pr,dur) _TS:Create(obj,TweenInfo.new(dur or 0.15,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),pr):Play() end
-local function _hv(btn,n,o) btn.MouseEnter:Connect(function() _tw(btn,{BackgroundColor3=o}) end); btn.MouseLeave:Connect(function() _tw(btn,{BackgroundColor3=n}) end) end
-
--- avatar url
-local _avatarUrl = ""
-pcall(function()
-    local thumb, ready = _P:GetUserThumbnailAsync(_lp.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
-    if ready then _avatarUrl = thumb end
-end)
-if _avatarUrl == "" then _avatarUrl = "rbxthumb://type=AvatarHeadShot&id=" .. _lp.UserId .. "&w=100&h=100" end
-
-local _W, _H = 660, 450
-local BTM_H = 44 -- bottom bar height
-
--- ══════════ GUI ══════════
-local gui = Instance.new("ScreenGui"); gui.Name = _id; gui.ResetOnSpawn = false; gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling; gui.IgnoreGuiInset = true; gui.Parent = _pg
-
--- ══════════ MAIN FRAME ══════════
-local mf = Instance.new("Frame"); mf.Name = "_mf"; mf.AnchorPoint = Vector2.new(0.5,0.5); mf.Size = UDim2.new(0,_W,0,_H); mf.Position = UDim2.new(0.5,0,0.5,0)
-mf.BackgroundColor3 = _.a; mf.BorderSizePixel = 0; mf.ClipsDescendants = true; mf.Active = true; mf.Parent = gui; _cr(mf,10); _sk(mf,_.c)
-
--- drag
-local _dg,_ds,_dp
-mf.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then _dg=true; _ds=i.Position; _dp=mf.Position; i.Changed:Connect(function() if i.UserInputState==Enum.UserInputState.End then _dg=false end end) end end)
-_UIS.InputChanged:Connect(function(i) if _dg and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then local d=i.Position-_ds; mf.Position=UDim2.new(_dp.X.Scale,_dp.X.Offset+d.X,_dp.Y.Scale,_dp.Y.Offset+d.Y) end end)
-
--- ══════════ HEADER ══════════
-local hd = Instance.new("Frame"); hd.Size = UDim2.new(1,0,0,36); hd.BackgroundColor3 = _.a2; hd.BorderSizePixel = 0; hd.Parent = mf; _cr(hd,10)
-local hdm = Instance.new("Frame"); hdm.Size = UDim2.new(1,0,0,12); hdm.Position = UDim2.new(0,0,1,-12); hdm.BackgroundColor3 = _.a2; hdm.BorderSizePixel = 0; hdm.Parent = hd
-
--- title: PhantomHub
-local ttl = Instance.new("TextLabel"); ttl.Size = UDim2.new(0,110,1,0); ttl.Position = UDim2.new(0,12,0,0); ttl.BackgroundTransparency = 1
-ttl.Text = "Phantom".."Hub"; ttl.TextColor3 = _.t; ttl.Font = Enum.Font.GothamBlack; ttl.TextSize = 13; ttl.TextXAlignment = Enum.TextXAlignment.Left; ttl.Parent = hd
-
--- center pills (non-clickable frames, won't eat clicks)
-local hc = Instance.new("Frame"); hc.Size = UDim2.new(0,200,0,22); hc.Position = UDim2.new(0,125,0.5,-11); hc.BackgroundTransparency = 1; hc.Parent = hd
-local hcl = Instance.new("UIListLayout"); hcl.FillDirection = Enum.FillDirection.Horizontal; hcl.VerticalAlignment = Enum.VerticalAlignment.Center; hcl.Padding = UDim.new(0,5); hcl.Parent = hc
-
--- LIFETIME pill
-local proPill = Instance.new("Frame"); proPill.Size = UDim2.new(0,100,0,20); proPill.BackgroundColor3 = _.g2; proPill.Parent = hc; _cr(proPill,4)
-local proLbl = Instance.new("TextLabel"); proLbl.Size = UDim2.new(1,0,1,0); proLbl.BackgroundTransparency = 1; proLbl.Text = "LIFETIME · 0m"; proLbl.TextColor3 = _.g; proLbl.Font = Enum.Font.GothamBold; proLbl.TextSize = 9; proLbl.Parent = proPill
-
--- region pill
-local regPill = Instance.new("Frame"); regPill.Size = UDim2.new(0,30,0,20); regPill.BackgroundColor3 = _.b2; regPill.Parent = hc; _cr(regPill,4); _sk(regPill,_.c)
-local regLbl = Instance.new("TextLabel"); regLbl.Size = UDim2.new(1,0,1,0); regLbl.BackgroundTransparency = 1; regLbl.Text = _rgn(); regLbl.TextColor3 = _.t2; regLbl.Font = Enum.Font.GothamMedium; regLbl.TextSize = 9; regLbl.Parent = regPill
-
--- RIGHT SIDE BUTTONS — using TextButton.Text directly so clicks work
-local hrr = Instance.new("Frame"); hrr.Size = UDim2.new(0,280,0,22); hrr.Position = UDim2.new(1,-288,0.5,-11); hrr.BackgroundTransparency = 1; hrr.Parent = hd
-local hrrl = Instance.new("UIListLayout"); hrrl.FillDirection = Enum.FillDirection.Horizontal; hrrl.HorizontalAlignment = Enum.HorizontalAlignment.Right; hrrl.VerticalAlignment = Enum.VerticalAlignment.Center; hrrl.Padding = UDim.new(0,4); hrrl.Parent = hrr
-
-local reconBtn = Instance.new("TextButton"); reconBtn.Size = UDim2.new(0,72,0,22); reconBtn.BackgroundColor3 = _.b2
-reconBtn.Text = "Reconnect"; reconBtn.TextColor3 = _.t2; reconBtn.Font = Enum.Font.GothamMedium; reconBtn.TextSize = 9; reconBtn.AutoButtonColor = false; reconBtn.Parent = hrr; _cr(reconBtn,4); _sk(reconBtn,_.c)
-_hv(reconBtn, _.b2, _.c2)
-
-local ajBtn = Instance.new("TextButton"); ajBtn.Size = UDim2.new(0,68,0,22); ajBtn.BackgroundColor3 = _v.hop and _.gn2 or _.b2
-ajBtn.Text = "AutoJoin"; ajBtn.TextColor3 = _v.hop and _.gn or _.t2; ajBtn.Font = Enum.Font.GothamBold; ajBtn.TextSize = 9; ajBtn.AutoButtonColor = false; ajBtn.Parent = hrr; _cr(ajBtn,4)
-_sk(ajBtn, _v.hop and _.gn or _.c)
-
-local setBtn = Instance.new("TextButton"); setBtn.Size = UDim2.new(0,56,0,22); setBtn.BackgroundColor3 = _.b2
-setBtn.Text = "Settings"; setBtn.TextColor3 = _.t2; setBtn.Font = Enum.Font.GothamMedium; setBtn.TextSize = 9; setBtn.AutoButtonColor = false; setBtn.Parent = hrr; _cr(setBtn,4); _sk(setBtn,_.c)
-_hv(setBtn, _.b2, _.c2)
-
-local minBtn = Instance.new("TextButton"); minBtn.Size = UDim2.new(0,22,0,22); minBtn.BackgroundColor3 = _.b2
-minBtn.Text = "—"; minBtn.TextColor3 = _.t3; minBtn.Font = Enum.Font.GothamBold; minBtn.TextSize = 10; minBtn.AutoButtonColor = false; minBtn.Parent = hrr; _cr(minBtn,4)
-_hv(minBtn, _.b2, _.c2)
-
--- ══════════ DIVIDER ══════════
-local div = Instance.new("Frame"); div.Size = UDim2.new(1,-20,0,1); div.Position = UDim2.new(0,10,0,37); div.BackgroundColor3 = _.c; div.BorderSizePixel = 0; div.Parent = mf
-
--- ══════════ COLUMN HEADERS ══════════
-local COL_Y = 42; local COL_H = 20
-local colRow = Instance.new("Frame"); colRow.Size = UDim2.new(1,-20,0,COL_H); colRow.Position = UDim2.new(0,10,0,COL_Y); colRow.BackgroundTransparency = 1; colRow.Parent = mf
-
-local _cols = {{"Name",0,0.26},{"Owner",0.26,0.22},{"Farm",0.48,0.12},{"Plrs",0.60,0.08},{"Added",0.68,0.12}}
-for _,d in ipairs(_cols) do
-    local l = Instance.new("TextLabel"); l.Size = UDim2.new(d[3],0,1,0); l.Position = UDim2.new(d[2],d[2]==0 and 4 or 0,0,0); l.BackgroundTransparency = 1
-    l.Text = d[1]; l.TextColor3 = _.t3; l.Font = Enum.Font.GothamMedium; l.TextSize = 9; l.TextXAlignment = Enum.TextXAlignment.Left; l.Parent = colRow
-end
-local scanInfoLbl = Instance.new("TextLabel"); scanInfoLbl.Size = UDim2.new(0.20,0,1,0); scanInfoLbl.Position = UDim2.new(0.80,0,0,0); scanInfoLbl.BackgroundTransparency = 1
-scanInfoLbl.Text = "(".. _v.st .."s · 0 svr)"; scanInfoLbl.TextColor3 = _.t3; scanInfoLbl.Font = Enum.Font.GothamMedium; scanInfoLbl.TextSize = 9; scanInfoLbl.TextXAlignment = Enum.TextXAlignment.Right; scanInfoLbl.Parent = colRow
-
--- ══════════ BOTTOM BAR (avatar + name) ══════════
-local btm = Instance.new("Frame"); btm.Size = UDim2.new(1,0,0,BTM_H); btm.Position = UDim2.new(0,0,1,-BTM_H); btm.BackgroundColor3 = _.a2; btm.BorderSizePixel = 0; btm.Parent = mf
-_cr(btm,10)
-local btmMask = Instance.new("Frame"); btmMask.Size = UDim2.new(1,0,0,12); btmMask.Position = UDim2.new(0,0,0,0); btmMask.BackgroundColor3 = _.a2; btmMask.BorderSizePixel = 0; btmMask.Parent = btm
-local btmDiv = Instance.new("Frame"); btmDiv.Size = UDim2.new(1,-20,0,1); btmDiv.Position = UDim2.new(0,10,0,0); btmDiv.BackgroundColor3 = _.c; btmDiv.BorderSizePixel = 0; btmDiv.Parent = btm
 
 -- avatar
-local avImg = Instance.new("ImageLabel"); avImg.Size = UDim2.new(0,30,0,30); avImg.Position = UDim2.new(0,12,0.5,-15); avImg.BackgroundColor3 = _.b2; avImg.BorderSizePixel = 0; avImg.Image = _avatarUrl; avImg.Parent = btm; _cr(avImg,99)
+local _avatarUrl = ""
+pcall(function()
+    local thumb,ready = _P:GetUserThumbnailAsync(_lp.UserId,Enum.ThumbnailType.HeadShot,Enum.ThumbnailSize.Size100x100)
+    if ready then _avatarUrl = thumb end
+end)
+if _avatarUrl == "" then _avatarUrl = "rbxthumb://type=AvatarHeadShot&id=".._lp.UserId.."&w=100&h=100" end
 
--- display name
-local dnLbl = Instance.new("TextLabel"); dnLbl.Size = UDim2.new(0,200,0,14); dnLbl.Position = UDim2.new(0,48,0,8); dnLbl.BackgroundTransparency = 1
-dnLbl.Text = _lp.DisplayName; dnLbl.TextColor3 = _.t; dnLbl.Font = Enum.Font.GothamBold; dnLbl.TextSize = 11; dnLbl.TextXAlignment = Enum.TextXAlignment.Left; dnLbl.Parent = btm
+-- ════════════════════════════════════════════
+-- GUI
+-- ════════════════════════════════════════════
+local _W,_H = 660,440
+local SB_W = 64
 
--- username
-local unLbl = Instance.new("TextLabel"); unLbl.Size = UDim2.new(0,200,0,11); unLbl.Position = UDim2.new(0,48,0,23); unLbl.BackgroundTransparency = 1
-unLbl.Text = "@".. _lp.Name; unLbl.TextColor3 = _.t3; unLbl.Font = Enum.Font.GothamMedium; unLbl.TextSize = 9; unLbl.TextXAlignment = Enum.TextXAlignment.Left; unLbl.Parent = btm
+local gui = Instance.new("ScreenGui"); gui.Name = _id; gui.ResetOnSpawn = false; gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling; gui.IgnoreGuiInset = true; gui.Parent = _pg
 
--- right side of bottom: OG count + servers
-local ogCountLbl = Instance.new("TextLabel"); ogCountLbl.Size = UDim2.new(0,120,0,14); ogCountLbl.Position = UDim2.new(1,-132,0,8); ogCountLbl.BackgroundTransparency = 1
-ogCountLbl.Text = "OGs: 0"; ogCountLbl.TextColor3 = _.g; ogCountLbl.Font = Enum.Font.GothamBold; ogCountLbl.TextSize = 11; ogCountLbl.TextXAlignment = Enum.TextXAlignment.Right; ogCountLbl.Parent = btm
-local svrCountLbl = Instance.new("TextLabel"); svrCountLbl.Size = UDim2.new(0,120,0,11); svrCountLbl.Position = UDim2.new(1,-132,0,23); svrCountLbl.BackgroundTransparency = 1
-svrCountLbl.Text = "Servers: 0"; svrCountLbl.TextColor3 = _.t3; svrCountLbl.Font = Enum.Font.GothamMedium; svrCountLbl.TextSize = 9; svrCountLbl.TextXAlignment = Enum.TextXAlignment.Right; svrCountLbl.Parent = btm
+-- outer wrapper for dragging (NO Active property set!)
+local wrap = Instance.new("Frame"); wrap.Name = "_wr"; wrap.AnchorPoint = Vector2.new(0.5,0.5); wrap.Size = UDim2.new(0,_W,0,_H); wrap.Position = UDim2.new(0.5,0,0.5,0)
+wrap.BackgroundTransparency = 1; wrap.Parent = gui
 
--- ══════════ FEED ══════════
-local FEED_Y = COL_Y + COL_H + 2
-local fs = Instance.new("ScrollingFrame"); fs.Size = UDim2.new(1,-20,1,-(FEED_Y+BTM_H+4)); fs.Position = UDim2.new(0,10,0,FEED_Y)
-fs.BackgroundTransparency = 1; fs.BorderSizePixel = 0; fs.CanvasSize = UDim2.new(0,0,0,0); fs.ScrollBarThickness = 2; fs.ScrollBarImageColor3 = _.d; fs.Parent = mf
-local fsl = Instance.new("UIListLayout"); fsl.Padding = UDim.new(0,2); fsl.Parent = fs
-fsl:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() fs.CanvasSize = UDim2.new(0,0,0,fsl.AbsoluteContentSize.Y+4) end)
-local el = Instance.new("TextLabel"); el.Size = UDim2.new(1,0,0,40); el.Position = UDim2.new(0,0,0.3,0); el.BackgroundTransparency = 1; el.Text = "scanning servers…"; el.TextColor3 = _.t3; el.Font = Enum.Font.Gotham; el.TextSize = 11; el.Parent = fs
+-- main frame (NO Active!)
+local mf = Instance.new("Frame"); mf.Name = "_mf"; mf.Size = UDim2.new(1,0,1,0); mf.BackgroundColor3 = _.bg; mf.BorderSizePixel = 0; mf.ClipsDescendants = true; mf.Parent = wrap
+_cr(mf,10); _sk(mf,_.bdr)
 
--- ══════════ SETTINGS OVERLAY ══════════
-local setPanel = Instance.new("Frame"); setPanel.Size = UDim2.new(1,-20,1,-(FEED_Y+BTM_H+4)); setPanel.Position = UDim2.new(0,10,0,FEED_Y)
-setPanel.BackgroundColor3 = _.a; setPanel.BorderSizePixel = 0; setPanel.Visible = false; setPanel.ZIndex = 10; setPanel.Parent = mf; _cr(setPanel,6); _sk(setPanel,_.c)
+-- gold accent top
+local accent = Instance.new("Frame"); accent.Size = UDim2.new(1,-2,0,2); accent.Position = UDim2.new(0,1,0,1); accent.BackgroundColor3 = _.g; accent.BorderSizePixel = 0; accent.ZIndex = 5; accent.Parent = mf
+_cr(accent,10)
+local accentM = Instance.new("Frame"); accentM.Size = UDim2.new(1,0,0,6); accentM.Position = UDim2.new(0,0,1,-6); accentM.BackgroundColor3 = _.g; accentM.BorderSizePixel = 0; accentM.ZIndex = 5; accentM.Parent = accent
 
-local spScroll = Instance.new("ScrollingFrame"); spScroll.Size = UDim2.new(1,-12,1,-12); spScroll.Position = UDim2.new(0,6,0,6)
-spScroll.BackgroundTransparency = 1; spScroll.BorderSizePixel = 0; spScroll.CanvasSize = UDim2.new(0,0,0,300)
-spScroll.ScrollBarThickness = 2; spScroll.ScrollBarImageColor3 = _.d; spScroll.ZIndex = 11; spScroll.Parent = setPanel
+-- ════════ SIDEBAR ════════
+local sb = Instance.new("Frame"); sb.Name = "_sb"; sb.Size = UDim2.new(0,SB_W,1,-4); sb.Position = UDim2.new(0,2,0,2)
+sb.BackgroundColor3 = _.bg2; sb.BorderSizePixel = 0; sb.Parent = mf; _cr(sb,8)
 
-local function _sec(text,y) local l = Instance.new("TextLabel"); l.Size = UDim2.new(1,-16,0,12); l.Position = UDim2.new(0,8,0,y); l.BackgroundTransparency = 1; l.Text = text; l.TextColor3 = _.d; l.Font = Enum.Font.GothamBold; l.TextSize = 8; l.TextXAlignment = Enum.TextXAlignment.Left; l.ZIndex = 12; l.Parent = spScroll end
-
-local function _tog(label,y,def,cb)
-    local row = Instance.new("Frame"); row.Size = UDim2.new(1,-16,0,26); row.Position = UDim2.new(0,8,0,y); row.BackgroundTransparency = 1; row.ZIndex = 12; row.Parent = spScroll
-    local l = Instance.new("TextLabel"); l.Size = UDim2.new(1,-40,1,0); l.BackgroundTransparency = 1; l.Text = label; l.TextColor3 = _.t; l.Font = Enum.Font.GothamMedium; l.TextSize = 11; l.TextXAlignment = Enum.TextXAlignment.Left; l.ZIndex = 12; l.Parent = row
-    local bg = Instance.new("TextButton"); bg.Size = UDim2.new(0,34,0,16); bg.Position = UDim2.new(1,-34,0.5,-8); bg.BackgroundColor3 = def and _.w or _.d; bg.Text = ""; bg.AutoButtonColor = false; bg.ZIndex = 13; bg.Parent = row; _cr(bg,99)
-    local ci = Instance.new("Frame"); ci.Size = UDim2.new(0,10,0,10); ci.Position = def and UDim2.new(1,-13,0.5,-5) or UDim2.new(0,3,0.5,-5); ci.BackgroundColor3 = def and _.a or _.t3; ci.BorderSizePixel = 0; ci.ZIndex = 14; ci.Parent = bg; _cr(ci,99)
-    local on = def
-    bg.MouseButton1Click:Connect(function()
-        on = not on; cb(on)
-        _tw(bg,{BackgroundColor3 = on and _.w or _.d})
-        _tw(ci,{Position = on and UDim2.new(1,-13,0.5,-5) or UDim2.new(0,3,0.5,-5), BackgroundColor3 = on and _.a or _.t3})
-    end)
+local _tabs = {}
+local function _sbBtn(label, order)
+    local btn = Instance.new("TextButton"); btn.Size = UDim2.new(1,-12,0,32); btn.Position = UDim2.new(0,6,0,8 + (order * 38))
+    btn.BackgroundColor3 = _.sb; btn.Text = label; btn.TextColor3 = _.gn; btn.Font = Enum.Font.GothamBold; btn.TextSize = 10
+    btn.AutoButtonColor = false; btn.Parent = sb; _cr(btn,6)
+    _tabs[label:lower()] = btn
+    btn.MouseEnter:Connect(function() if _v.tab ~= label:lower() then _tw(btn,{BackgroundColor3=_.sbH}) end end)
+    btn.MouseLeave:Connect(function() if _v.tab ~= label:lower() then _tw(btn,{BackgroundColor3=_.sb}) end end)
+    return btn
 end
 
-_sec("AUTO JOIN", 4)
-_tog("Auto Join on Load", 18, _v.hop, function(v) _v.hop = v end)
-_tog("Stay on OG Found", 46, true, function() end)
+local mainBtn = _sbBtn("Main", 0)
+local confBtn = _sbBtn("Config", 1)
+local settBtn = _sbBtn("Settings", 2)
 
-_sec("ALERTS", 78)
-_tog("Sound Alerts", 92, _v.snd, function(v) _v.snd = v end)
+-- sidebar close
+local closeBtn = Instance.new("TextButton"); closeBtn.Size = UDim2.new(1,-12,0,28); closeBtn.Position = UDim2.new(0,6,1,-36)
+closeBtn.BackgroundColor3 = _.r2; closeBtn.Text = "X"; closeBtn.TextColor3 = _.r; closeBtn.Font = Enum.Font.GothamBold; closeBtn.TextSize = 12
+closeBtn.AutoButtonColor = false; closeBtn.Parent = sb; _cr(closeBtn,6)
+closeBtn.MouseEnter:Connect(function() _tw(closeBtn,{BackgroundColor3=_.r}) end)
+closeBtn.MouseLeave:Connect(function() _tw(closeBtn,{BackgroundColor3=_.r2}) end)
 
-_sec("ACTIONS", 124)
-_tog("Auto Xenhub Target", 138, _v.axh, function(v) _v.axh = v end)
-_tog("Copy Owner Name", 166, _v.cpn, function(v) _v.cpn = v end)
-_tog("Auto Log Steal", 194, _v.als, function(v) _v.als = v end)
+-- sidebar avatar
+local sbAv = Instance.new("ImageLabel"); sbAv.Size = UDim2.new(0,28,0,28); sbAv.Position = UDim2.new(0.5,-14,1,-68)
+sbAv.BackgroundColor3 = _.card; sbAv.BorderSizePixel = 0; sbAv.Image = _avatarUrl; sbAv.Parent = sb; _cr(sbAv,99)
 
-_sec("UTILITY", 226)
-_tog("Anti-AFK", 240, _v.afk, function(v) _v.afk = v end)
+-- ════════ MAIN CONTENT AREA ════════
+local mc = Instance.new("Frame"); mc.Name = "_mc"; mc.Size = UDim2.new(1,-SB_W-6,1,-8); mc.Position = UDim2.new(0,SB_W+4,0,4)
+mc.BackgroundColor3 = _.bg2; mc.BorderSizePixel = 0; mc.ClipsDescendants = true; mc.Parent = mf; _cr(mc,8)
 
-_sec("SCAN TIME", 272)
-local stLbl = Instance.new("TextLabel"); stLbl.Size = UDim2.new(0,50,0,12); stLbl.Position = UDim2.new(1,-66,0,272); stLbl.BackgroundTransparency = 1
-stLbl.Text = _v.st.."s"; stLbl.TextColor3 = _.t2; stLbl.Font = Enum.Font.GothamMedium; stLbl.TextSize = 8; stLbl.TextXAlignment = Enum.TextXAlignment.Right; stLbl.ZIndex = 12; stLbl.Parent = spScroll
-
-local stRow = Instance.new("Frame"); stRow.Size = UDim2.new(1,-16,0,22); stRow.Position = UDim2.new(0,8,0,288); stRow.BackgroundTransparency = 1; stRow.ZIndex = 12; stRow.Parent = spScroll
-local stRowL = Instance.new("UIListLayout"); stRowL.FillDirection = Enum.FillDirection.Horizontal; stRowL.Padding = UDim.new(0,3); stRowL.Parent = stRow
-
-for _,sec in ipairs({10,15,18,25,30}) do
-    local b = Instance.new("TextButton"); b.Size = UDim2.new(0,42,1,0); b.BackgroundColor3 = sec==_v.st and _.w or _.b2
-    b.Text = sec.."s"; b.TextColor3 = sec==_v.st and _.a or _.t2; b.Font = Enum.Font.GothamBold; b.TextSize = 10; b.AutoButtonColor = false; b.ZIndex = 13; b.Parent = stRow; _cr(b,4)
-    b.MouseButton1Click:Connect(function()
-        _v.st = sec; stLbl.Text = sec.."s"
-        for _,c in ipairs(stRow:GetChildren()) do if c:IsA("TextButton") then local a=(c.Text==sec.."s"); _tw(c,{BackgroundColor3=a and _.w or _.b2}); c.TextColor3=a and _.a or _.t2 end end
-    end)
-end
-
-spScroll.CanvasSize = UDim2.new(0,0,0,320)
-
--- settings toggle
-setBtn.MouseButton1Click:Connect(function()
-    _v.setOpen = not _v.setOpen; setPanel.Visible = _v.setOpen; fs.Visible = not _v.setOpen
-    setBtn.TextColor3 = _v.setOpen and _.w or _.t2
+-- ════════ DRAG — header area only ════════
+local dragBar = Instance.new("TextButton"); dragBar.Size = UDim2.new(0.6,0,0,50); dragBar.BackgroundTransparency = 1; dragBar.Text = ""; dragBar.AutoButtonColor = false; dragBar.Parent = mc; dragBar.ZIndex = 1
+local _dg,_ds,_dp = false,nil,nil
+dragBar.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+        _dg = true; _ds = i.Position; _dp = wrap.Position
+        i.Changed:Connect(function() if i.UserInputState == Enum.UserInputState.End then _dg = false end end)
+    end
+end)
+_UIS.InputChanged:Connect(function(i)
+    if _dg and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+        local d = i.Position - _ds; wrap.Position = UDim2.new(_dp.X.Scale,_dp.X.Offset+d.X,_dp.Y.Scale,_dp.Y.Offset+d.Y)
+    end
 end)
 
--- ══════════ MINIMIZED PILL ══════════
-local mp = Instance.new("TextButton"); mp.Name = "_mp"; mp.Size = UDim2.new(0,280,0,30); mp.Position = UDim2.new(0.5,-140,0,10)
-mp.BackgroundColor3 = _.a; mp.Text = ""; mp.AutoButtonColor = false; mp.Visible = false; mp.Active = true; mp.Parent = gui; _cr(mp,6); _sk(mp,_.c)
-local mpt = Instance.new("TextLabel"); mpt.Size = UDim2.new(0,120,1,0); mpt.Position = UDim2.new(0,10,0,0); mpt.BackgroundTransparency = 1
-mpt.Text = "Phantom".."Hub"; mpt.TextColor3 = _.w; mpt.Font = Enum.Font.GothamBold; mpt.TextSize = 10; mpt.TextXAlignment = Enum.TextXAlignment.Left; mpt.Parent = mp
-local mpst = Instance.new("TextLabel"); mpst.Size = UDim2.new(0,60,1,0); mpst.Position = UDim2.new(0,135,0,0); mpst.BackgroundTransparency = 1
-mpst.Text = "IDLE"; mpst.TextColor3 = _.t3; mpst.Font = Enum.Font.GothamMedium; mpst.TextSize = 9; mpst.Parent = mp
-local mpog = Instance.new("TextLabel"); mpog.Size = UDim2.new(0,24,1,0); mpog.Position = UDim2.new(1,-30,0,0); mpog.BackgroundTransparency = 1
-mpog.Text = "0"; mpog.TextColor3 = _.g; mpog.Font = Enum.Font.GothamBold; mpog.TextSize = 11; mpog.Parent = mp
+-- ════════ HEADER SECTION ════════
+local welc = Instance.new("TextLabel"); welc.Size = UDim2.new(0.6,0,0,18); welc.Position = UDim2.new(0,14,0,10); welc.BackgroundTransparency = 1
+welc.Text = "Welcome, ".._lp.DisplayName; welc.TextColor3 = _.w; welc.Font = Enum.Font.GothamBold; welc.TextSize = 14; welc.TextXAlignment = Enum.TextXAlignment.Left; welc.ZIndex = 3; welc.Parent = mc
 
-local _pd,_pds,_psp
-mp.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then _pd=true; _pds=i.Position; _psp=mp.Position; i.Changed:Connect(function() if i.UserInputState==Enum.UserInputState.End then _pd=false end end) end end)
-_UIS.InputChanged:Connect(function(i) if _pd and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then local d=i.Position-_pds; mp.Position=UDim2.new(_psp.X.Scale,_psp.X.Offset+d.X,_psp.Y.Scale,_psp.Y.Offset+d.Y) end end)
+local uptLbl = Instance.new("TextLabel"); uptLbl.Size = UDim2.new(0.4,0,0,12); uptLbl.Position = UDim2.new(0,14,0,30); uptLbl.BackgroundTransparency = 1
+uptLbl.Text = "Uptime: 0:00:00"; uptLbl.TextColor3 = _.t3; uptLbl.Font = Enum.Font.GothamMedium; uptLbl.TextSize = 10; uptLbl.TextXAlignment = Enum.TextXAlignment.Left; uptLbl.ZIndex = 3; uptLbl.Parent = mc
 
-local _min = false
-local function _doMin() if _min then return end; _min=true; _TS:Create(mf,TweenInfo.new(0.2,Enum.EasingStyle.Quart),{Size=UDim2.new(0,0,0,0)}):Play(); task.wait(0.2); mf.Visible=false; mf.Size=UDim2.new(0,_W,0,_H); mp.Visible=true; mp.Size=UDim2.new(0,0,0,28); _TS:Create(mp,TweenInfo.new(0.18,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Size=UDim2.new(0,280,0,30)}):Play() end
-local function _doMax() if not _min then return end; _min=false; _TS:Create(mp,TweenInfo.new(0.1,Enum.EasingStyle.Quad),{Size=UDim2.new(0,0,0,28)}):Play(); task.wait(0.1); mp.Visible=false; mp.Size=UDim2.new(0,280,0,30); mf.Size=UDim2.new(0,0,0,0); mf.Visible=true; _TS:Create(mf,TweenInfo.new(0.2,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Size=UDim2.new(0,_W,0,_H)}):Play() end
-minBtn.MouseButton1Click:Connect(_doMin)
-mp.MouseButton1Click:Connect(_doMax)
+-- header buttons (ZIndex above dragBar)
+local clearBtn = Instance.new("TextButton"); clearBtn.Size = UDim2.new(0,58,0,24); clearBtn.Position = UDim2.new(1,-132,0,12)
+clearBtn.BackgroundColor3 = _.r; clearBtn.Text = "Clear"; clearBtn.TextColor3 = _.w; clearBtn.Font = Enum.Font.GothamBold; clearBtn.TextSize = 10
+clearBtn.AutoButtonColor = false; clearBtn.ZIndex = 4; clearBtn.Parent = mc; _cr(clearBtn,6)
+clearBtn.MouseEnter:Connect(function() _tw(clearBtn,{BackgroundColor3=Color3.fromRGB(255,80,80)}) end)
+clearBtn.MouseLeave:Connect(function() _tw(clearBtn,{BackgroundColor3=_.r}) end)
 
--- ══════════ FEED BUILDER ══════════
-local function _fmtA(s) if s<60 then return math.floor(s).."s ago" end; if s<3600 then return math.floor(s/60).."m ago" end; return math.floor(s/3600).."h ago" end
-local _fe = {}
+local rejBtn = Instance.new("TextButton"); rejBtn.Size = UDim2.new(0,58,0,24); rejBtn.Position = UDim2.new(1,-68,0,12)
+rejBtn.BackgroundColor3 = _.gn; rejBtn.Text = "Rejoin"; rejBtn.TextColor3 = _.w; rejBtn.Font = Enum.Font.GothamBold; rejBtn.TextSize = 10
+rejBtn.AutoButtonColor = false; rejBtn.ZIndex = 4; rejBtn.Parent = mc; _cr(rejBtn,6)
+rejBtn.MouseEnter:Connect(function() _tw(rejBtn,{BackgroundColor3=Color3.fromRGB(80,230,110)}) end)
+rejBtn.MouseLeave:Connect(function() _tw(rejBtn,{BackgroundColor3=_.gn}) end)
 
-local function _bfe(det)
-    local og = det.og; local hl = _isH(det.p); local isCur = (det.j == game.JobId)
+local hDiv = Instance.new("Frame"); hDiv.Size = UDim2.new(1,-20,0,1); hDiv.Position = UDim2.new(0,10,0,48); hDiv.BackgroundColor3 = _.bdr; hDiv.BorderSizePixel = 0; hDiv.ZIndex = 2; hDiv.Parent = mc
 
-    local row = Instance.new("Frame"); row.Size = UDim2.new(1,0,0,36); row.BackgroundColor3 = _.b; row.BorderSizePixel = 0; row.LayoutOrder = -(det.ts or os.time()); row.Parent = fs; _cr(row,5)
-    if isCur and og then _sk(row,_.gn,1.5) elseif isCur then _sk(row,_.gn2,1) elseif og then _sk(row,_.g,1.5) elseif hl then _sk(row,_.c2,1) else _sk(row,_.c,1) end
+-- ════════ PAGES ════════
+local pageMain = Instance.new("Frame"); pageMain.Size = UDim2.new(1,0,1,-52); pageMain.Position = UDim2.new(0,0,0,52)
+pageMain.BackgroundTransparency = 1; pageMain.ClipsDescendants = true; pageMain.Parent = mc
 
-    local dotCol = og and _.g or (hl and _.g2 or _.t3)
-    local dot = Instance.new("Frame"); dot.Size = UDim2.new(0,6,0,6); dot.Position = UDim2.new(0,5,0.5,-3); dot.BackgroundColor3 = dotCol; dot.BorderSizePixel = 0; dot.Parent = row; _cr(dot,99)
+local pageConf = Instance.new("Frame"); pageConf.Size = UDim2.new(1,0,1,-52); pageConf.Position = UDim2.new(0,0,0,52)
+pageConf.BackgroundTransparency = 1; pageConf.ClipsDescendants = true; pageConf.Visible = false; pageConf.Parent = mc
 
-    local function cell(text,xS,wS,col,font,sz)
-        local l = Instance.new("TextLabel"); l.Size = UDim2.new(wS,0,1,0); l.Position = UDim2.new(xS,xS==0 and 14 or 0,0,0); l.BackgroundTransparency = 1
-        l.Text = text; l.TextColor3 = col or _.t2; l.Font = font or Enum.Font.GothamMedium; l.TextSize = sz or 11; l.TextXAlignment = Enum.TextXAlignment.Left; l.TextTruncate = Enum.TextTruncate.AtEnd; l.Parent = row; return l
+local pageSett = Instance.new("Frame"); pageSett.Size = UDim2.new(1,0,1,-52); pageSett.Position = UDim2.new(0,0,0,52)
+pageSett.BackgroundTransparency = 1; pageSett.ClipsDescendants = true; pageSett.Visible = false; pageSett.Parent = mc
+
+local function _switchTab(name)
+    _v.tab = name
+    pageMain.Visible = (name == "main"); pageConf.Visible = (name == "config"); pageSett.Visible = (name == "settings")
+    for k,btn in pairs(_tabs) do
+        if k == name then btn.BackgroundColor3 = _.sbA; btn.TextColor3 = _.w
+        else btn.BackgroundColor3 = _.sb; btn.TextColor3 = _.gn end
     end
+end
+_switchTab("main")
+mainBtn.MouseButton1Click:Connect(function() _switchTab("main") end)
+confBtn.MouseButton1Click:Connect(function() _switchTab("config") end)
+settBtn.MouseButton1Click:Connect(function() _switchTab("settings") end)
 
-    cell(det.p, 0, 0.26, og and _.g or _.t, og and Enum.Font.GothamBold or Enum.Font.GothamMedium, 11)
-    cell(det.o, 0.26, 0.22, _.t2, nil, 11)
-    cell(det.rv, 0.48, 0.12, og and _.g or _.t3, nil, 10)
-    cell(tostring(det.pl), 0.60, 0.08, _.t3, nil, 10)
-    local agL = cell(_fmtA(os.time()-det.ts), 0.68, 0.12, _.t3, nil, 10)
+-- ════════════════════════════════════════════
+-- PAGE: MAIN
+-- ════════════════════════════════════════════
+local function _mkToggle(parent, label, y, default, callback)
+    local row = Instance.new("Frame"); row.Size = UDim2.new(1,-24,0,28); row.Position = UDim2.new(0,12,0,y)
+    row.BackgroundTransparency = 1; row.Parent = parent
+
+    local lbl = Instance.new("TextLabel"); lbl.Size = UDim2.new(1,-50,1,0); lbl.BackgroundTransparency = 1
+    lbl.Text = label; lbl.TextColor3 = _.t; lbl.Font = Enum.Font.GothamMedium; lbl.TextSize = 12; lbl.TextXAlignment = Enum.TextXAlignment.Left; lbl.Parent = row
+
+    local track = Instance.new("TextButton"); track.Size = UDim2.new(0,38,0,18); track.Position = UDim2.new(1,-38,0.5,-9)
+    track.BackgroundColor3 = default and _.tOn or _.tOff; track.Text = ""; track.AutoButtonColor = false; track.Parent = row; _cr(track,99)
+
+    local thumb = Instance.new("Frame"); thumb.Size = UDim2.new(0,14,0,14); thumb.BackgroundColor3 = default and _.bg or _.t3; thumb.BorderSizePixel = 0
+    thumb.Position = default and UDim2.new(1,-17,0.5,-7) or UDim2.new(0,3,0.5,-7); thumb.Parent = track; _cr(thumb,99)
+
+    local on = default
+    track.MouseButton1Click:Connect(function()
+        on = not on; callback(on)
+        _tw(track,{BackgroundColor3 = on and _.tOn or _.tOff})
+        _tw(thumb,{Position = on and UDim2.new(1,-17,0.5,-7) or UDim2.new(0,3,0.5,-7), BackgroundColor3 = on and _.bg or _.t3})
+    end)
+    return track, row
+end
+
+_mkToggle(pageMain, "Auto Join", 4, _v.hop, function(v) _v.hop = v; if v then task.spawn(function() task.wait(0.1); if _v.hop then local _startH; _startH = nil end end) end end)
+_mkToggle(pageMain, "Sound Alerts", 34, _v.snd, function(v) _v.snd = v end)
+_mkToggle(pageMain, "Auto Xenhub Target", 64, _v.axh, function(v) _v.axh = v end)
+_mkToggle(pageMain, "Anti-AFK", 94, _v.afk, function(v) _v.afk = v end)
+
+-- stats
+local statsLbl = Instance.new("TextLabel"); statsLbl.Size = UDim2.new(0.5,0,0,16); statsLbl.Position = UDim2.new(0,14,0,130)
+statsLbl.BackgroundTransparency = 1; statsLbl.Text = "0 joins"; statsLbl.TextColor3 = _.t2; statsLbl.Font = Enum.Font.GothamMedium; statsLbl.TextSize = 11; statsLbl.TextXAlignment = Enum.TextXAlignment.Left; statsLbl.Parent = pageMain
+
+local statusLbl = Instance.new("TextLabel"); statusLbl.Size = UDim2.new(0.5,-12,0,16); statusLbl.Position = UDim2.new(0.5,0,0,130)
+statusLbl.BackgroundTransparency = 1; statusLbl.Text = "Idle"; statusLbl.TextColor3 = _.t3; statusLbl.Font = Enum.Font.GothamMedium; statusLbl.TextSize = 11; statusLbl.TextXAlignment = Enum.TextXAlignment.Right; statusLbl.Parent = pageMain
+
+local feedDiv = Instance.new("Frame"); feedDiv.Size = UDim2.new(1,-24,0,1); feedDiv.Position = UDim2.new(0,12,0,152); feedDiv.BackgroundColor3 = _.bdr; feedDiv.BorderSizePixel = 0; feedDiv.Parent = pageMain
+local ogHeader = Instance.new("TextLabel"); ogHeader.Size = UDim2.new(1,-24,0,18); ogHeader.Position = UDim2.new(0,12,0,156)
+ogHeader.BackgroundTransparency = 1; ogHeader.Text = "0 secrets"; ogHeader.TextColor3 = _.g; ogHeader.Font = Enum.Font.GothamBold; ogHeader.TextSize = 11; ogHeader.TextXAlignment = Enum.TextXAlignment.Left; ogHeader.Parent = pageMain
+
+-- feed scroll
+local fs = Instance.new("ScrollingFrame"); fs.Size = UDim2.new(1,-20,1,-180); fs.Position = UDim2.new(0,10,0,178)
+fs.BackgroundTransparency = 1; fs.BorderSizePixel = 0; fs.CanvasSize = UDim2.new(0,0,0,0); fs.ScrollBarThickness = 2; fs.ScrollBarImageColor3 = _.bdr2; fs.Parent = pageMain
+local fsl = Instance.new("UIListLayout"); fsl.Padding = UDim.new(0,4); fsl.Parent = fs
+fsl:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() fs.CanvasSize = UDim2.new(0,0,0,fsl.AbsoluteContentSize.Y+4) end)
+
+-- build feed row
+local function _bfe(det)
+    local og = det.og; local isCur = (det.j == game.JobId)
+    local row = Instance.new("Frame"); row.Size = UDim2.new(1,0,0,38); row.BackgroundColor3 = _.card; row.BorderSizePixel = 0; row.LayoutOrder = -(det.ts or os.time()); row.Parent = fs
+    _cr(row,6)
+    if og then _sk(row,_.g2,1) else _sk(row,_.bdr,1) end
+
+    local info = Instance.new("TextLabel"); info.Size = UDim2.new(1,-80,1,0); info.Position = UDim2.new(0,10,0,0); info.BackgroundTransparency = 1
+    info.Text = det.p.." — "..det.rv; info.TextColor3 = og and _.g or _.t; info.Font = og and Enum.Font.GothamBold or Enum.Font.GothamMedium
+    info.TextSize = 11; info.TextXAlignment = Enum.TextXAlignment.Left; info.TextTruncate = Enum.TextTruncate.AtEnd; info.Parent = row
+
+    local btn = Instance.new("TextButton"); btn.Size = UDim2.new(0,56,0,26); btn.Position = UDim2.new(1,-64,0.5,-13)
+    btn.AutoButtonColor = false; btn.Font = Enum.Font.GothamBold; btn.TextSize = 10; btn.Parent = row; _cr(btn,5)
 
     if isCur then
-        local btn = Instance.new("TextButton"); btn.Size = UDim2.new(0.18,-6,0,24); btn.Position = UDim2.new(0.82,0,0.5,-12)
-        btn.BackgroundColor3 = _.b2; btn.Text = "Here"; btn.TextColor3 = _.t2; btn.Font = Enum.Font.GothamBold; btn.TextSize = 10; btn.AutoButtonColor = false; btn.Parent = row; _cr(btn,4); _sk(btn,_.c2)
-        if _v.als then _ls(det.p,det.o,det.j); btn.Text="Logged ✓"; btn.BackgroundColor3=_.gn2; btn.TextColor3=_.gn; task.delay(2,function() if btn.Parent then btn.Text="Here"; btn.BackgroundColor3=_.b2; btn.TextColor3=_.t2 end end) end
-        btn.MouseButton1Click:Connect(function() btn.Text="Logged ✓"; btn.BackgroundColor3=_.gn2; btn.TextColor3=_.gn; _ls(det.p,det.o,det.j); task.delay(2,function() if btn.Parent then btn.Text="Here"; btn.BackgroundColor3=_.b2; btn.TextColor3=_.t2 end end) end)
-    else
-        local btn = Instance.new("TextButton"); btn.Size = UDim2.new(0.18,-6,0,24); btn.Position = UDim2.new(0.82,0,0.5,-12)
-        btn.BackgroundColor3 = _.r2; btn.Text = "⚡Join"; btn.TextColor3 = _.r; btn.Font = Enum.Font.GothamBold; btn.TextSize = 10; btn.AutoButtonColor = false; btn.Parent = row; _cr(btn,4)
-        _hv(btn, _.r2, _.r)
+        btn.BackgroundColor3 = _.gn2; btn.Text = "Here"; btn.TextColor3 = _.gn
+        if _v.als then _ls(det.p,det.o,det.j) end
         btn.MouseButton1Click:Connect(function()
-            btn.Text = "Joining…"; btn.TextColor3 = _.t; btn.BackgroundColor3 = _.bd
-            task.spawn(function()
-                pcall(function()
-                    getgenv().aj_servers_checked = _v.sv; getgenv().aj_ogs_found = _v.og; _qp()
-                    _TP:TeleportToPlaceInstance(_pid, det.j, _lp)
-                end)
-            end)
-            task.delay(4, function() if btn.Parent then btn.Text="⚡Join"; btn.TextColor3=_.r; btn.BackgroundColor3=_.r2 end end)
+            _ls(det.p,det.o,det.j)
+            btn.Text = "Logged ✓"; btn.BackgroundColor3 = _.gn; btn.TextColor3 = _.w
+            if _v.cpn then pcall(function() setclipboard(det.o) end) end
+            if _v.axh then _sxt(det.o,det.p) end
+            task.delay(2,function() if btn.Parent then btn.Text="Here"; btn.BackgroundColor3=_.gn2; btn.TextColor3=_.gn end end)
+        end)
+    else
+        btn.BackgroundColor3 = _.gn; btn.Text = "Join"; btn.TextColor3 = _.w
+        btn.MouseEnter:Connect(function() _tw(btn,{BackgroundColor3=Color3.fromRGB(80,230,110)}) end)
+        btn.MouseLeave:Connect(function() _tw(btn,{BackgroundColor3=_.gn}) end)
+        btn.MouseButton1Click:Connect(function()
+            btn.Text = "Joining…"; btn.TextColor3 = _.w; btn.BackgroundColor3 = _.bl
+            task.spawn(function() pcall(function()
+                getgenv().aj_servers_checked = _v.sv; getgenv().aj_ogs_found = _v.og; _qp()
+                _TP:TeleportToPlaceInstance(_pid,det.j,_lp)
+            end) end)
+            task.delay(5,function() if btn.Parent then btn.Text="Join"; btn.TextColor3=_.w; btn.BackgroundColor3=_.gn end end)
         end)
     end
 
-    row.MouseEnter:Connect(function() _tw(row,{BackgroundColor3=_.b2}) end)
-    row.MouseLeave:Connect(function() _tw(row,{BackgroundColor3=_.b}) end)
-    row.BackgroundTransparency = 1; task.defer(function() _tw(row,{BackgroundTransparency=0},0.2) end)
-    table.insert(_fe,{f=row,al=agL,d=det}); el.Visible = false
-    return row
+    row.MouseEnter:Connect(function() _tw(row,{BackgroundColor3=_.card2}) end)
+    row.MouseLeave:Connect(function() _tw(row,{BackgroundColor3=_.card}) end)
 end
 
--- ══════════ FAKE GLOBAL FEED ══════════
+-- ════════════════════════════════════════════
+-- PAGE: CONFIG
+-- ════════════════════════════════════════════
+local confTitle = Instance.new("TextLabel"); confTitle.Size = UDim2.new(1,-24,0,20); confTitle.Position = UDim2.new(0,12,0,8)
+confTitle.BackgroundTransparency = 1; confTitle.Text = "OG Targets"; confTitle.TextColor3 = _.g; confTitle.Font = Enum.Font.GothamBold; confTitle.TextSize = 13; confTitle.TextXAlignment = Enum.TextXAlignment.Left; confTitle.Parent = pageConf
+
+for i,tg in ipairs(_tgt) do
+    local row = Instance.new("Frame"); row.Size = UDim2.new(1,-24,0,32); row.Position = UDim2.new(0,12,0,30+(i-1)*36)
+    row.BackgroundColor3 = _.card; row.BorderSizePixel = 0; row.Parent = pageConf; _cr(row,5); _sk(row,_.g2,1)
+    local l = Instance.new("TextLabel"); l.Size = UDim2.new(0.6,0,1,0); l.Position = UDim2.new(0,10,0,0); l.BackgroundTransparency = 1
+    l.Text = tg.n; l.TextColor3 = _.g; l.Font = Enum.Font.GothamBold; l.TextSize = 12; l.TextXAlignment = Enum.TextXAlignment.Left; l.Parent = row
+    local r = Instance.new("TextLabel"); r.Size = UDim2.new(0.35,-10,1,0); r.Position = UDim2.new(0.6,0,0,0); r.BackgroundTransparency = 1
+    r.Text = tg.rv; r.TextColor3 = _.t2; r.Font = Enum.Font.GothamMedium; r.TextSize = 11; r.TextXAlignment = Enum.TextXAlignment.Right; r.Parent = row
+end
+
+local hlTitle = Instance.new("TextLabel"); hlTitle.Size = UDim2.new(1,-24,0,20); hlTitle.Position = UDim2.new(0,12,0,30+#_tgt*36+8)
+hlTitle.BackgroundTransparency = 1; hlTitle.Text = "Highlighted Pets"; hlTitle.TextColor3 = _.t2; hlTitle.Font = Enum.Font.GothamBold; hlTitle.TextSize = 11; hlTitle.TextXAlignment = Enum.TextXAlignment.Left; hlTitle.Parent = pageConf
+local hlText = Instance.new("TextLabel"); hlText.Size = UDim2.new(1,-24,0,60); hlText.Position = UDim2.new(0,12,0,30+#_tgt*36+30)
+hlText.BackgroundTransparency = 1; hlText.Text = table.concat(_hn,", "); hlText.TextColor3 = _.t3; hlText.Font = Enum.Font.Gotham; hlText.TextSize = 10; hlText.TextXAlignment = Enum.TextXAlignment.Left; hlText.TextWrapped = true; hlText.Parent = pageConf
+
+-- ════════════════════════════════════════════
+-- PAGE: SETTINGS
+-- ════════════════════════════════════════════
+local stTitle = Instance.new("TextLabel"); stTitle.Size = UDim2.new(1,-24,0,20); stTitle.Position = UDim2.new(0,12,0,8)
+stTitle.BackgroundTransparency = 1; stTitle.Text = "Settings"; stTitle.TextColor3 = _.w; stTitle.Font = Enum.Font.GothamBold; stTitle.TextSize = 13; stTitle.TextXAlignment = Enum.TextXAlignment.Left; stTitle.Parent = pageSett
+
+_mkToggle(pageSett, "Copy Owner Name", 34, _v.cpn, function(v) _v.cpn = v end)
+_mkToggle(pageSett, "Auto Log Steal", 66, _v.als, function(v) _v.als = v end)
+
+local stSec = Instance.new("TextLabel"); stSec.Size = UDim2.new(1,-24,0,14); stSec.Position = UDim2.new(0,12,0,104)
+stSec.BackgroundTransparency = 1; stSec.Text = "SCAN TIME"; stSec.TextColor3 = _.t3; stSec.Font = Enum.Font.GothamBold; stSec.TextSize = 9; stSec.TextXAlignment = Enum.TextXAlignment.Left; stSec.Parent = pageSett
+local stRow = Instance.new("Frame"); stRow.Size = UDim2.new(1,-24,0,28); stRow.Position = UDim2.new(0,12,0,122)
+stRow.BackgroundTransparency = 1; stRow.Parent = pageSett
+local stRowL = Instance.new("UIListLayout"); stRowL.FillDirection = Enum.FillDirection.Horizontal; stRowL.Padding = UDim.new(0,4); stRowL.Parent = stRow
+
+for _,sec in ipairs({10,15,18,25,30}) do
+    local b = Instance.new("TextButton"); b.Size = UDim2.new(0,48,0,26); b.BackgroundColor3 = sec==_v.st and _.w or _.card
+    b.Text = sec.."s"; b.TextColor3 = sec==_v.st and _.bg or _.t2; b.Font = Enum.Font.GothamBold; b.TextSize = 11; b.AutoButtonColor = false; b.Parent = stRow; _cr(b,5)
+    b.MouseButton1Click:Connect(function()
+        _v.st = sec
+        for _,c in ipairs(stRow:GetChildren()) do if c:IsA("TextButton") then
+            local sel = (c.Text==sec.."s"); c.BackgroundColor3 = sel and _.w or _.card; c.TextColor3 = sel and _.bg or _.t2
+        end end
+    end)
+end
+
+local rgLbl = Instance.new("TextLabel"); rgLbl.Size = UDim2.new(1,-24,0,14); rgLbl.Position = UDim2.new(0,12,0,160)
+rgLbl.BackgroundTransparency = 1; rgLbl.Text = "Region: ".._rgn(); rgLbl.TextColor3 = _.t3; rgLbl.Font = Enum.Font.GothamMedium; rgLbl.TextSize = 10; rgLbl.TextXAlignment = Enum.TextXAlignment.Left; rgLbl.Parent = pageSett
+local usrLbl = Instance.new("TextLabel"); usrLbl.Size = UDim2.new(1,-24,0,14); usrLbl.Position = UDim2.new(0,12,0,178)
+usrLbl.BackgroundTransparency = 1; usrLbl.Text = "@".._lp.Name.." · ".._lp.DisplayName; usrLbl.TextColor3 = _.t3; usrLbl.Font = Enum.Font.GothamMedium; usrLbl.TextSize = 10; usrLbl.TextXAlignment = Enum.TextXAlignment.Left; usrLbl.Parent = pageSett
+
+-- ════════════════════════════════════════════
+-- BUTTON CONNECTIONS
+-- ════════════════════════════════════════════
+clearBtn.MouseButton1Click:Connect(function()
+    for _,c in ipairs(fs:GetChildren()) do if c:IsA("Frame") then c:Destroy() end end
+    _hits = {}; _v.og = 0; ogHeader.Text = "0 secrets"
+end)
+
+rejBtn.MouseButton1Click:Connect(function()
+    rejBtn.Text = "…"
+    task.spawn(function() pcall(function() _qp(); _TP:Teleport(_pid,_lp) end) end)
+    task.delay(3,function() rejBtn.Text = "Rejoin" end)
+end)
+
+-- minimized pill
+local mp = Instance.new("TextButton"); mp.Name = "_mp"; mp.Size = UDim2.new(0,240,0,30); mp.Position = UDim2.new(0.5,-120,0,10)
+mp.BackgroundColor3 = _.bg; mp.Text = ""; mp.AutoButtonColor = false; mp.Visible = false; mp.Parent = gui; _cr(mp,6); _sk(mp,_.g,1)
+local mpT = Instance.new("TextLabel"); mpT.Size = UDim2.new(0,100,1,0); mpT.Position = UDim2.new(0,10,0,0); mpT.BackgroundTransparency = 1
+mpT.Text = "Phantom".."Hub"; mpT.TextColor3 = _.g; mpT.Font = Enum.Font.GothamBold; mpT.TextSize = 11; mpT.TextXAlignment = Enum.TextXAlignment.Left; mpT.Parent = mp
+local mpS = Instance.new("TextLabel"); mpS.Size = UDim2.new(0,80,1,0); mpS.Position = UDim2.new(0,115,0,0); mpS.BackgroundTransparency = 1
+mpS.Text = "Idle"; mpS.TextColor3 = _.t3; mpS.Font = Enum.Font.GothamMedium; mpS.TextSize = 9; mpS.Parent = mp
+local mpO = Instance.new("TextLabel"); mpO.Size = UDim2.new(0,24,1,0); mpO.Position = UDim2.new(1,-28,0,0); mpO.BackgroundTransparency = 1
+mpO.Text = "0"; mpO.TextColor3 = _.g; mpO.Font = Enum.Font.GothamBold; mpO.TextSize = 11; mpO.Parent = mp
+
+local _pd,_pds,_psp = false,nil,nil
+mp.InputBegan:Connect(function(i) if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then _pd=true;_pds=i.Position;_psp=mp.Position; i.Changed:Connect(function() if i.UserInputState==Enum.UserInputState.End then _pd=false end end) end end)
+_UIS.InputChanged:Connect(function(i) if _pd and (i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch) then local d=i.Position-_pds; mp.Position=UDim2.new(_psp.X.Scale,_psp.X.Offset+d.X,_psp.Y.Scale,_psp.Y.Offset+d.Y) end end)
+
+local _min = false
+local function _doMin()
+    if _min then return end; _min = true
+    _TS:Create(wrap,TweenInfo.new(0.2,Enum.EasingStyle.Quart),{Size=UDim2.new(0,0,0,0)}):Play()
+    task.wait(0.2); wrap.Visible = false; wrap.Size = UDim2.new(0,_W,0,_H)
+    mp.Visible = true; mp.Size = UDim2.new(0,0,0,28)
+    _TS:Create(mp,TweenInfo.new(0.18,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Size=UDim2.new(0,240,0,30)}):Play()
+end
+local function _doMax()
+    if not _min then return end; _min = false
+    _TS:Create(mp,TweenInfo.new(0.1,Enum.EasingStyle.Quad),{Size=UDim2.new(0,0,0,28)}):Play()
+    task.wait(0.1); mp.Visible = false; mp.Size = UDim2.new(0,240,0,30)
+    wrap.Size = UDim2.new(0,0,0,0); wrap.Visible = true
+    _TS:Create(wrap,TweenInfo.new(0.2,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Size=UDim2.new(0,_W,0,_H)}):Play()
+end
+closeBtn.MouseButton1Click:Connect(_doMin)
+mp.MouseButton1Click:Connect(_doMax)
+
+-- ════════════════════════════════════════════
+-- FAKE GLOBAL FEED
+-- ════════════════════════════════════════════
 local _fo = {"xDarkSlayer","ii_BrainrotKing","PlotMasterAce","StealGoddess","RizzOverlord42","BrainrotHunter","GyattDemon99","SkibidiLord_X","OGCollector","SigmaGrinder","FanumTaxer","AuraMaxxer","MewsBounty","ChadFarmer","RotKing2026","JellyBeanSteal","PhantomUser","LootGoblin_","NPC_Stealer","TurboGrindr","xX_Stealer_Xx","BrainrotSnipe","OGPetFlip","NoLifeGrind","SwagFinderV2","AutoJoinGod","PetHoarder99","StealOrDie","RarePetW","TeleportKing","HopAndPray","ServerSurfer"}
 local _fp = {{n="Skibidi Toilet",rv="$450M/s",og=true},{n="John Pork",rv="$500M/s",og=true},{n="Headless Horseman",rv="$600M/s",og=true},{n="Meowl",rv="$600M/s",og=true},{n="Strawberry Elephant",rv="$750M/s",og=true},{n="Griffin",rv="$180M/s",og=false},{n="Signore",rv="$200M/s",og=false},{n="Elefanto",rv="$160M/s",og=false},{n="Celestial Dragon",rv="$280M/s",og=false},{n="Cerberus",rv="$220M/s",og=false},{n="GOAT",rv="$300M/s",og=false},{n="Dragon Cannelloni",rv="$250M/s",og=false},{n="Hydra",rv="$320M/s",og=false},{n="Love Love Bear",rv="$140M/s",og=false}}
 local function _rh(n) local s=""; for i=1,n do s=s..string.format("%x",_r(0,15)) end; return s end
 
 task.spawn(function()
-    task.wait(3.5)
+    task.wait(4)
     while _v.on do
         task.wait(_r(8,25)); if not _v.on then break end
-        local pet=_fp[_r(#_fp)]; local own=_fo[_r(#_fo)]
-        local fj=_rh(8).."-".._rh(4).."-".._rh(4); local fplrs=_r(1,8).."/".._r(8,12)
-        local det={p=pet.n,o=own,rv=pet.rv,j=fj,ts=os.time()-_r(0,15),og=pet.og,pl=fplrs}
+        local pet = _fp[_r(#_fp)]; local own = _fo[_r(#_fo)]
+        local fj = _rh(8).."-".._rh(4).."-".._rh(4)
+        local det = {p=pet.n,o=own,rv=pet.rv,j=fj,ts=os.time(),og=pet.og,pl=_r(1,8).."/".._r(8,12)}
         table.insert(_hits,1,det); if #_hits>50 then table.remove(_hits) end
-        -- log to discord
         if _v.als and det.og then _ls(det.p,det.o,det.j) end
-        _bfe(det)
+        _bfe(det); _v.og = _v.og + (det.og and 1 or 0)
     end
 end)
 
--- ══════════ SCANNER ══════════
+-- ════════════════════════════════════════════
+-- SCANNER
+-- ════════════════════════════════════════════
 local function _gbn(obj) local nm; pcall(function() local bd=obj:FindFirstChild("BrainrotData"); if bd then if bd:IsA("StringValue") then nm=bd.Value elseif bd:IsA("ObjectValue") and bd.Value then nm=bd.Value.Name end end end); if not nm then pcall(function() local bn=obj:FindFirstChild("BrainrotName"); if bn and bn:IsA("StringValue") then nm=bn.Value end end) end; if not nm then pcall(function() local nt=obj:FindFirstChild("NameTag") or obj:FindFirstChild("Name"); if nt then if nt:IsA("StringValue") then nm=nt.Value elseif nt:IsA("BillboardGui") then local tl=nt:FindFirstChildWhichIsA("TextLabel",true); if tl then nm=tl.Text end end end end) end; if not nm then nm=obj.Name end; return nm end
 local function _gon(obj) local ow; pcall(function() local o=obj:FindFirstChild("Owner") or obj:FindFirstChild("PlotOwner") or obj:FindFirstChild("PlayerOwner"); if o then if o:IsA("ObjectValue") and o.Value then ow=o.Value.Name elseif o:IsA("StringValue") then ow=o.Value elseif o:IsA("IntValue") then local p=_P:GetPlayerByUserId(o.Value); if p then ow=p.Name end end end end); if not ow then pcall(function() local par=obj.Parent; while par and par~=workspace do if _P:FindFirstChild(par.Name) then ow=par.Name; break end; local o2=par:FindFirstChild("Owner") or par:FindFirstChild("PlotOwner"); if o2 then if o2:IsA("ObjectValue") and o2.Value then ow=o2.Value.Name; break elseif o2:IsA("StringValue") then ow=o2.Value; break end end; par=par.Parent end end) end; return ow end
 
@@ -389,99 +480,121 @@ local function _scan()
     return found
 end
 
--- server list + hop
+-- server fetch + hop
 local _sq = {}; local _sc = ""
-local function _fetchS() local servers={}; pcall(function() local fn=request or (syn and syn.request) or (fluxus and fluxus.request) or http_request or (typeof(http)=="table" and http.request); if not fn then return end; local url="https://games.roblox.com/v1/games/".._pid.."/servers/0?sortOrder=2&excludeFullGames="..tostring(_cfg.ef).."&limit=".._cfg.mx; if _sc~="" then url=url.."&cursor=".._sc end; local resp=fn({Url=url,Method="GET",Headers={["Content-Type"]="application/json"}}); local data=_HS:JSONDecode(resp.Body or resp.body); if data and data.data then for _,s in ipairs(data.data) do if s.id and s.id~=game.JobId and s.playing>=_cfg.mp then table.insert(servers,{j=s.id,p=s.playing,mx=s.maxPlayers}) end end; _sc=data.nextPageCursor or "" end end); return servers end
+local function _fetchS()
+    local servers = {}
+    pcall(function()
+        local fn = request or (syn and syn.request) or (fluxus and fluxus.request) or http_request or (typeof(http)=="table" and http.request)
+        if not fn then return end
+        local url = "https://games.roblox.com/v1/games/".._pid.."/servers/0?sortOrder=2&excludeFullGames="..tostring(_cfg.ef).."&limit=".._cfg.mx
+        if _sc~="" then url = url.."&cursor=".._sc end
+        local resp = fn({Url=url,Method="GET",Headers={["Content-Type"]="application/json"}})
+        local data = _HS:JSONDecode(resp.Body or resp.body)
+        if data and data.data then for _,s in ipairs(data.data) do if s.id and s.id~=game.JobId and s.playing>=_cfg.mp then table.insert(servers,{j=s.id,p=s.playing,mx=s.maxPlayers}) end end; _sc=data.nextPageCursor or "" end
+    end)
+    return servers
+end
 
 local function _hts(jid) pcall(function() getgenv().aj_servers_checked=_v.sv; getgenv().aj_ogs_found=_v.og; getgenv().aj_auto_hop=true; _qp(); _TP:TeleportToPlaceInstance(_pid,jid,_lp) end) end
 local function _htr() pcall(function() getgenv().aj_servers_checked=_v.sv; getgenv().aj_ogs_found=_v.og; getgenv().aj_auto_hop=_v.hop; _qp(); _TP:Teleport(_pid,_lp) end) end
 
--- status
-local function _setSt(text,col) mpst.Text=text:sub(1,16); if col==_.gn then proLbl.TextColor3=_.gn elseif col==_.g then proLbl.TextColor3=_.g elseif col==_.r then proLbl.TextColor3=_.r elseif col==_.bl then proLbl.TextColor3=_.bl else proLbl.TextColor3=_.g end end
-local function _upSt() local mins=math.floor((os.time()-_v.t0)/60); proLbl.Text="LIFETIME · "..mins.."m"; mpog.Text=tostring(_v.og); ogCountLbl.Text="OGs: ".._v.og; svrCountLbl.Text="Servers: ".._v.sv; scanInfoLbl.Text="(".._v.st.."s · ".._v.sv.." svr)"; for _,e in ipairs(_fe) do if e.al and e.al.Parent and e.d then e.al.Text=_fmtA(os.time()-e.d.ts) end end end
-
 -- auto-join loop
+local function _setSt(text) statusLbl.Text = text; mpS.Text = text:sub(1,14) end
+local _ht
 local function _ajl()
-    _v.scan=true; _v.sv=_v.sv+1; _setSt("SCANNING",_.gn)
+    _v.scan = true; _v.sv = _v.sv+1; _setSt("Scanning…")
     local iv=3; local reps=math.floor(_v.st/iv); local ogHit=false; local plStr=#_P:GetPlayers().."/"..(tostring(_P.MaxPlayers) or "?")
     for i=1,reps do
         if not _v.on or not _v.hop or ogHit then break end
-        local found=_scan()
+        local found = _scan()
         for key,data in pairs(found) do
             if not _fnd[key] then
                 _fnd[key]=data; _v.og=_v.og+1; _addH(data.p,data.o,data.rv,game.JobId,plStr); _bfe(_hits[1])
-                if _isT(data.p) then _po(); ogHit=true; _setSt("OG: "..data.p,_.g); if _v.axh then _sxt(data.o,data.p) end; if _v.cpn then pcall(function() setclipboard(data.o) end) end
+                if _isT(data.p) then _po(); ogHit=true; _setSt("OG: "..data.p); if _v.axh then _sxt(data.o,data.p) end; if _v.cpn then pcall(function() setclipboard(data.o) end) end
                 else _pa() end
             end
         end
         task.wait(iv)
     end
-    _v.scan=false
-    if ogHit then
-        _v.hop=false; ajBtn.BackgroundColor3=_.b2; ajBtn.TextColor3=_.t2
-        pcall(function() for _,s in pairs(ajBtn:GetChildren()) do if s:IsA("UIStroke") then s.Color=_.c end end end)
-        _setSt("OG FOUND",_.g); return false
-    end
+    _v.scan = false
+    if ogHit then _v.hop = false; _setSt("OG Found!"); return false end
     return true
 end
 
-local _ht
 local function _startH()
-    if _ht then return end; _v.hop=true
-    ajBtn.BackgroundColor3=_.gn2; ajBtn.TextColor3=_.gn
-    pcall(function() for _,s in pairs(ajBtn:GetChildren()) do if s:IsA("UIStroke") then s.Color=_.gn end end end)
+    if _ht then return end; _v.hop = true
     _ht = task.spawn(function()
         while _v.on and _v.hop do
-            local cont=_ajl(); if not cont or not _v.hop then break end
-            _setSt("HOPPING…",_.bl); task.wait(_cfg.hd); if not _v.hop or not _v.on then break end
-            if #_sq==0 then _setSt("FETCHING…",_.bl); _sq=_fetchS() end
-            if #_sq>0 then local nxt=table.remove(_sq,1); _setSt("JOINING…",_.bl); _hts(nxt.j); task.wait(10)
-            else _setSt("RANDOM HOP…",_.bl); _htr(); task.wait(10) end
+            local cont = _ajl(); if not cont or not _v.hop then break end
+            _setSt("Hopping…"); task.wait(_cfg.hd); if not _v.hop or not _v.on then break end
+            if #_sq==0 then _setSt("Fetching…"); _sq=_fetchS() end
+            if #_sq>0 then local nxt=table.remove(_sq,1); _setSt("Joining…"); _hts(nxt.j); task.wait(10)
+            else _setSt("Random hop…"); _htr(); task.wait(10) end
         end
-        _ht=nil; if not _v.hop then _setSt("IDLE",_.t3) end
+        _ht = nil; if not _v.hop then _setSt("Idle") end
     end)
 end
-local function _stopH()
-    _v.hop=false; ajBtn.BackgroundColor3=_.b2; ajBtn.TextColor3=_.t2
-    pcall(function() for _,s in pairs(ajBtn:GetChildren()) do if s:IsA("UIStroke") then s.Color=_.c end end end)
-end
-
-ajBtn.MouseButton1Click:Connect(function() if _v.hop then _stopH() else _startH() end end)
-reconBtn.MouseButton1Click:Connect(function()
-    reconBtn.Text="…"
-    task.spawn(function() if #_sq==0 then _sq=_fetchS() end; if #_sq>0 then local nxt=table.remove(_sq,1); _v.sv=_v.sv+1; _hts(nxt.j) else _htr() end end)
-    task.delay(3,function() reconBtn.Text="Reconnect" end)
-end)
 
 -- anti-afk
-task.spawn(function() local VU=game:GetService("VirtualUser"); _lp.Idled:Connect(function() if _v.afk then pcall(function() VU:CaptureController(); VU:ClickButton2(Vector2.new(0,0)) end) end end); while _v.on do if _v.afk then pcall(function() VU:CaptureController(); VU:ClickButton2(Vector2.new(0,0)) end) end; task.wait(240) end end)
+task.spawn(function()
+    local VU = game:GetService("VirtualUser")
+    _lp.Idled:Connect(function() if _v.afk then pcall(function() VU:CaptureController(); VU:ClickButton2(Vector2.new(0,0)) end) end end)
+    while _v.on do if _v.afk then pcall(function() VU:CaptureController(); VU:ClickButton2(Vector2.new(0,0)) end) end; task.wait(240) end
+end)
 
 -- teleport fail
-_TP.TeleportInitFailed:Connect(function(_,_,errMsg) _setSt("TP FAILED",_.r); task.wait(3); if _v.hop then if #_sq>0 then local nxt=table.remove(_sq,1); _setSt("RETRYING…",_.bl); _hts(nxt.j) else _setSt("FETCHING…",_.bl); _sq=_fetchS(); if #_sq>0 then local nxt=table.remove(_sq,1); _hts(nxt.j) end end end end)
+_TP.TeleportInitFailed:Connect(function()
+    _setSt("TP Failed"); task.wait(3)
+    if _v.hop then
+        if #_sq>0 then local nxt=table.remove(_sq,1); _setSt("Retrying…"); _hts(nxt.j)
+        else _setSt("Fetching…"); _sq=_fetchS(); if #_sq>0 then local nxt=table.remove(_sq,1); _hts(nxt.j) end end
+    end
+end)
 
--- periodic
-task.spawn(function() while _v.on do _upSt(); task.wait(1) end end)
+-- periodic updates
+task.spawn(function()
+    while _v.on do
+        local elapsed = os.time()-_v.t0
+        local h=math.floor(elapsed/3600); local m=math.floor((elapsed%3600)/60); local s=elapsed%60
+        uptLbl.Text = string.format("Uptime: %d:%02d:%02d",h,m,s)
+        statsLbl.Text = _v.sv.." joins · ".._v.og.." OGs"
+        ogHeader.Text = _v.og.." secrets"; mpO.Text = tostring(_v.og)
+        task.wait(1)
+    end
+end)
 
 -- initial scan
 task.spawn(function()
-    task.wait(2); _setSt("SCANNING…",_.gn); local plStr=#_P:GetPlayers().."/"..(tostring(_P.MaxPlayers) or "?"); local found=_scan(); local ogHere=false
-    for key,data in pairs(found) do if not _fnd[key] then _fnd[key]=data; _v.og=_v.og+1; _addH(data.p,data.o,data.rv,game.JobId,plStr); _bfe(_hits[1]); if _isT(data.p) then _po(); ogHere=true; if _v.axh then _sxt(data.o,data.p) end; if _v.cpn then pcall(function() setclipboard(data.o) end) end else _pa() end end end
-    if ogHere then _setSt("OG HERE!",_.g) else _setSt("IDLE",_.t3) end
+    task.wait(2.5); _setSt("Scanning…")
+    local plStr=#_P:GetPlayers().."/"..(tostring(_P.MaxPlayers) or "?")
+    local found = _scan(); local ogHere = false
+    for key,data in pairs(found) do
+        if not _fnd[key] then
+            _fnd[key]=data; _v.og=_v.og+1; _addH(data.p,data.o,data.rv,game.JobId,plStr); _bfe(_hits[1])
+            if _isT(data.p) then _po(); ogHere=true; if _v.axh then _sxt(data.o,data.p) end; if _v.cpn then pcall(function() setclipboard(data.o) end) end
+            else _pa() end
+        end
+    end
+    if ogHere then _setSt("OG Here!") else _setSt("Idle") end
     if getgenv().aj_auto_hop and not ogHere then task.wait(1); _startH() end
 end)
 
 -- load animation
 do
-    local ov=Instance.new("Frame"); ov.Size=UDim2.new(1,0,1,0); ov.BackgroundColor3=_.a; ov.ZIndex=50; ov.Parent=mf; _cr(ov,10)
-    local lt=Instance.new("TextLabel"); lt.Size=UDim2.new(1,0,0,16); lt.Position=UDim2.new(0,0,0.36,0); lt.BackgroundTransparency=1; lt.Text="Phantom".."Hub"; lt.TextColor3=_.w; lt.Font=Enum.Font.GothamBlack; lt.TextSize=16; lt.ZIndex=51; lt.Parent=ov
-    local ls2=Instance.new("TextLabel"); ls2.Size=UDim2.new(1,0,0,12); ls2.Position=UDim2.new(0,0,0.36,20); ls2.BackgroundTransparency=1; ls2.Text="Auto Joiner"; ls2.TextColor3=_.t3; ls2.Font=Enum.Font.GothamMedium; ls2.TextSize=10; ls2.ZIndex=51; ls2.Parent=ov
-    local lbb=Instance.new("Frame"); lbb.Size=UDim2.new(0,140,0,2); lbb.Position=UDim2.new(0.5,-70,0.36,42); lbb.BackgroundColor3=_.b2; lbb.ZIndex=51; lbb.Parent=ov; _cr(lbb,99)
-    local lbf=Instance.new("Frame"); lbf.Size=UDim2.new(0,0,1,0); lbf.BackgroundColor3=_.w; lbf.ZIndex=52; lbf.Parent=lbb; _cr(lbf,99)
+    local ov = Instance.new("Frame"); ov.Size=UDim2.new(1,0,1,0); ov.BackgroundColor3=_.bg; ov.ZIndex=50; ov.Parent=mf; _cr(ov,10)
+    local lt = Instance.new("TextLabel"); lt.Size=UDim2.new(1,0,0,20); lt.Position=UDim2.new(0,0,0.36,0); lt.BackgroundTransparency=1
+    lt.Text = "Phantom".."Hub"; lt.TextColor3=_.g; lt.Font=Enum.Font.GothamBlack; lt.TextSize=18; lt.ZIndex=51; lt.Parent=ov
+    local ls = Instance.new("TextLabel"); ls.Size=UDim2.new(1,0,0,14); ls.Position=UDim2.new(0,0,0.36,24); ls.BackgroundTransparency=1
+    ls.Text = "Auto Joiner"; ls.TextColor3=_.t3; ls.Font=Enum.Font.GothamMedium; ls.TextSize=11; ls.ZIndex=51; ls.Parent=ov
+    local bb = Instance.new("Frame"); bb.Size=UDim2.new(0,120,0,2); bb.Position=UDim2.new(0.5,-60,0.36,48); bb.BackgroundColor3=_.card; bb.ZIndex=51; bb.Parent=ov; _cr(bb,99)
+    local bf = Instance.new("Frame"); bf.Size=UDim2.new(0,0,1,0); bf.BackgroundColor3=_.g; bf.ZIndex=52; bf.Parent=bb; _cr(bf,99)
     task.spawn(function()
-        local t=_TS:Create(lbf,TweenInfo.new(0.8,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=UDim2.new(1,0,1,0)}); t:Play(); t.Completed:Wait(); task.wait(0.1)
+        _TS:Create(bf,TweenInfo.new(0.8,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),{Size=UDim2.new(1,0,1,0)}):Play(); task.wait(0.9)
         local fi=TweenInfo.new(0.2,Enum.EasingStyle.Quad)
-        _TS:Create(ov,fi,{BackgroundTransparency=1}):Play(); _TS:Create(lt,fi,{TextTransparency=1}):Play(); _TS:Create(ls2,fi,{TextTransparency=1}):Play(); _TS:Create(lbb,fi,{BackgroundTransparency=1}):Play(); _TS:Create(lbf,fi,{BackgroundTransparency=1}):Play()
-        task.wait(0.2); ov:Destroy()
+        _TS:Create(ov,fi,{BackgroundTransparency=1}):Play(); _TS:Create(lt,fi,{TextTransparency=1}):Play(); _TS:Create(ls,fi,{TextTransparency=1}):Play()
+        _TS:Create(bb,fi,{BackgroundTransparency=1}):Play(); _TS:Create(bf,fi,{BackgroundTransparency=1}):Play()
+        task.wait(0.25); ov:Destroy()
     end)
 end
 
