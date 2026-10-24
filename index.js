@@ -32,6 +32,10 @@ const client = new Client({
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMembers,
     ],
+    presence: {
+        status: "online",
+        activities: [{ name: "PhantomHub Keys", type: ActivityType.Watching }],
+    },
 });
 
 // ── Theme ──
@@ -180,12 +184,31 @@ app.get("/loader.lua", (req, res) => {
     res.type("text/plain").send(fs.readFileSync(loaderPath, "utf-8"));
 });
 
+// Serve auto_joiner.lua — the AJ loadstring pulls from this
+app.get("/aj.lua", (req, res) => {
+    const ajPath = path.join(__dirname, "data", "auto_joiner.lua");
+    if (!fs.existsSync(ajPath)) {
+        return res.status(404).send("-- PhantomHub: Auto Joiner not found");
+    }
+    res.type("text/plain").send(fs.readFileSync(ajPath, "utf-8"));
+});
+
 // /load removed — source code is protected, delivered only through the loader
 
 // Start Express
 app.listen(PORT, () => {
     console.log(`[API] Server running on port ${PORT}`);
 });
+
+// ── Keep-alive self-ping (prevents Render free tier spin-down) ──
+const RENDER_URL = process.env.RENDER_EXTERNAL_URL || "https://phantomhub.onrender.com";
+setInterval(() => {
+    const https = require("https");
+    https.get(RENDER_URL, (res) => {
+        let d = ""; res.on("data", c => d += c);
+        res.on("end", () => console.log(`[KEEPALIVE] Pinged ${res.statusCode}`));
+    }).on("error", (e) => console.log(`[KEEPALIVE] Ping failed: ${e.message}`));
+}, 4 * 60 * 1000); // every 4 minutes
 
 // ══════════════════════════════════════════════════
 // ── SLASH COMMANDS                              ──
