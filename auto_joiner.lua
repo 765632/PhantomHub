@@ -314,7 +314,7 @@ screenGui.Parent = PG
 local main = Instance.new("Frame")
 main.Name = "Main"
 main.AnchorPoint = Vector2.new(0.5, 0.5)
-main.Size = UDim2.new(0, 560, 0, 580)
+main.Size = UDim2.new(0, 680, 0, 580)
 main.Position = UDim2.new(0.5, 0, 0.5, 0)
 main.BackgroundColor3 = T.bg
 main.BorderSizePixel = 0
@@ -382,8 +382,8 @@ subtitleLbl.Parent = topBar
 
 -- top bar pills (right side)
 local pillContainer = Instance.new("Frame")
-pillContainer.Size = UDim2.new(0, 320, 0, 24)
-pillContainer.Position = UDim2.new(1, -330, 0.5, -12)
+pillContainer.Size = UDim2.new(0, 400, 0, 24)
+pillContainer.Position = UDim2.new(1, -410, 0.5, -12)
 pillContainer.BackgroundTransparency = 1
 pillContainer.Parent = topBar
 
@@ -502,10 +502,10 @@ end
 
 local statServers = statLbl("Servers: 0", 12, 44)
 local statOGs     = statLbl("OGs Found: 0", 12, 60, T.ogGold)
-local statPlayers = statLbl("Players: " .. #Players:GetPlayers() .. "/??", 160, 44)
-local statSession = statLbl("Session: 0m", 160, 60)
-local statJobId   = statLbl("Job: " .. game.JobId:sub(1, 12) .. "...", 320, 44, T.textDim)
-local statRegion  = statLbl("Region: " .. getRegion(), 320, 60, T.textMid)
+local statPlayers = statLbl("Players: " .. #Players:GetPlayers() .. "/??", 200, 44)
+local statSession = statLbl("Session: 0m", 200, 60)
+local statJobId   = statLbl("Job: " .. game.JobId:sub(1, 12) .. "...", 400, 44, T.textDim)
+local statRegion  = statLbl("Region: " .. getRegion(), 400, 60, T.textMid)
 
 -- control buttons row
 local ctrlRow = Instance.new("Frame")
@@ -623,11 +623,11 @@ local function colHeader(text, xOff, width)
     lbl.Parent = feedHeader
 end
 
-colHeader("BRAINROT", 4, 180)
-colHeader("OWNER", 195, 120)
-colHeader("RATE", 330, 80)
-colHeader("AGE", 430, 60)
-colHeader("SERVER", 495, 50)
+colHeader("BRAINROT", 4, 220)
+colHeader("OWNER", 235, 150)
+colHeader("RATE", 400, 80)
+colHeader("AGE", 500, 60)
+colHeader("SERVER", 580, 70)
 
 local feedScroll = Instance.new("ScrollingFrame")
 feedScroll.Size = UDim2.new(1, 0, 1, -22)
@@ -756,7 +756,7 @@ local function buildFeedEntry(det)
 
     -- pet name
     local petLbl = Instance.new("TextLabel")
-    petLbl.Size = UDim2.new(0, 180, 1, 0)
+    petLbl.Size = UDim2.new(0, 220, 1, 0)
     petLbl.Position = UDim2.new(0, isOg and 12 or 8, 0, 0)
     petLbl.BackgroundTransparency = 1
     petLbl.Text = det.pet
@@ -769,8 +769,8 @@ local function buildFeedEntry(det)
 
     -- owner
     local ownerLbl = Instance.new("TextLabel")
-    ownerLbl.Size = UDim2.new(0, 120, 1, 0)
-    ownerLbl.Position = UDim2.new(0, 195, 0, 0)
+    ownerLbl.Size = UDim2.new(0, 150, 1, 0)
+    ownerLbl.Position = UDim2.new(0, 235, 0, 0)
     ownerLbl.BackgroundTransparency = 1
     ownerLbl.Text = det.owner
     ownerLbl.TextColor3 = T.textMid
@@ -783,7 +783,7 @@ local function buildFeedEntry(det)
     -- rate
     local rateLbl = Instance.new("TextLabel")
     rateLbl.Size = UDim2.new(0, 80, 1, 0)
-    rateLbl.Position = UDim2.new(0, 330, 0, 0)
+    rateLbl.Position = UDim2.new(0, 400, 0, 0)
     rateLbl.BackgroundTransparency = 1
     rateLbl.Text = det.rate
     rateLbl.TextColor3 = isOg and T.ogGold or T.textDim
@@ -795,7 +795,7 @@ local function buildFeedEntry(det)
     -- age
     local ageLbl = Instance.new("TextLabel")
     ageLbl.Size = UDim2.new(0, 60, 1, 0)
-    ageLbl.Position = UDim2.new(0, 430, 0, 0)
+    ageLbl.Position = UDim2.new(0, 500, 0, 0)
     ageLbl.BackgroundTransparency = 1
     ageLbl.Text = formatAge(os.time() - det.time)
     ageLbl.TextColor3 = T.textDim
@@ -805,8 +805,8 @@ local function buildFeedEntry(det)
 
     -- server indicator
     local srvLbl = Instance.new("TextLabel")
-    srvLbl.Size = UDim2.new(0, 50, 1, 0)
-    srvLbl.Position = UDim2.new(0, 495, 0, 0)
+    srvLbl.Size = UDim2.new(0, 70, 1, 0)
+    srvLbl.Position = UDim2.new(0, 580, 0, 0)
     srvLbl.BackgroundTransparency = 1
     srvLbl.Text = (det.jobId == game.JobId) and "HERE" or det.jobId:sub(1, 6)
     srvLbl.TextColor3 = (det.jobId == game.JobId) and T.success or T.textDim
@@ -1047,7 +1047,7 @@ local function minimizeUI()
     }):Play()
     task.wait(0.3)
     main.Visible = false
-    main.Size = UDim2.new(0, 560, 0, 580)
+    main.Size = UDim2.new(0, 680, 0, 580)
     minPill.Visible = true
     minPill.Size = UDim2.new(0, 0, 0, 36)
     TweenService:Create(minPill, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
@@ -1065,7 +1065,7 @@ local function restoreUI()
     main.Size = UDim2.new(0, 0, 0, 0)
     main.Visible = true
     TweenService:Create(main, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 560, 0, 580),
+        Size = UDim2.new(0, 680, 0, 580),
     }):Play()
 end
 
