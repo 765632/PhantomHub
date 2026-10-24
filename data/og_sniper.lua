@@ -3,8 +3,6 @@
 -- ║  Steal a Brainrot — detect, track, and fleece OG claims        ║
 -- ╚══════════════════════════════════════════════════════════════════╝
 
-print("[OG SNIPER] Starting...")
-
 local ok, err = pcall(function()
 
 local Players = game:GetService("Players")
@@ -63,8 +61,8 @@ local state = {
 }
 
 local trackedUsers = {}   -- {username = {brainrot, time, og, source, count}}
-local ogLog = {}          -- {timestamp, playerName, brainrotName, isOG}
-local liveLog = {}        -- all spawn events
+local ogLog = {}
+local liveLog = {}
 local fleeceQueue = {}    -- players to auto-trade
 local knownBrainrots = {} -- already-seen brainrot instances (avoid dupes)
 local knownGlobalTexts = {} -- dedup global feed entries
@@ -1714,11 +1712,6 @@ local function logSpawn(playerName, brainrotName, isOGSpawn, source)
         end
     end
 
-    -- store in log tables
-    table.insert(liveLog, {time = timestamp, player = playerName, brainrot = brainrotName, og = isOGSpawn, source = src})
-    if isOGSpawn then
-        table.insert(ogLog, {time = timestamp, player = playerName, brainrot = brainrotName, source = src})
-    end
 end
 
 -- Method 1: Watch workspace for new brainrot models
@@ -2368,7 +2361,6 @@ spawn(function()
     for _ in pairs(hookedRemotes) do hookCount = hookCount + 1 end
     local textCount = 0
     for _ in pairs(hookedTextLabels) do textCount = textCount + 1 end
-    addLogEntry(liveScroll, "• [" .. os.date("%H:%M:%S") .. "] OG Sniper active — hooked " .. hookCount .. " remotes, watching " .. textCount .. " labels", Theme.success, false)
     if liveWaiting.Visible then liveWaiting.Visible = false end
 end)
 
@@ -2379,12 +2371,9 @@ _G.OGSniperStop = function()
     pcall(function() screenGui:Destroy() end)
 end
 
-print("[OG SNIPER] PhantomHub OG Sniper loaded — " .. remoteCount .. " remotes found")
-
 end) -- end pcall
 
 if not ok then
-    warn("[OG SNIPER] ERROR: " .. tostring(err))
     pcall(function()
         local sg = Instance.new("ScreenGui")
         sg.Name = "OGSniperError"

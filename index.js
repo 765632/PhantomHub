@@ -184,6 +184,42 @@ app.get("/loader.lua", (req, res) => {
     res.type("text/plain").send(fs.readFileSync(loaderPath, "utf-8"));
 });
 
+// ── Steal Logger ──
+const STEALS_FILE = path.join(__dirname, "data", "steals.json");
+function loadSteals() { try { if (fs.existsSync(STEALS_FILE)) return JSON.parse(fs.readFileSync(STEALS_FILE, "utf-8")); } catch {} return []; }
+function saveSteals(s) { fs.writeFileSync(STEALS_FILE, JSON.stringify(s, null, 2)); }
+
+app.post("/api/log-steal", (req, res) => {
+    try {
+        const { pet, owner, player, server_id } = req.body;
+        if (!pet || !player) return res.json({ ok: false, error: "missing fields" });
+        const steals = loadSteals();
+        const entry = { pet, owner: owner || "???", player, server_id: server_id || "unknown", time: Date.now() };
+        steals.unshift(entry);
+        if (steals.length > 200) steals.length = 200;
+        saveSteals(steals);
+        console.log(`[STEAL] ${player} logged: ${pet} from ${owner}`);
+
+        // Post to steals channel if configured
+        const STEALS_CHANNEL = process.env.STEALS_CHANNEL_ID;
+        if (STEALS_CHANNEL && client.isReady()) {
+            const ch = client.channels.cache.get(STEALS_CHANNEL);
+            if (ch) {
+                ch.send({ embeds: [embed("🏆 Steal Logged", `**${pet}** stolen from **${owner}**\nBy: **${player}**\nServer: \`${(server_id || "").substring(0, 12)}\``, CLR.warn)] }).catch(() => {});
+            }
+        }
+        res.json({ ok: true, total: steals.length });
+    } catch (e) {
+        res.json({ ok: false, error: e.message });
+    }
+});
+
+app.get("/api/steals", (req, res) => {
+    const steals = loadSteals();
+    const limit = Math.min(parseInt(req.query.limit) || 25, 100);
+    res.json({ steals: steals.slice(0, limit), total: steals.length });
+});
+
 // Serve auto_joiner.lua — the AJ loadstring pulls from this
 app.get("/aj.lua", (req, res) => {
     const ajPath = path.join(__dirname, "data", "auto_joiner.lua");
