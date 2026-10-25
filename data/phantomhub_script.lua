@@ -5302,6 +5302,9 @@ end
 local _riddlerConns = {}
 local _riddlerSolving = false
 local _notifyRemoteRef = nil
+local _riddlerSeenTexts = {}
+local _riddlerLastScan = 0
+local RIDDLER_SCAN_INTERVAL = 0.4
 
 local function riddlerGetCodeBox()
     local pg = LocalPlayer:FindFirstChildOfClass("PlayerGui")
@@ -6271,6 +6274,17 @@ local function onRiddleDetected(text)
     cleaned = trim(cleaned)
     if cleaned == "" or #cleaned < 3 then return end
 
+    -- dedup: skip if we already processed this exact text recently
+    local dedupKey = cleaned:lower():sub(1, 120)
+    if _riddlerSeenTexts[dedupKey] and (os.clock() - _riddlerSeenTexts[dedupKey]) < 30 then return end
+    _riddlerSeenTexts[dedupKey] = os.clock()
+
+    -- cleanup old entries periodically
+    local now = os.clock()
+    for k, t in pairs(_riddlerSeenTexts) do
+        if now - t > 60 then _riddlerSeenTexts[k] = nil end
+    end
+
     pushLog("> riddle: " .. cleaned:sub(1, 50), Color3.fromRGB(200, 180, 100))
     pushLog("> solving...", COL_ON)
 
@@ -6407,7 +6421,7 @@ local function startRiddler()
         table.insert(_riddlerConns, conn)
         pushLog("> riddler: notify mapped", COL_ON)
     else
-        pushLog("> riddler: no notify remote", Color3.fromRGB(255, 90, 90))
+        pushLog("> riddler: no notify remote (using scanner fallback)", Color3.fromRGB(255, 200, 80))
     end
 
     -- also listen to chat for riddle-like messages
@@ -6421,7 +6435,16 @@ local function startRiddler()
                         pcall(function()
                             local text = stripRich(msg.Text or "")
                             local lower = text:lower()
-                            if lower:find("riddle", 1, true) or lower:find("?") then
+                            if lower:find("riddle", 1, true) or lower:find("?")
+                                or lower:find("what") or lower:find("who")
+                                or lower:find("where") or lower:find("how")
+                                or lower:find("name") or lower:find("favorite")
+                                or lower:find("colour") or lower:find("color")
+                                or lower:find("mutation") or lower:find("machine")
+                                or lower:find("brainrot") or lower:find("sammy")
+                                or lower:find("spell") or lower:find("reverse")
+                                or lower:find("backward") or lower:find("letter")
+                                or lower:find("times") or lower:find("rarity") then
                                 onRiddleDetected(text)
                             end
                         end)
@@ -6444,12 +6467,59 @@ local function startRiddler()
             local lower = text:lower()
             if lower:find("?") or lower:find("riddle") or lower:find("what")
                 or lower:find("who") or lower:find("where") or lower:find("how")
-                or lower:find("when") or lower:find("name") or lower:find("favorite") then
+                or lower:find("when") or lower:find("name") or lower:find("favorite")
+                or lower:find("colour") or lower:find("color") or lower:find("mutation")
+                or lower:find("machine") or lower:find("brainrot") or lower:find("sammy")
+                or lower:find("spell") or lower:find("reverse") or lower:find("backward")
+                or lower:find("letter") or lower:find("times") or lower:find("rarity") then
                 onRiddleDetected(text)
             end
         end
     end)
     table.insert(_riddlerConns, conn3)
+
+    -- HEARTBEAT SCANNER: scans ALL visible TextLabels every 0.4s
+    -- This catches riddles that come through ANY UI element (announcements, popups, etc.)
+    -- Much more reliable than only watching DescendantAdded or notification remotes
+    local scanConn = RunService.Heartbeat:Connect(function()
+        if not state.riddlerToggled or _riddlerSolving then return end
+        local now = os.clock()
+        if now - _riddlerLastScan < RIDDLER_SCAN_INTERVAL then return end
+        _riddlerLastScan = now
+
+        local pg = LocalPlayer:FindFirstChildOfClass("PlayerGui")
+        if not pg then return end
+
+        for _, gui in ipairs(pg:GetChildren()) do
+            if gui:IsA("ScreenGui") and gui.Enabled and gui ~= screenGui then
+                for _, d in ipairs(gui:GetDescendants()) do
+                    if d:IsA("TextLabel") and d.Visible then
+                        local text = nil
+                        pcall(function() text = d.Text end)
+                        if text and #text > 8 then
+                            local lower = text:lower()
+                            local isRiddle = lower:find("?") or lower:find("riddle")
+                                or lower:find("what") or lower:find("who")
+                                or lower:find("where") or lower:find("how")
+                                or lower:find("when") or lower:find("name the")
+                                or lower:find("favorite") or lower:find("colour")
+                                or lower:find("color") or lower:find("mutation")
+                                or lower:find("machine") or lower:find("brainrot")
+                                or lower:find("sammy") or lower:find("spell")
+                                or lower:find("reverse") or lower:find("backward")
+                                or lower:find("letter") or lower:find("times")
+                                or lower:find("rarity") or lower:find("which")
+                            if isRiddle then
+                                pcall(onRiddleDetected, text)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+    table.insert(_riddlerConns, scanConn)
+    pushLog("> riddler: heartbeat scanner active", COL_ON)
 end
 
 local function stopRiddler()
