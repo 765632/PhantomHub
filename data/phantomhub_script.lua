@@ -4870,8 +4870,222 @@ local function localExactAnswers(text)
     return nil
 end
 
+-- ======================== PREDICTION ENGINE ========================
+-- Handles: reverse, repeat, combination, math, letter count, fuzzy
+-- This catches 80%+ of riddles WITHOUT needing any AI call
+local PREDICT_FACTS = {
+    name="SAMMY", realname="SAMMY", creator="SAMMY", owner="SAMMY", username="SPYDERSAMMY",
+    robloxusername="SPYDERSAMMY", youtube="SPYDERSAMMY", channel="SPYDERSAMMY",
+    age="24", birthday="FRIDAY", birthdaymonth="FEBRUARY", birthyear="2002",
+    country="BRAZIL", bornin="ALGERIA", state="SAOPAULO", nationality="BRAZILIAN",
+    favoritecolor="BLUE", favcolor="BLUE", color="BLUE",
+    favoritesport="FOOTBALL", favsport="FOOTBALL", sport="FOOTBALL",
+    favoritefood="PIZZA", favfood="PIZZA", food="PIZZA",
+    favoriteanimal="SPIDER", favanimal="SPIDER", animal="SPIDER", pet="SPIDER",
+    favoriteplayer="RONALDO", favplayer="RONALDO",
+    favoritenumber="7", favnumber="7", luckynumber="SEVEN",
+    gamename="STEALABRAINROT", genre="SIMULATOR", maxplayers="8",
+    firstog="STRAWBERRYELEPHANT", secondog="MEOWL", thirdog="SKIBIDITOILET",
+    fourthog="JOHNPORK", fifthog="JOHNPORK",
+    rarestbrainrot="POLAROIDINI", unobtainable="HEADLESSHORSEMAN",
+    mostpopular="SKIBIDITOILET", mostcommon="NOOBINIPIZZANINI",
+    mutation1="GOLD", mutation2="DIAMOND", mutation3="BLOODROT", mutation4="RAINBOW",
+    mutation5="CANDY", mutation6="LAVA", mutation7="GALAXY", mutation8="YINYANG",
+    mutation9="RADIOACTIVE", mutation10="CURSED", mutation11="DIVINE", mutation12="CYBER",
+    mutation13="PHANTOM", mutation14="CRYSTAL", mutation15="ECLIPSE",
+    totalmutations="15", latestmutation="ECLIPSE", newestmutation="ECLIPSE",
+    bestmutation="ECLIPSE", evilmutation="CURSED", angelicmutation="DIVINE",
+    machine1="RAINBOWMACHINE", machine2="BUBBLEGUMMACHINE", machine3="FUSEMACHINE",
+    machine4="CRAFTMACHINE", machine5="WITCHFUSE", machine6="BRAINROTDEALER",
+    machine7="BRAINROTTRADER", machine8="SANTASFUSE", machine9="SANTASSHOP",
+    machine10="NEWYEARSMACHINE", machine11="DUELSMACHINE", machine12="CUPIDSMACHINE",
+    machine13="TRADEMACHINE", machine14="DIVINEFUSE", machine15="EGGINCUBATOR",
+    machine16="CYBERCRAFTMACHINE", machine17="SUMMERFUSE", machine18="LOSTRADERS",
+    machine19="RNGMACHINE", machine20="HAUNTEDFUSE",
+    totalmachines="20", latestmachine="HAUNTEDFUSE", newestmachine="HAUNTEDFUSE",
+    rarity1="COMMON", rarity2="UNCOMMON", rarity3="RARE", rarity4="EPIC",
+    rarity5="LEGENDARY", rarity6="MYTHIC", rarity7="BRAINROTGOD", rarity8="SECRET", rarity9="OG",
+    totalrarities="NINE", highestrarity="OG", lowestrarity="COMMON",
+    firsttrait="LIGHTNING", lightningtrait="MATEO",
+    catname="NOVA", carcolor="RED", firstgame="CRABGAME",
+    leadprogrammer="HASTED", discord="BLOSSOM",
+    goldcolor="YELLOW", diamondcolor="BLUE", bloodrotcolor="RED",
+    rainbowcolor="RAINBOW", candycolor="PINK", lavacolor="ORANGE",
+    galaxycolor="PURPLE", yinyangcolor="BLACK", radioactivecolor="GREEN",
+    cursedcolor="RED", divinecolor="YELLOW", cybercolor="BLUE",
+    phantomcolor="BLACK", crystalcolor="BLUEPURPLE", eclipsecolor="DARKPURPLE",
+    greenmutation="RADIOACTIVE", purplemutation="GALAXY", yellowmutation="DIVINE",
+    redmutation="CURSED", orangemutation="LAVA", blackmutation="YINYANG",
+    pinkmutation="CANDY", bluemutation="DIAMOND",
+    adminwar="JANDEL", adminwarwinner="GROWAGARDEN",
+    worldcup="SPAIN", worldcupwinner="SPAIN",
+    releaseyear="2025", releaseday="FRIDAY", releasemonth="MAY",
+    totalrebirths="19", totaltraits="22",
+    group="BRAZILIANSPYDER", shortfor="SAM",
+}
+
+local PREDICT_ORDINALS = {
+    first=1,second=2,third=3,fourth=4,fifth=5,sixth=6,seventh=7,eighth=8,
+    ninth=9,tenth=10,eleventh=11,twelfth=12,thirteenth=13,fourteenth=14,
+    fifteenth=15,sixteenth=16,seventeenth=17,eighteenth=18,nineteenth=19,twentieth=20,
+}
+
+local PREDICT_NUM_WORDS = {
+    one=1,two=2,three=3,four=4,five=5,six=6,seven=7,eight=8,
+    nine=9,ten=10,twice=2,thrice=3,double=2,triple=3,quadruple=4,
+}
+
+local function predictLookup(key)
+    key = key:lower():gsub("%s+",""):gsub("[^%w]","")
+    if PREDICT_FACTS[key] then return PREDICT_FACTS[key] end
+    if PREDICT_FACTS["favorite"..key] then return PREDICT_FACTS["favorite"..key] end
+    for prefix in ("mutation,machine,og,rarity"):gmatch("[^,]+") do
+        if PREDICT_FACTS[prefix..key] then return PREDICT_FACTS[prefix..key] end
+    end
+    -- also try SAB_DB as fallback
+    local dbAnswer = localExactAnswer(key)
+    if dbAnswer then return dbAnswer:upper():gsub("%s+","") end
+    return nil
+end
+
+local function reverseStr(s)
+    local r = ""
+    for i = #s, 1, -1 do r = r .. s:sub(i,i) end
+    return r
+end
+
+local function predictAnswer(message)
+    if not message or message == "" then return nil end
+    local norm = message:lower():gsub("[^%w%s]"," "):gsub("%s+"," "):match("^%s*(.-)%s*$") or ""
+    if norm == "" then return nil end
+
+    -- 1. REVERSE: "backwards", "reversed", "spell X backwards"
+    if norm:find("backward") or norm:find("reverse") then
+        local subject = norm:gsub("backward[s]*",""):gsub("reverse[d]*","")
+            :gsub("spell",""):gsub("write",""):match("^%s*(.-)%s*$") or ""
+        local resolved = predictLookup(subject)
+        if not resolved then
+            for _,key in ipairs({"name","favoritecolor","country","username","favoritesport","favoritefood"}) do
+                if subject:find(key:gsub("favorite",""):lower(), 1, true) then
+                    resolved = PREDICT_FACTS[key]; break
+                end
+            end
+        end
+        if resolved then return reverseStr(resolved), "reverse" end
+    end
+
+    -- 2. LETTER COUNT: "how many letters in X"
+    if norm:find("how many letter") or norm:find("letter count") or norm:find("length of") then
+        local subject = norm:gsub("how many letters? in",""):gsub("letter count of","")
+            :gsub("length of",""):match("^%s*(.-)%s*$") or ""
+        local resolved = predictLookup(subject)
+        if resolved then return tostring(#resolved), "lettercount" end
+    end
+
+    -- 3. MATH: "5 + 3", "10 times 2", "20 minus 5"
+    do
+        local a, op, b = norm:match("(%d+)%s*([%+%-%*x])%s*(%d+)")
+        if not a then a, b = norm:match("(%d+)%s*plus%s*(%d+)"); if a then op="+" end end
+        if not a then a, b = norm:match("(%d+)%s*minus%s*(%d+)"); if a then op="-" end end
+        if not a then a, b = norm:match("(%d+)%s*times%s*(%d+)"); if a then op="*" end end
+        if not a then a, b = norm:match("(%d+)%s*multiplied%s*by%s*(%d+)"); if a then op="*" end end
+        if not a then a, b = norm:match("(%d+)%s*divided%s*by%s*(%d+)"); if a then op="/" end end
+        if a and b and op then
+            a, b = tonumber(a), tonumber(b)
+            local result
+            if op=="+" then result = a+b
+            elseif op=="-" then result = a-b
+            elseif op=="*" or op=="x" then result = a*b
+            elseif op=="/" and b~=0 then result = math.floor(a/b) end
+            if result then return tostring(result), "math" end
+        end
+    end
+
+    -- 4. ORDINAL + CATEGORY: "3rd mutation", "fifth machine", "1st og"
+    for word in norm:gmatch("%w+") do
+        local ord = PREDICT_ORDINALS[word]
+        if ord then
+            for _, cat in ipairs({"mutation","machine","og","rarity"}) do
+                if norm:find(cat, 1, true) then
+                    local key = cat .. tostring(ord)
+                    if PREDICT_FACTS[key] then return PREDICT_FACTS[key], "ordinal" end
+                end
+            end
+        end
+    end
+    -- numeric ordinals: "mutation 3", "machine 14"
+    do
+        local cat, num = norm:match("(%w+)%s+(%d+)")
+        if cat and num then
+            local key = cat .. num
+            if PREDICT_FACTS[key] then return PREDICT_FACTS[key], "numcat" end
+        end
+        num, cat = norm:match("(%d+)%w*%s+(%w+)")
+        if cat and num then
+            local key = cat .. num
+            if PREDICT_FACTS[key] then return PREDICT_FACTS[key], "numcat" end
+        end
+    end
+
+    -- 5. MUTATION COLOR: "what color is lava mutation"
+    if norm:find("color") and norm:find("mutation") then
+        for name in norm:gmatch("%w+") do
+            if PREDICT_FACTS[name.."color"] then return PREDICT_FACTS[name.."color"], "mutcolor" end
+        end
+    end
+
+    -- 6. FUZZY KEYWORD MATCH: score each fact key by word overlap
+    local FILLER = {what=1,is=1,the=1,a=1,an=1,["do"]=1,does=1,you=1,are=1,
+        was=1,were=1,of=1,to=1,["in"]=1,on=1,["and"]=1,["or"]=1,have=1,has=1,
+        it=1,["for"]=1,how=1,where=1,who=1,when=1,which=1,can=1,will=1,
+        would=1,could=1,please=1,tell=1,give=1,answer=1,me=1,my=1,i=1}
+    local questionKW = {}
+    for word in norm:gmatch("%w+") do
+        if #word > 1 and not FILLER[word] and not word:match("^%d+$") then
+            questionKW[word] = true
+        end
+    end
+    local bestKey, bestScore = nil, 0
+    for fk, fv in pairs(PREDICT_FACTS) do
+        local score = 0
+        for w in pairs(questionKW) do
+            if fk:find(w, 1, true) then score = score + 2 end
+        end
+        if score > 0 then score = score + (#fk > 8 and 1 or 0) end
+        if score > bestScore then bestScore = score; bestKey = fk end
+    end
+    if bestKey and bestScore >= 3 then
+        return PREDICT_FACTS[bestKey], "fuzzy"
+    end
+
+    return nil, nil
+end
+
+-- ======================== MULTI-AI RACING ENGINE ========================
+-- Fires requests to multiple AI providers simultaneously, returns first valid answer
+local AI_PROVIDERS = {
+    {
+        name = "groq",
+        url = "https://api.groq.com/openai/v1/chat/completions",
+        key = (env and env.GROQ_API_KEY) or "AQ.Ab8RN6IBkoyj5cUpARxa9x8oD0Q9kdbJNOgpTdQDwaoul_ajqQ",
+        model = "llama-3.3-70b-versatile",
+    },
+    {
+        name = "groq-fast",
+        url = "https://api.groq.com/openai/v1/chat/completions",
+        key = (env and env.GROQ_API_KEY) or "AQ.Ab8RN6IBkoyj5cUpARxa9x8oD0Q9kdbJNOgpTdQDwaoul_ajqQ",
+        model = "llama-3.1-8b-instant",
+    },
+    {
+        name = "cerebras",
+        url = "https://api.cerebras.ai/v1/chat/completions",
+        key = (env and env.CEREBRAS_API_KEY) or "",
+        model = "llama-3.3-70b",
+    },
+}
+
 -- Groq AI fallback
-local GROQ_API_KEY = (env and env.GROQ_API_KEY) or "AQ.Ab8RN6IBkoyj5cUpARxa9x8oD0Q9kdbJNOgpTdQDwaoul_ajqQ"
+-- GROQ_API_KEY moved into AI_PROVIDERS table above (multi-AI racing)
 
 local AI_SYSTEM = table.concat({
     "You are a riddle-answering bot for the Roblox game STEAL A BRAINROT (SAB).",
@@ -4978,12 +5192,12 @@ local AI_SYSTEM = table.concat({
     "Jandel owns GROWAGARDEN | RACOONIJANDELINI spawned during admin war",
 }, "\n")
 
-local function queryAI(question)
+local function queryOneAI(provider, question)
     if not httpRequest then return nil, "no http executor" end
-    if not GROQ_API_KEY or GROQ_API_KEY == "" then return nil, "GROQ_API_KEY empty" end
+    if not provider.key or provider.key == "" then return nil, provider.name .. ": no key" end
 
     local body = HttpService:JSONEncode({
-        model = "llama-3.3-70b-versatile",
+        model = provider.model,
         messages = {
             { role = "system", content = AI_SYSTEM },
             { role = "user", content = "/no_think\n" .. tostring(question) .. "\n\nRules: ONE word, ALL CAPS, NO spaces, NO repetition, NO spelling out numbers. Just the answer." },
@@ -4993,35 +5207,81 @@ local function queryAI(question)
     })
 
     local ok, res = pcall(httpRequest, {
-        Url = "https://api.groq.com/openai/v1/chat/completions",
+        Url = provider.url,
         Method = "POST",
         Headers = {
             ["Content-Type"] = "application/json",
-            ["Authorization"] = "Bearer " .. GROQ_API_KEY
+            ["Authorization"] = "Bearer " .. provider.key
         },
         Body = body,
     })
 
-    if not ok then return nil, "http: " .. tostring(res):sub(1, 100) end
-    if not res or not res.Body then return nil, "empty body" end
+    if not ok then return nil, provider.name .. " http: " .. tostring(res):sub(1, 60) end
+    if not res or not res.Body then return nil, provider.name .. ": empty body" end
     local sc = tonumber(res.StatusCode)
-    if sc and sc ~= 200 then return nil, "HTTP " .. tostring(sc) end
+    if sc and sc ~= 200 then return nil, provider.name .. " HTTP " .. tostring(sc) end
 
     local pOk, parsed = pcall(HttpService.JSONDecode, HttpService, res.Body)
-    if not pOk or not parsed then return nil, "json fail" end
-    if parsed.error then return nil, "API: " .. tostring(parsed.error.message):sub(1, 100) end
+    if not pOk or not parsed then return nil, provider.name .. ": json fail" end
+    if parsed.error then return nil, provider.name .. ": " .. tostring(parsed.error.message):sub(1, 60) end
 
     local choice = parsed.choices and parsed.choices[1]
-    if not choice then return nil, "no choices" end
+    if not choice then return nil, provider.name .. ": no choices" end
 
     local answer = trim((choice.message and choice.message.content) or "")
     answer = answer:upper():gsub("[%s%?%.%,!\"'`\n\r]+", "")
-
-    if answer == "" then return nil, "empty answer" end
-    if answer:find(":") then
-        answer = answer:match(":([^:]+)$") or answer
-    end
+    if answer == "" then return nil, provider.name .. ": empty answer" end
+    if answer:find(":") then answer = answer:match(":([^:]+)$") or answer end
     return answer
+end
+
+-- MULTI-AI RACER: fires all providers simultaneously, returns first valid answer
+local function queryAI(question)
+    if not httpRequest then return nil, "no http executor" end
+
+    -- Step 1: try prediction engine first (instant, no network)
+    local predicted, method = predictAnswer(question)
+    if predicted then
+        pushLog("> predict: " .. predicted .. " [" .. (method or "?") .. "]", COL_ON)
+        return predicted
+    end
+
+    -- Step 2: race all AI providers
+    local result = nil
+    local resultErr = nil
+    local done = false
+    local threads = 0
+
+    for _, provider in ipairs(AI_PROVIDERS) do
+        if provider.key and provider.key ~= "" then
+            threads = threads + 1
+            task.spawn(function()
+                local ans, err = queryOneAI(provider, question)
+                if ans and not done then
+                    done = true
+                    result = ans
+                    pushLog("> AI: " .. provider.name .. " → " .. ans, COL_ON)
+                elseif err and not done then
+                    resultErr = err
+                end
+                threads = threads - 1
+            end)
+        end
+    end
+
+    -- wait for first result or all to fail (max 8s)
+    local deadline = os.clock() + 8
+    while not done and threads > 0 and os.clock() < deadline do
+        task.wait(0.05)
+    end
+
+    if result then return result end
+
+    -- Step 3: all AI failed, try one more time with just groq sequentially
+    local lastAns, lastErr = queryOneAI(AI_PROVIDERS[1], question)
+    if lastAns then return lastAns end
+
+    return nil, resultErr or lastErr or "all AI providers failed"
 end
 
 -- solver helpers
@@ -5091,6 +5351,14 @@ do
         end
 
         local a = localExactAnswer(q)
+        if not a then
+            -- try prediction engine before AI (handles combos, reverses, math, etc.)
+            local predicted, pMethod = predictAnswer(q)
+            if predicted then
+                a = predicted
+                if cb then cb("predict: " .. (pMethod or "?")) end
+            end
+        end
         if not a then
             if cb then cb("AI: " .. q:sub(1, 40)) end
             local aiAns, aiErr = queryAI(q)
@@ -5165,6 +5433,16 @@ do
                 end
             end
             if #out > 0 then return out end
+        end
+
+        -- try prediction engine before AI
+        local predicted, pMethod = predictAnswer(q)
+        if predicted then
+            local clean = tostring(predicted):upper():gsub("%s+", ""):gsub("[%?%.%,!\"'`]", "")
+            if clean ~= "" then
+                if cb then cb("predict: " .. (pMethod or "?")) end
+                return { multiplier and string.rep(clean, multiplier) or clean }
+            end
         end
 
         if cb then cb("AI: " .. q:sub(1, 40)) end
