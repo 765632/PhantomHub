@@ -5729,14 +5729,19 @@ local function riddlerSubmitAnswer(answer)
 
     local box = riddlerGetCodeBox()
     if not box then
-        -- retry after a brief wait
         task.wait(0.2)
         box = riddlerGetCodeBox()
     end
+    -- fallback: use aceCodeBox (broader search — any visible textbox)
+    if not box then
+        box = aceCodeBox()
+    end
 
     if not box then
-        pushLog("> riddler: no code box found", Color3.fromRGB(255, 90, 90))
-        return false, "code box not found"
+        -- last resort: fall through to typeAndSubmitCode which has its own GUI-opening logic
+        pushLog("> riddler: no box via riddlerGetCodeBox, trying typeAndSubmitCode", Color3.fromRGB(255, 200, 80))
+        local ok, msg = typeAndSubmitCode(answer)
+        return ok, msg
     end
 
     -- Step 1: Focus the box (SAB requires focus cycle for submission)
@@ -6691,9 +6696,14 @@ local function onRiddleDetected(text)
 
     _riddlerSolving = true
     task.spawn(function()
-        local answers = solveRiddleMulti(cleaned, function(msg)
+        local solveOk, answers = pcall(solveRiddleMulti, cleaned, function(msg)
             pushLog("> " .. tostring(msg), Color3.fromRGB(140, 140, 150))
         end)
+
+        if not solveOk then
+            pushLog("> solve error: " .. tostring(answers):sub(1, 60), Color3.fromRGB(255, 90, 90))
+            answers = nil
+        end
 
         if answers and #answers > 0 then
             local primary = answers[1]
