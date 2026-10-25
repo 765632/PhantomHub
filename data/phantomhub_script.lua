@@ -6496,21 +6496,24 @@ local function startRiddler()
                     if d:IsA("TextLabel") and d.Visible then
                         local text = nil
                         pcall(function() text = d.Text end)
-                        if text and #text > 8 then
+                        if text and #text > 15 then
                             local lower = text:lower()
-                            local isRiddle = lower:find("?") or lower:find("riddle")
-                                or lower:find("what") or lower:find("who")
-                                or lower:find("where") or lower:find("how")
-                                or lower:find("when") or lower:find("name the")
-                                or lower:find("favorite") or lower:find("colour")
-                                or lower:find("color") or lower:find("mutation")
-                                or lower:find("machine") or lower:find("brainrot")
-                                or lower:find("sammy") or lower:find("spell")
-                                or lower:find("reverse") or lower:find("backward")
-                                or lower:find("letter") or lower:find("times")
-                                or lower:find("rarity") or lower:find("which")
-                            if isRiddle then
-                                pcall(onRiddleDetected, text)
+                            -- Heartbeat scanner is STRICT: require "?" to avoid
+                            -- false positives on normal game UI text.
+                            -- DescendantAdded + chat listeners handle the broader keywords.
+                            local hasQuestion = lower:find("?")
+                            if hasQuestion then
+                                -- must also contain at least one riddle keyword
+                                local hasKeyword = lower:find("what") or lower:find("who")
+                                    or lower:find("where") or lower:find("how")
+                                    or lower:find("when") or lower:find("which")
+                                    or lower:find("name") or lower:find("favorite")
+                                    or lower:find("spell") or lower:find("reverse")
+                                    or lower:find("riddle") or lower:find("mutation")
+                                    or lower:find("machine") or lower:find("sammy")
+                                if hasKeyword then
+                                    pcall(onRiddleDetected, text)
+                                end
                             end
                         end
                     end
