@@ -1044,7 +1044,16 @@ local function typeAndSubmitCode(code)
             end
 
             if box then
+                pcall(function() box:CaptureFocus() end)
+                task.wait(0.05)
                 pcall(function() box.Text = code end)
+                task.wait(0.05)
+                pcall(function()
+                    if typeof(firesignal) == "function" then
+                        firesignal(box:GetPropertyChangedSignal("Text"))
+                    end
+                end)
+                pcall(function() box:ReleaseFocus(true) end)
                 task.wait(0.05)
                 if submitBtn then clickButton(submitBtn) end
                 fireBoxFocusLost(box)
@@ -1093,7 +1102,17 @@ local function typeAndSubmitCode(code)
 
     if not box then return false, "no codebox found" end
 
+    -- focus cycle: CaptureFocus → set text → fire property signal → ReleaseFocus
+    pcall(function() box:CaptureFocus() end)
+    task.wait(0.05)
     pcall(function() box.Text = code end)
+    pcall(function()
+        if typeof(firesignal) == "function" then
+            firesignal(box:GetPropertyChangedSignal("Text"))
+        end
+    end)
+    task.wait(0.05)
+    pcall(function() box:ReleaseFocus(true) end)
     task.wait(0.05)
 
     local redeemBtn = nil
@@ -5720,30 +5739,52 @@ local function riddlerSubmitAnswer(answer)
         return false, "code box not found"
     end
 
-    -- clear then set text with retries (Luna's approach)
+    -- Step 1: Focus the box (SAB requires focus cycle for submission)
+    pcall(function() box:CaptureFocus() end)
+    task.wait(0.05)
+
+    -- Step 2: Clear and set text
     pcall(function() box.Text = "" end)
-    task.wait(0.04)
+    task.wait(0.05)
     pcall(function() box.Text = answer end)
-    for _ = 1, 8 do
+
+    -- Step 3: Retry text set until it sticks
+    for _ = 1, 6 do
         task.wait(0.04)
         local current = ""
         pcall(function() current = box.Text end)
         if current == answer then break end
         pcall(function() box.Text = answer end)
     end
+
+    -- Step 4: Fire property changed signal so game detects the text change
+    pcall(function()
+        if typeof(firesignal) == "function" then
+            firesignal(box:GetPropertyChangedSignal("Text"))
+        end
+    end)
     task.wait(0.08)
 
     pushLog("> riddler: typed " .. answer, COL_ON)
 
     local submitted = false
 
-    -- method 1: fire FocusLost connections
+    -- Step 5: ReleaseFocus with enterPressed=true (this is what SAB actually checks)
+    pcall(function() box:ReleaseFocus(true) end)
+    task.wait(0.05)
+
+    -- Step 6: Fire FocusLost via firesignal (backup for ReleaseFocus)
+    if typeof(firesignal) == "function" then
+        pcall(firesignal, box.FocusLost, true)
+    end
+
+    -- Step 7: Fire FocusLost connections directly
     if riddlerFireConns(box.FocusLost, true) then
         submitted = true
     end
     task.wait(0.05)
 
-    -- method 2: find and click submit/redeem button (walk up to 6 parent levels)
+    -- Step 8: Find and click submit/redeem button (walk up to 6 parent levels)
     pcall(function()
         local searchNames = {"submit","redeem","claim","confirm","enter","send","apply"}
         local p = box.Parent
@@ -5792,16 +5833,18 @@ local function riddlerSubmitAnswer(answer)
     end)
     task.wait(0.05)
 
-    -- method 3: direct Fire on FocusLost
+    -- Step 9: Verify text stuck after all submit attempts
+    pcall(function()
+        if box.Text ~= answer then box.Text = answer end
+    end)
+
+    -- Step 10: Direct Fire on FocusLost (final fallback)
     if not submitted then
         pcall(function() box.FocusLost:Fire(true) end)
-        if typeof(firesignal) == "function" then
-            pcall(firesignal, box.FocusLost, true)
-        end
         submitted = true
     end
 
-    -- method 4: keypress Enter fallback
+    -- Step 11: keypress Enter fallback
     if not submitted then
         pcall(function()
             if typeof(keypress) == "function" then
@@ -6820,19 +6863,22 @@ local function startRiddler()
         task.wait(0.05)
         local text = nil
         pcall(function() text = obj.Text end)
-        if text and text ~= "" and #text > 12 then
+        if text and text ~= "" and #text > 8 then
             local lower = text:lower()
-            -- STRICT: require SAB-specific keyword OR ("?" AND a generic keyword)
-            local isSABSpecific = lower:find("riddle", 1, true) or lower:find("sammy", 1, true)
-                or lower:find("brainrot", 1, true) or lower:find("mutation", 1, true)
-                or lower:find("machine", 1, true)
-            local hasQuestion = lower:find("?")
-            local hasKeyword = lower:find("spell") or lower:find("reverse")
-                or lower:find("backward") or lower:find("letter")
-                or lower:find("what") or lower:find("who")
-                or lower:find("name") or lower:find("favorite")
-                or lower:find("color") or lower:find("colour")
-            if isSABSpecific or (hasQuestion and hasKeyword) then
+            -- broad keywords for new screen elements (game-created, not player chat)
+            local isRiddle = lower:find("what") or lower:find("who")
+                or lower:find("how") or lower:find("where")
+                or lower:find("which") or lower:find("name")
+                or lower:find("?") or lower:find("favorite")
+                or lower:find("colour") or lower:find("color")
+                or lower:find("mutation") or lower:find("machine")
+                or lower:find("rarity") or lower:find("brainrot")
+                or lower:find("sammy") or lower:find("spell")
+                or lower:find("reverse") or lower:find("backward")
+                or lower:find("letter") or lower:find("times")
+                or lower:find("twice") or lower:find("plus")
+                or lower:find("minus") or lower:find("add")
+            if isRiddle then
                 onRiddleDetected(text)
             end
         end
@@ -6840,8 +6886,8 @@ local function startRiddler()
     table.insert(_riddlerConns, conn3)
 
     -- HEARTBEAT SCANNER: scans ALL visible TextLabels every 0.4s
-    -- This catches riddles that come through ANY UI element (announcements, popups, etc.)
-    -- Much more reliable than only watching DescendantAdded or notification remotes
+    -- Screen TextLabels are game-created (announcements), so broad keywords are safe here
+    -- (unlike chat, which comes from players and needs strict filtering)
     local scanConn = RunService.Heartbeat:Connect(function()
         if not state.riddlerToggled or _riddlerSolving then return end
         local now = os.clock()
@@ -6857,24 +6903,23 @@ local function startRiddler()
                     if d:IsA("TextLabel") and d.Visible then
                         local text = nil
                         pcall(function() text = d.Text end)
-                        if text and #text > 15 then
+                        if text and #text > 8 then
                             local lower = text:lower()
-                            -- Heartbeat scanner is STRICT: require "?" to avoid
-                            -- false positives on normal game UI text.
-                            -- DescendantAdded + chat listeners handle the broader keywords.
-                            local hasQuestion = lower:find("?")
-                            if hasQuestion then
-                                -- must also contain at least one riddle keyword
-                                local hasKeyword = lower:find("what") or lower:find("who")
-                                    or lower:find("where") or lower:find("how")
-                                    or lower:find("when") or lower:find("which")
-                                    or lower:find("name") or lower:find("favorite")
-                                    or lower:find("spell") or lower:find("reverse")
-                                    or lower:find("riddle") or lower:find("mutation")
-                                    or lower:find("machine") or lower:find("sammy")
-                                if hasKeyword then
-                                    pcall(onRiddleDetected, text)
-                                end
+                            -- broad keyword match (same as brxxks) — screen labels are trusted
+                            local isRiddle = lower:find("what") or lower:find("who")
+                                or lower:find("how") or lower:find("where")
+                                or lower:find("which") or lower:find("name")
+                                or lower:find("?") or lower:find("favorite")
+                                or lower:find("colour") or lower:find("color")
+                                or lower:find("mutation") or lower:find("machine")
+                                or lower:find("rarity") or lower:find("brainrot")
+                                or lower:find("sammy") or lower:find("spell")
+                                or lower:find("reverse") or lower:find("backward")
+                                or lower:find("letter") or lower:find("times")
+                                or lower:find("twice") or lower:find("plus")
+                                or lower:find("minus") or lower:find("add")
+                            if isRiddle then
+                                pcall(onRiddleDetected, text)
                             end
                         end
                     end
