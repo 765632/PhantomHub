@@ -209,5 +209,18 @@
     "expiresAt": "never",
     "expired": false,
     "hwid": null
+  },
+  "PH-Z3H3F-GWBGK-3V394": {
+    "duration": "lifetime",
+    "label": "Lifetime",
+    "script": "code-sniper",
+    "scriptLabel": "Code Sniper",
+    "createdAt": 1792901884802,
+    "createdBy": "1532174717124087905",
+    "redeemedBy": "1532174717124087905",
+    "redeemedAt": 1792901891197,
+    "expiresAt": "never",
+    "expired": false,
+    "hwid": null
   }
 }
