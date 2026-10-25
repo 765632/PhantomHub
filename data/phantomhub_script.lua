@@ -987,10 +987,22 @@ local function typeAndSubmitCode(code)
     local pg = PlayerGui
     if not pg then return false, "no PlayerGui" end
 
+    -- find codes GUI by exact name or by name containing "code"/"redeem"
     local codesGui = pg:FindFirstChild("Codes")
+    if not codesGui then
+        for _, g in ipairs(pg:GetChildren()) do
+            if g:IsA("ScreenGui") then
+                local gn = g.Name:lower()
+                if gn:find("code") or gn:find("redeem") then
+                    codesGui = g
+                    break
+                end
+            end
+        end
+    end
     if codesGui then
         if codesGui:IsA("ScreenGui") then codesGui.Enabled = true end
-        local codesFrame = codesGui:FindFirstChild("Codes") or codesGui
+        local codesFrame = codesGui:FindFirstChild("Codes") or codesGui:FindFirstChild(codesGui.Name) or codesGui
         if codesFrame then
             if codesFrame:IsA("GuiObject") then codesFrame.Visible = true end
             local cur = codesFrame
@@ -1013,7 +1025,7 @@ local function typeAndSubmitCode(code)
                     local n = d.Name:lower()
                     local txt = ""
                     pcall(function() txt = d.Text:lower() end)
-                    if n:find("submit") or txt:find("submit") or n:find("redeem") or txt:find("redeem") or n:find("claim") or txt:find("confirm") or n:find("enter") then
+                    if n:find("submit") or txt:find("submit") or n:find("redeem") or txt:find("redeem") or n:find("claim") or txt:find("claim") or txt:find("confirm") or n == "enter" or txt:find("enter") then
                         submitBtn = d
                         break
                     end
@@ -1041,8 +1053,21 @@ local function typeAndSubmitCode(code)
         end
     end
 
-    -- fallback: search all visible textboxes
-    task.wait(0.2)
+    -- fallback: try to enable any code-related ScreenGui first, then search
+    pcall(function()
+        for _, g in ipairs(pg:GetChildren()) do
+            if g:IsA("ScreenGui") then
+                local gn = g.Name:lower()
+                if gn:find("code") or gn:find("redeem") then
+                    g.Enabled = true
+                    for _, d in ipairs(g:GetDescendants()) do
+                        if d:IsA("GuiObject") then pcall(function() d.Visible = true end) end
+                    end
+                end
+            end
+        end
+    end)
+    task.wait(0.15)
     local box = nil
     local deadline = tick() + 2
     while tick() < deadline do
@@ -5076,12 +5101,13 @@ local AI_PROVIDERS = {
         key = (env and env.GROQ_API_KEY) or "AQ.Ab8RN6IBkoyj5cUpARxa9x8oD0Q9kdbJNOgpTdQDwaoul_ajqQ",
         model = "llama-3.1-8b-instant",
     },
-    {
-        name = "cerebras",
-        url = "https://api.cerebras.ai/v1/chat/completions",
-        key = (env and env.CEREBRAS_API_KEY) or "",
-        model = "llama-3.3-70b",
-    },
+    -- cerebras removed: no API key available (add env.CEREBRAS_API_KEY to enable)
+    -- {
+    --     name = "cerebras",
+    --     url = "https://api.cerebras.ai/v1/chat/completions",
+    --     key = (env and env.CEREBRAS_API_KEY) or "",
+    --     model = "llama-3.3-70b",
+    -- },
 }
 
 -- Groq AI fallback
@@ -5717,18 +5743,50 @@ local function riddlerSubmitAnswer(answer)
     end
     task.wait(0.05)
 
-    -- method 2: find and click submit/redeem button
+    -- method 2: find and click submit/redeem button (walk up to 6 parent levels)
     pcall(function()
-        local parent = box.Parent
-        if not parent then return end
-        for _, child in ipairs(parent:GetDescendants()) do
-            if child:IsA("TextButton") or child:IsA("ImageButton") then
-                local t = ((child.Text or "") .. (child.Name or "")):lower()
-                if t:find("redeem") or t:find("submit") or t:find("enter") or t:find("claim") then
-                    clickButton(child)
-                    submitted = true
-                    return
+        local searchNames = {"submit","redeem","claim","confirm","enter","send","apply"}
+        local p = box.Parent
+        for _ = 1, 6 do
+            if not p then break end
+            for _, child in ipairs(p:GetDescendants()) do
+                if (child:IsA("TextButton") or child:IsA("ImageButton")) and child ~= box then
+                    local n = child.Name:lower()
+                    local txt = ""
+                    pcall(function() txt = child.Text:lower() end)
+                    for _, sn in ipairs(searchNames) do
+                        if n:find(sn) or txt:find(sn) then
+                            if isVisibleChain(child) then
+                                clickButton(child)
+                                submitted = true
+                                return
+                            end
+                        end
+                    end
                 end
+            end
+            if submitted then return end
+            p = p.Parent
+        end
+        -- last resort: any button near the box that isn't close/x
+        if not submitted then
+            local p2 = box.Parent
+            for _ = 1, 4 do
+                if not p2 then break end
+                for _, child in ipairs(p2:GetDescendants()) do
+                    if (child:IsA("TextButton") or child:IsA("ImageButton")) and child ~= box then
+                        local n = child.Name:lower()
+                        if not n:find("close") and not n:find("toggle") and n ~= "x" then
+                            if isVisibleChain(child) then
+                                clickButton(child)
+                                submitted = true
+                                return
+                            end
+                        end
+                    end
+                end
+                if submitted then return end
+                p2 = p2.Parent
             end
         end
     end)
@@ -6546,8 +6604,15 @@ local function destroyRiddlerPanel()
     _riddlerTabBtns = {}
 end
 
+local _riddleQueue = nil -- stores one pending riddle while solving
+
 local function onRiddleDetected(text)
-    if not state.riddlerToggled or _riddlerSolving then return end
+    if not state.riddlerToggled then return end
+    if _riddlerSolving then
+        -- queue one riddle instead of dropping it
+        _riddleQueue = text
+        return
+    end
     local cleaned = stripRich(tostring(text or ""))
     cleaned = trim(cleaned)
     if cleaned == "" or #cleaned < 3 then return end
@@ -6648,6 +6713,12 @@ local function onRiddleDetected(text)
             end
         end
         _riddlerSolving = false
+        -- drain queued riddle if any
+        if _riddleQueue then
+            local queued = _riddleQueue
+            _riddleQueue = nil
+            task.defer(onRiddleDetected, queued)
+        end
     end)
 end
 
@@ -6686,13 +6757,18 @@ local function startRiddler()
             local firstArg = tostring((...) or "")
             local raw = stripRich(firstArg)
             local lower = raw:lower()
-            -- Accept if it looks like an announcement OR if the text itself looks like a riddle
+            -- Accept announcements with broad keywords (game remotes are trusted)
+            -- But still require minimum length and some relevance
             local isAnnounce = looksLikeAnnouncement(...)
-            local isRiddle = lower:find("riddle", 1, true) or lower:find("?")
-                or lower:find("what") or lower:find("who") or lower:find("where")
+            local isSABSpecific = lower:find("riddle", 1, true) or lower:find("sammy", 1, true)
+                or lower:find("brainrot", 1, true) or lower:find("mutation", 1, true)
+                or lower:find("machine", 1, true)
+            local hasQuestion = lower:find("?")
+            local hasKeyword = lower:find("what") or lower:find("who") or lower:find("where")
                 or lower:find("how") or lower:find("when") or lower:find("name")
-                or lower:find("favorite") or lower:find("colour") or lower:find("color")
-            if (isAnnounce or isRiddle) and #raw > 5 then
+                or lower:find("spell") or lower:find("reverse") or lower:find("favorite")
+            -- Notification remote is more trusted (game-sent), so accept announcements with any keyword
+            if #raw > 8 and (isSABSpecific or isAnnounce or (hasQuestion and hasKeyword)) then
                 pcall(onRiddleDetected, firstArg)
             end
         end)
@@ -6712,17 +6788,20 @@ local function startRiddler()
                         if not state.riddlerToggled then return end
                         pcall(function()
                             local text = stripRich(msg.Text or "")
+                            if #text < 10 then return end
                             local lower = text:lower()
-                            if lower:find("riddle", 1, true) or lower:find("?")
+                            -- STRICT: require "?" AND a keyword, OR a SAB-specific keyword alone
+                            local isSABSpecific = lower:find("riddle", 1, true) or lower:find("sammy", 1, true)
+                                or lower:find("brainrot", 1, true) or lower:find("mutation", 1, true)
+                                or lower:find("machine", 1, true)
+                            local hasQuestion = lower:find("?")
+                            local hasKeyword = lower:find("spell") or lower:find("reverse")
+                                or lower:find("backward") or lower:find("letter")
+                                or lower:find("times") or lower:find("rarity")
                                 or lower:find("what") or lower:find("who")
                                 or lower:find("where") or lower:find("how")
                                 or lower:find("name") or lower:find("favorite")
-                                or lower:find("colour") or lower:find("color")
-                                or lower:find("mutation") or lower:find("machine")
-                                or lower:find("brainrot") or lower:find("sammy")
-                                or lower:find("spell") or lower:find("reverse")
-                                or lower:find("backward") or lower:find("letter")
-                                or lower:find("times") or lower:find("rarity") then
+                            if isSABSpecific or (hasQuestion and hasKeyword) then
                                 onRiddleDetected(text)
                             end
                         end)
@@ -6741,15 +6820,19 @@ local function startRiddler()
         task.wait(0.05)
         local text = nil
         pcall(function() text = obj.Text end)
-        if text and text ~= "" and #text > 5 then
+        if text and text ~= "" and #text > 12 then
             local lower = text:lower()
-            if lower:find("?") or lower:find("riddle") or lower:find("what")
-                or lower:find("who") or lower:find("where") or lower:find("how")
-                or lower:find("when") or lower:find("name") or lower:find("favorite")
-                or lower:find("colour") or lower:find("color") or lower:find("mutation")
-                or lower:find("machine") or lower:find("brainrot") or lower:find("sammy")
-                or lower:find("spell") or lower:find("reverse") or lower:find("backward")
-                or lower:find("letter") or lower:find("times") or lower:find("rarity") then
+            -- STRICT: require SAB-specific keyword OR ("?" AND a generic keyword)
+            local isSABSpecific = lower:find("riddle", 1, true) or lower:find("sammy", 1, true)
+                or lower:find("brainrot", 1, true) or lower:find("mutation", 1, true)
+                or lower:find("machine", 1, true)
+            local hasQuestion = lower:find("?")
+            local hasKeyword = lower:find("spell") or lower:find("reverse")
+                or lower:find("backward") or lower:find("letter")
+                or lower:find("what") or lower:find("who")
+                or lower:find("name") or lower:find("favorite")
+                or lower:find("color") or lower:find("colour")
+            if isSABSpecific or (hasQuestion and hasKeyword) then
                 onRiddleDetected(text)
             end
         end
@@ -6979,9 +7062,9 @@ local function feedSection(text)
     local cleaned = sniperStrip(text)
     if cleaned == "" then return end
 
-    -- Post-submit cooldown: ignore everything for 5s after a redeem
+    -- Post-submit cooldown: ignore everything for 2s after a redeem
     local now = tick()
-    if now - _redeemCooldown < 5 then return end
+    if now - _redeemCooldown < 2 then return end
 
     -- Skip riddle text
     if looksLikeRiddle(cleaned) then return end
