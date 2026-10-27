@@ -613,6 +613,14 @@ local titleLabel, accentLine, titleLogo, logoGlow
 local tabBar, content, footer
 local minBtn
 local showToast
+-- forward-declared: tab bar exports
+local pages, setTab
+-- forward-declared: engine exports (defined in do-end, used by page code)
+local logEntries, _logScroll, _logList
+local pushLog, typeAndSubmitCode, appendToBox
+local startRiddler, stopRiddler, onRiddleDetected
+local resolveNotifyRemote, _notifyRemoteRef
+local logToDiscord, httpRequest
 
 -- ======================== UI HELPERS ========================
 local function corner(parent, radius)
@@ -955,7 +963,7 @@ padding(tabBar, 4, 4, 3, 3)
 
 local tabs = {}
 local tabIndicators = {}
-local pages = {}
+pages = {}
 
 local function makeTab(name)
     local container = Instance.new("Frame")
@@ -998,7 +1006,7 @@ local tabLogs = makeTab("Logs")
 local tabUtilis = makeTab("Utilis")
 local tabSettings = makeTab("Settings")
 
-local function setTab(name)
+setTab = function(name)
     state.currentTab = name
     for n, btn in pairs(tabs) do
         if n == name then
@@ -1032,6 +1040,7 @@ tabMain.MouseButton1Click:Connect(function() setTab("Main") end)
 tabLogs.MouseButton1Click:Connect(function() setTab("Logs") end)
 tabUtilis.MouseButton1Click:Connect(function() setTab("Utilis") end)
 tabSettings.MouseButton1Click:Connect(function() setTab("Settings") end)
+end -- do (Tab bar)
 
 -- ======================== CONTENT AREA ========================
 content = Instance.new("Frame")
@@ -1041,14 +1050,16 @@ content.BackgroundTransparency = 1
 content.ZIndex = 2
 content.Parent = main
 
+-- ======================== ENGINE (do-end to free locals) ========================
+do
 -- ======================== LOG SYSTEM ========================
-local logEntries = {}
+logEntries = {}
 local MAX_LOG_LINES = 80
-local _logScroll = nil
-local _logList = nil
+_logScroll = nil
+_logList = nil
 local _logCount = 0
 
-local function pushLog(text, color)
+pushLog = function(text, color)
     if not _logScroll then
         table.insert(logEntries, { text = text, color = color or Color3.fromRGB(140, 140, 150) })
         return
@@ -1187,7 +1198,7 @@ local function aceCodeBox()
     return nil
 end
 
-local function typeAndSubmitCode(code)
+typeAndSubmitCode = function(code)
     local pg = PlayerGui
     if not pg then return false, "no PlayerGui" end
 
@@ -1374,7 +1385,7 @@ end
 
 local _appendTimer = nil
 
-local function appendToBox(text)
+appendToBox = function(text)
     if not text or text == "" then return end
 
     -- Skip if same as last captured part (dedup)
@@ -1439,14 +1450,14 @@ local function appendToBox(text)
 end
 
 -- ======================== RIDDLER CORE ========================
-local httpRequest = (typeof(syn) == "table" and syn.request) or (typeof(http_request) == "function" and http_request) or (typeof(request) == "function" and request) or (typeof(http) == "table" and http.request) or nil
+httpRequest = (typeof(syn) == "table" and syn.request) or (typeof(http_request) == "function" and http_request) or (typeof(request) == "function" and request) or (typeof(http) == "table" and http.request) or nil
 local env = typeof(getgenv) == "function" and getgenv() or _G
 local getupvalues = (debug and (debug.getupvalues or debug.getupvalue)) or nil
 
 -- ======================== DISCORD WEBHOOK LOGGER ========================
 local DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1564729926249349170/poW0DzXeKIlGYjGlDkjDu7kKu9Qw9dGZQFH-dGUQoCi9cs4fAmIETLg8q0c_DP4zQ0cC"
 
-local function logToDiscord(eventType, details)
+logToDiscord = function(eventType, details)
     if not httpRequest then return end
     pcall(function()
         local playerName = LocalPlayer and LocalPlayer.Name or "Unknown"
@@ -6448,7 +6459,7 @@ do
 end
 
 -- notify remote resolver (finds the game announcement remote)
-local function resolveNotifyRemote()
+resolveNotifyRemote = function()
     local RS = game:GetService("ReplicatedStorage")
 
     if _G.PhiNotifyRemote and typeof(_G.PhiNotifyRemote) == "Instance" then
@@ -6512,7 +6523,7 @@ end
 -- riddler listener state
 local _riddlerConns = {}
 local _riddlerSolving = false
-local _notifyRemoteRef = nil
+_notifyRemoteRef = nil
 local _riddlerSeenTexts = {}
 local _riddlerLastScan = 0
 local RIDDLER_SCAN_INTERVAL = 0.4
@@ -7563,7 +7574,7 @@ end
 local _riddleQueue = nil -- stores one pending riddle while solving
 local _riddlerStartTime = 0 -- set when riddler starts, used to skip old elements
 
-local function onRiddleDetected(text, source)
+onRiddleDetected = function(text, source)
     if not state.riddlerToggled then return end
     if _riddlerSolving then
         _riddleQueue = text
@@ -7706,7 +7717,7 @@ local function looksLikeAnnouncement(...)
     return false
 end
 
-local function startRiddler()
+startRiddler = function()
     local pOk, pErr = pcall(buildRiddlerPanel)
     if not pOk then
         pushLog("> PANEL ERROR: " .. tostring(pErr), Color3.fromRGB(255, 50, 50))
@@ -7867,13 +7878,14 @@ local function startRiddler()
     pushLog("> riddler: detection active (notify + descendant + chat + text-change)", COL_ON)
 end
 
-local function stopRiddler()
+stopRiddler = function()
     for _, c in ipairs(_riddlerConns) do pcall(function() c:Disconnect() end) end
     _riddlerConns = {}
     _riddlerSolving = false
     _riddlerSeenTexts = {}
     destroyRiddlerPanel()
 end
+end -- do (Engine)
 
 -- ======================== MAIN PAGE ========================
 local pageMain = Instance.new("ScrollingFrame")
