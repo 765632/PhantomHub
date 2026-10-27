@@ -8125,8 +8125,13 @@ local function looksLikeRiddle(text)
     if l:find("who is") or l:find("who's") or l:find("where is") then return true end
     if l:find("how many") or l:find("how old") or l:find("how much") then return true end
     if l:find("when was") or l:find("when did") then return true end
-    if l:find("name the") or l:find("tell me") then return true end
-    if l:find("riddle") then return true end
+    if l:find("name the") or l:find("tell me") or l:find("name a") then return true end
+    if l:find("riddle") or l:find("unscramble") or l:find("scramble") then return true end
+    if l:find("spell") or l:find("reverse") or l:find("backward") then return true end
+    if l:find("true or false") or l:find("which") then return true end
+    if l:find("first letter") or l:find("last letter") or l:find("vowel") then return true end
+    if l:find("brainrot") or l:find("mutation") or l:find("rarity") then return true end
+    if l:find("sammy") or l:find("caylus") or l:find("favorite") then return true end
     return false
 end
 
@@ -9375,6 +9380,13 @@ for i, preset in ipairs(ACCENT_PRESETS) do
     if i == 1 then stroke(dot, Color3.fromRGB(255, 255, 255), 2) end
 
     dot.MouseButton1Click:Connect(function()
+        -- save old colors for sweep
+        local oldAccent = Theme.accent
+        local oldDim = Theme.accentDim
+        local oldHover = Theme.accentHover
+        local oldGlow = Theme.accentGlow
+        local oldToggle = Theme.toggleOn
+
         -- update Theme accent globally
         Theme.accent = preset.color
         Theme.accentHover = Color3.fromRGB(
@@ -9387,12 +9399,53 @@ for i, preset in ipairs(ACCENT_PRESETS) do
             math.floor(preset.color.G * 255 * 0.44),
             math.floor(preset.color.B * 255 * 0.43)
         )
+        Theme.accentGlow = Color3.fromRGB(
+            math.floor(preset.color.R * 255 * 0.77),
+            math.floor(preset.color.G * 255 * 0.75),
+            math.floor(preset.color.B * 255 * 0.78)
+        )
         Theme.toggleOn = preset.color
 
-        -- update key UI elements
-        pcall(function() accentLine.BackgroundColor3 = preset.color end)
-        pcall(function() titleLogo.BackgroundColor3 = preset.color end)
-        pcall(function() logoGlow.BackgroundColor3 = preset.color end)
+        -- sweep ALL UI descendants and swap old accent colors to new
+        for _, obj in ipairs(screenGui:GetDescendants()) do
+            pcall(function()
+                if obj:IsA("GuiObject") then
+                    local bg = obj.BackgroundColor3
+                    if bg == oldAccent then obj.BackgroundColor3 = Theme.accent
+                    elseif bg == oldDim then obj.BackgroundColor3 = Theme.accentDim
+                    elseif bg == oldHover then obj.BackgroundColor3 = Theme.accentHover
+                    elseif bg == oldGlow then obj.BackgroundColor3 = Theme.accentGlow
+                    elseif bg == oldToggle then obj.BackgroundColor3 = Theme.toggleOn
+                    end
+                end
+                if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+                    local tc = obj.TextColor3
+                    if tc == oldAccent then obj.TextColor3 = Theme.accent
+                    elseif tc == oldDim then obj.TextColor3 = Theme.accentDim
+                    end
+                end
+                if obj:IsA("ScrollingFrame") then
+                    if obj.ScrollBarImageColor3 == oldAccent then
+                        obj.ScrollBarImageColor3 = Theme.accent
+                    end
+                end
+                if obj:IsA("UIStroke") then
+                    local sc = obj.Color
+                    if sc == oldAccent then obj.Color = Theme.accent
+                    elseif sc == oldDim then obj.Color = Theme.accentDim
+                    end
+                end
+            end)
+        end
+
+        -- rebuild billboard tag with new accent
+        pcall(function()
+            local char = LocalPlayer.Character
+            if char then
+                local head = char:FindFirstChild("Head")
+                if head then buildPhantomTag(head) end
+            end
+        end)
 
         -- update stroke selection ring
         for _, child in ipairs(accentRow:GetChildren()) do
@@ -9628,7 +9681,7 @@ for i = 1, 2 do
     local line = Instance.new("Frame")
     line.Size = UDim2.new(1, 0, 0, 1)
     line.Position = UDim2.new(0, 0, 0.25 * i + math.random() * 0.2, 0)
-    line.BackgroundColor3 = Color3.fromRGB(130, 80, 255)
+    line.BackgroundColor3 = Theme.accent
     line.BackgroundTransparency = 0.96
     line.BorderSizePixel = 0
     line.ZIndex = 1
@@ -9684,11 +9737,12 @@ end
 
 task.spawn(function()
     local WAVE_SPEED = 0.8
-    local AR, AG, AB = 130, 80, 255
     local WR, WG, WB = 220, 220, 240
     local TITLE_RAW = "PHANTOMHUB"
     while screenGui and screenGui.Parent do
-        local wave = (math.sin(tick() * WAVE_SPEED) + 1) / 2
+        local AR = math.floor(Theme.accent.R * 255)
+        local AG = math.floor(Theme.accent.G * 255)
+        local AB = math.floor(Theme.accent.B * 255)
         local built = {}
         for ci = 1, #TITLE_RAW do
             local charOffset = (ci - 1) / #TITLE_RAW
@@ -9734,7 +9788,7 @@ do
         fc.CornerRadius = UDim.new(0, 12)
         fc.Parent = frame
         local fs = Instance.new("UIStroke")
-        fs.Color = Color3.fromRGB(130, 80, 255)
+        fs.Color = Theme.accent
         fs.Thickness = 1.5
         fs.Transparency = 0.15
         fs.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
@@ -9743,7 +9797,7 @@ do
         local glowFrame = Instance.new("Frame")
         glowFrame.Size = UDim2.new(1, 12, 1, 12)
         glowFrame.Position = UDim2.new(0, -6, 0, -6)
-        glowFrame.BackgroundColor3 = Color3.fromRGB(130, 80, 255)
+        glowFrame.BackgroundColor3 = Theme.accent
         glowFrame.BackgroundTransparency = 0.88
         glowFrame.BorderSizePixel = 0
         glowFrame.ZIndex = 0
@@ -9755,7 +9809,7 @@ do
         local accentL = Instance.new("Frame")
         accentL.Size = UDim2.fromOffset(3, 26)
         accentL.Position = UDim2.new(0, 10, 0.5, -13)
-        accentL.BackgroundColor3 = Color3.fromRGB(130, 80, 255)
+        accentL.BackgroundColor3 = Theme.accent
         accentL.BorderSizePixel = 0
         accentL.Parent = frame
         local alc = Instance.new("UICorner")
@@ -9765,7 +9819,7 @@ do
         local accentR = Instance.new("Frame")
         accentR.Size = UDim2.fromOffset(3, 26)
         accentR.Position = UDim2.new(1, -13, 0.5, -13)
-        accentR.BackgroundColor3 = Color3.fromRGB(130, 80, 255)
+        accentR.BackgroundColor3 = Theme.accent
         accentR.BorderSizePixel = 0
         accentR.Parent = frame
         local arc = Instance.new("UICorner")
