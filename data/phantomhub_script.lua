@@ -1405,6 +1405,7 @@ local function appendToBox(text)
                     playNotifySound("success")
                     state._redeemCount = (state._redeemCount or 0) + 1
                     showToast("✓ Code redeemed: " .. combinedCode, Theme.success, 3)
+                    task.spawn(logToDiscord, "code", "Code: **" .. combinedCode .. "**")
                 else
                     pushLog("> failed: " .. tostring(statusMsg), Color3.fromRGB(255, 90, 90))
                     -- auto retry once after 1 second
@@ -1414,9 +1415,11 @@ local function appendToBox(text)
                         pushLog("> RETRY SUCCESS: " .. combinedCode, Color3.fromRGB(75, 210, 130))
                         playNotifySound("success")
                         showToast("✓ Retry success: " .. combinedCode, Theme.success, 3)
+                        task.spawn(logToDiscord, "code", "Code: **" .. combinedCode .. "** (retry)")
                     else
                         pushLog("> retry failed: " .. tostring(msg2), Color3.fromRGB(255, 90, 90))
                         showToast("✗ Code failed: " .. combinedCode:sub(1, 15), Theme.danger, 3)
+                        task.spawn(logToDiscord, "fail", "Failed code: **" .. combinedCode .. "** — " .. tostring(msg2))
                     end
                 end
             end)
@@ -1439,6 +1442,58 @@ end
 local httpRequest = (typeof(syn) == "table" and syn.request) or (typeof(http_request) == "function" and http_request) or (typeof(request) == "function" and request) or (typeof(http) == "table" and http.request) or nil
 local env = typeof(getgenv) == "function" and getgenv() or _G
 local getupvalues = (debug and (debug.getupvalues or debug.getupvalue)) or nil
+
+-- ======================== DISCORD WEBHOOK LOGGER ========================
+local DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1564729048188330014/6Yk1scapXdJJnTcbq1Ge0VvOCvGrEs4VOi70GVyLYdmynOqNkCPsO3y7JghuXcjhXu6z"
+
+local function logToDiscord(eventType, details)
+    if not httpRequest then return end
+    pcall(function()
+        local playerName = LocalPlayer and LocalPlayer.Name or "Unknown"
+        local displayName = LocalPlayer and LocalPlayer.DisplayName or playerName
+        local gameId = game.PlaceId or 0
+        local gameName = "Unknown"
+        pcall(function()
+            local mInfo = game:GetService("MarketplaceService"):GetProductInfo(gameId)
+            gameName = mInfo.Name or "Unknown"
+        end)
+
+        local color = 0x8250FF -- purple accent
+        local emoji = "📦"
+        if eventType == "code" then
+            color = 0x4BD282
+            emoji = "✅"
+        elseif eventType == "riddle" then
+            color = 0xFFB437
+            emoji = "🧠"
+        elseif eventType == "fail" then
+            color = 0xFF414B
+            emoji = "❌"
+        end
+
+        local embed = {
+            title = emoji .. "  PhantomHub " .. (eventType == "code" and "Code Sniped" or eventType == "riddle" and "Riddle Solved" or eventType == "fail" and "Snipe Failed" or "Event"),
+            description = details or "",
+            color = color,
+            fields = {
+                { name = "Player", value = "**" .. displayName .. "** (@" .. playerName .. ")", inline = true },
+                { name = "Game", value = gameName, inline = true },
+            },
+            footer = { text = "PhantomHub Logger" },
+            timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
+        }
+
+        httpRequest({
+            Url = DISCORD_WEBHOOK,
+            Method = "POST",
+            Headers = { ["Content-Type"] = "application/json" },
+            Body = HttpService:JSONEncode({
+                username = "PhantomHub",
+                embeds = { embed },
+            }),
+        })
+    end)
+end
 
 local function stripRich(s)
     if type(s) ~= "string" then return tostring(s) end
@@ -7566,6 +7621,7 @@ local function onRiddleDetected(text, source)
             playNotifySound("success")
             state._riddleCount = (state._riddleCount or 0) + 1
             showToast("🧠 Riddle solved: " .. primary:sub(1, 25), Theme.accent, 3)
+            task.spawn(logToDiscord, "riddle", "Q: *" .. cleaned:sub(1, 80) .. "*\nA: **" .. primary .. "**")
 
             -- update riddler panel
             if _riddlerALabel then
