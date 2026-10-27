@@ -8867,11 +8867,15 @@ local function extractCode(text)
     -- 1. If whole string is a clean code token, use it directly
     if isCodeToken(stripped) then return stripped end
 
-    -- 2. Extract from patterns: "code: XXX", "Code is: XXX", "Redeem: XXX", "Use code XXX"
+    -- 2. Extract from patterns: "code: XXX", "Code is: XXX", "Redeem: XXX", "Use code XXX", etc.
     local code = stripped:match("[Cc][Oo][Dd][Ee]%s*:?%s*[Ii]?[Ss]?%s*:?%s*(%S+)")
         or stripped:match("[Rr][Ee][Dd][Ee][Ee][Mm]%s*:?%s*(%S+)")
         or stripped:match("[Uu][Ss][Ee]%s+[Cc][Oo][Dd][Ee]%s+(%S+)")
         or stripped:match("[Nn][Ee][Ww]%s+[Cc][Oo][Dd][Ee]%s*:?%s*(%S+)")
+        or stripped:match("[Tt][Yy][Pp][Ee]%s+(%S+)")
+        or stripped:match("[Ee][Nn][Tt][Ee][Rr]%s+(%S+)")
+        or stripped:match("[Cc][Oo][Dd][Ee]%s+(%S+)")
+        or stripped:match("[Rr][Ee][Dd][Ee][Ee][Mm]%s+[Cc][Oo][Dd][Ee]%s+(%S+)")
     if code then
         code = code:gsub("[%.!,;:%(%)%[%]\"']+$", "")
         if isCodeToken(code) then return code end
