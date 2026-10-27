@@ -14,7 +14,7 @@ end
 -- ============================================================
 --  PHANTOMHUB CINEMATIC INTRO
 -- ============================================================
-do
+;(function()
     local HUB_NAME = "PhantomHub"
     local SUBTITLE = "CODE REDEEMER + AI RIDDLER"
 
@@ -541,7 +541,7 @@ do
 
     local introWaitStart = os.clock()
     repeat task.wait(0.05) until introDone or (os.clock() - introWaitStart > 15)
-end
+end)()
 
 -- PhantomHub (Potassium-compatible)
 -- Removed: Riddle Solver (HTTP), firesignal/getconns calls, exploit-only APIs
@@ -621,6 +621,7 @@ local pushLog, typeAndSubmitCode, appendToBox
 local startRiddler, stopRiddler, onRiddleDetected
 local resolveNotifyRemote, _notifyRemoteRef
 local logToDiscord, httpRequest
+local trackTextElement
 
 -- ======================== UI HELPERS ========================
 local function corner(parent, radius)
@@ -7888,6 +7889,7 @@ end
 end)()
 
 -- ======================== MAIN PAGE ========================
+;(function()
 local pageMain = Instance.new("ScrollingFrame")
 pageMain.Size = UDim2.new(1, 0, 1, 0)
 pageMain.BackgroundTransparency = 1
@@ -8208,7 +8210,7 @@ end
 
 local _trackedTexts = {}
 
-local function trackTextElement(obj)
+trackTextElement = function(obj)
     if not obj then return end
     if obj:IsDescendantOf(screenGui) then return end
     -- Only track TextLabels — TextButtons are UI buttons, not announcements
@@ -9815,3 +9817,4 @@ setTab("Main")
 pushLog("> PhantomHub v2.1 loaded", COL_ON)
 showToast("PhantomHub v2.1 loaded", Theme.accent, 3)
 print("PhantomHub v2.1 loaded")
+end)()
