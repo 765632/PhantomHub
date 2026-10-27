@@ -5488,6 +5488,15 @@ local function predictAnswer(message)
     local norm = message:lower():gsub("[^%w%s]"," "):gsub("%s+"," "):match("^%s*(.-)%s*$") or ""
     if norm == "" then return nil end
 
+    -- 0. REPEAT/SAY/TYPE: "type PIZZA", "say HELLO", "repeat after me: SAMMY"
+    do
+        local typed = norm:match("type%s+(%S+)") or norm:match("say%s+(%S+)") or norm:match("repeat%s+after%s+me%s+(.+)")
+        if typed then
+            typed = typed:upper():gsub("[^%w]", "")
+            if #typed >= 2 then return typed, "repeat" end
+        end
+    end
+
     -- 1. REVERSE: "backwards", "reversed", "spell X backwards"
     if norm:find("backward") or norm:find("reverse") then
         local subject = norm:gsub("backward[s]*",""):gsub("reverse[d]*","")
@@ -5563,6 +5572,28 @@ local function predictAnswer(message)
         end
     end
 
+    -- 5b. COLOR TO MUTATION: "which mutation is blue" / "what mutation is red"
+    if norm:find("mutation") and not norm:find("color") then
+        local COLOR_TO_MUT = {
+            yellow="GOLD", blue="DIAMOND", red="BLOODROT", rainbow="RAINBOW",
+            pink="CANDY", orange="LAVA", purple="GALAXY", black="YINYANG",
+            green="RADIOACTIVE", darkred="CURSED", gold="DIVINE", cyan="CYBER",
+            dark="PHANTOM", crystal="CRYSTAL", darkpurple="ECLIPSE",
+        }
+        for cname, mut in pairs(COLOR_TO_MUT) do
+            if norm:find(cname, 1, true) then return mut, "colormut" end
+        end
+    end
+
+    -- 5c. SPELL: "spell [word]" or "how do you spell [word]"
+    if norm:find("spell") then
+        local word = norm:match("spell%s+(%S+)")
+        if word then
+            local resolved = predictLookup(word)
+            if resolved then return resolved, "spell" end
+        end
+    end
+
     -- 6. FUZZY KEYWORD MATCH: score each fact key by word overlap
     local FILLER = {what=1,is=1,the=1,a=1,an=1,["do"]=1,does=1,you=1,are=1,
         was=1,were=1,of=1,to=1,["in"]=1,on=1,["and"]=1,["or"]=1,have=1,has=1,
@@ -5583,7 +5614,9 @@ local function predictAnswer(message)
         if score > 0 then score = score + (#fk > 8 and 1 or 0) end
         if score > bestScore then bestScore = score; bestKey = fk end
     end
-    if bestKey and bestScore >= 3 then
+    -- require at least 2 keyword matches (4 score) for short keys, 3 (6 score) otherwise
+    local threshold = bestKey and #bestKey <= 10 and 2 or 3
+    if bestKey and bestScore >= threshold then
         return PREDICT_FACTS[bestKey], "fuzzy"
     end
 
