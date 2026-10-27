@@ -7689,13 +7689,22 @@ local function feedSection(text)
 
     -- Post-submit cooldown: ignore everything for 2s after a redeem
     local now = tick()
-    if now - _redeemCooldown < 2 then return end
+    if now - _redeemCooldown < 2 then
+        if state.debugMode then pushLog("> [debug] skipped (cooldown): " .. cleaned:sub(1, 30), Color3.fromRGB(80, 80, 100)) end
+        return
+    end
 
     -- Skip riddle text
-    if looksLikeRiddle(cleaned) then return end
+    if looksLikeRiddle(cleaned) then
+        if state.debugMode then pushLog("> [debug] skipped (riddle): " .. cleaned:sub(1, 30), Color3.fromRGB(80, 80, 100)) end
+        return
+    end
 
     -- Must look like a code section
-    if not isCodeSection(cleaned) then return end
+    if not isCodeSection(cleaned) then
+        if state.debugMode then pushLog("> [debug] skipped (not code): " .. cleaned:sub(1, 30), Color3.fromRGB(80, 80, 100)) end
+        return
+    end
 
     -- Dedup within 1.5 seconds
     if cleaned == _lastSectionText and (now - _lastSectionTick) < 1.5 then return end
