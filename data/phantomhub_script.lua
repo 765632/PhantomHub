@@ -1399,6 +1399,17 @@ local function appendToBox(text)
                     showToast("✓ Code redeemed: " .. combinedCode, Theme.success, 3)
                 else
                     pushLog("> failed: " .. tostring(statusMsg), Color3.fromRGB(255, 90, 90))
+                    -- auto retry once after 1 second
+                    task.wait(1)
+                    local ok2, msg2 = typeAndSubmitCode(combinedCode)
+                    if ok2 then
+                        pushLog("> RETRY SUCCESS: " .. combinedCode, Color3.fromRGB(75, 210, 130))
+                        playNotifySound("success")
+                        showToast("✓ Retry success: " .. combinedCode, Theme.success, 3)
+                    else
+                        pushLog("> retry failed: " .. tostring(msg2), Color3.fromRGB(255, 90, 90))
+                        showToast("✗ Code failed: " .. combinedCode:sub(1, 15), Theme.danger, 3)
+                    end
                 end
             end)
         end
@@ -7697,6 +7708,8 @@ local function startRiddler()
                                 or lower:find("rarity") or lower:find("caylus")
                                 or lower:find("steak") or lower:find("favorite")
                                 or lower:find("fuse") or lower:find("trait")
+                                or lower:find("unscramble") or lower:find("true or false")
+                                or lower:find("vowel") or lower:find("letter")
                             if endsWithQ or startsWithQ or (wordCount >= 5 and hasAnyKeyword) then
                                 onRiddleDetected(text, "chat")
                             end
@@ -7734,6 +7747,8 @@ local function startRiddler()
                 or lower:match("^%s*spell%s") or lower:match("^%s*name%s")
                 or lower:match("^%s*reverse%s") or lower:match("^%s*tell%s")
                 or lower:match("^%s*type%s") or lower:match("^%s*find%s")
+                or lower:match("^%s*unscramble%s") or lower:match("^%s*say%s")
+                or lower:match("^%s*repeat%s") or lower:match("^%s*true%s")
 
             local hasAnyKeyword = lower:find("riddle") or lower:find("sammy")
                 or lower:find("brainrot") or lower:find("mutation")
@@ -7743,6 +7758,9 @@ local function startRiddler()
                 or lower:find("favorite") or lower:find("fuse")
                 or lower:find("trait") or lower:find("colour")
                 or lower:find("color") or lower:find("admin abuse")
+                or lower:find("unscramble") or lower:find("true or false")
+                or lower:find("vowel") or lower:find("consonant")
+                or lower:find("first letter") or lower:find("last letter")
 
             if endsWithQ or startsWithQ or (wordCount >= 5 and hasAnyKeyword) then
                 onRiddleDetected(stripped, "gui")
@@ -8209,6 +8227,9 @@ local function stopSniper()
     _capturedParts = {}
 end
 
+-- ═══ MAIN PAGE CONTROLS ═══
+do
+
 -- ═══ SECTION: CODE SNIPER ═══
 makeSectionHeader(pageMain, 0, "Code Sniper")
 
@@ -8525,8 +8546,10 @@ task.spawn(function()
         end
     end
 end)
+end -- do (Main page controls)
 
 -- ======================== LOGS PAGE ========================
+do
 local pageLogs = Instance.new("Frame")
 pageLogs.Size = UDim2.new(1, 0, 1, 0)
 pageLogs.BackgroundTransparency = 1
@@ -8612,8 +8635,10 @@ for _, entry in ipairs(logEntries) do
     pushLog(entry.text, entry.color)
 end
 logEntries = {}
+end -- do (Logs page)
 
 -- ======================== UTILIS PAGE ========================
+do
 local pageUtilis = Instance.new("Frame")
 pageUtilis.Size = UDim2.new(1, 0, 1, 0)
 pageUtilis.BackgroundTransparency = 1
@@ -8957,8 +8982,10 @@ makeUtilisToggle(8, "No Clip", false, function(on)
         pushLog("> no clip: OFF", Color3.fromRGB(140, 140, 150))
     end
 end)
+end -- do (Utilis page)
 
 -- ======================== SETTINGS PAGE ========================
+do
 local pageSettings = Instance.new("ScrollingFrame")
 pageSettings.Size = UDim2.new(1, 0, 1, 0)
 pageSettings.BackgroundTransparency = 1
@@ -9204,6 +9231,92 @@ makeSettingsToggle(6, "Compact Mode", false, function(on)
     pushLog("> compact mode: " .. (on and "ON" or "OFF"), on and COL_ON or Color3.fromRGB(140, 140, 150))
 end)
 
+-- ACCENT COLOR PICKER
+local accentRow = makeSettingsRow(7)
+local accentLabel = Instance.new("TextLabel")
+accentLabel.Size = UDim2.new(0.35, 0, 1, 0)
+accentLabel.Position = UDim2.new(0, 14, 0, 0)
+accentLabel.BackgroundTransparency = 1
+accentLabel.Font = Enum.Font.GothamBold
+accentLabel.TextSize = 12
+accentLabel.TextColor3 = Theme.text
+accentLabel.TextXAlignment = Enum.TextXAlignment.Left
+accentLabel.Text = "Accent"
+accentLabel.ZIndex = 4
+accentLabel.Parent = accentRow
+
+local ACCENT_PRESETS = {
+    { name = "Purple", color = Color3.fromRGB(130, 80, 255) },
+    { name = "Blue",   color = Color3.fromRGB(60, 130, 255) },
+    { name = "Green",  color = Color3.fromRGB(75, 210, 130) },
+    { name = "Red",    color = Color3.fromRGB(255, 65, 100) },
+    { name = "Gold",   color = Color3.fromRGB(255, 180, 55) },
+}
+
+for i, preset in ipairs(ACCENT_PRESETS) do
+    local dot = Instance.new("TextButton")
+    dot.Size = UDim2.fromOffset(22, 22)
+    dot.Position = UDim2.new(0.35, (i - 1) * 28 + 4, 0.5, -11)
+    dot.BackgroundColor3 = preset.color
+    dot.BorderSizePixel = 0
+    dot.Text = ""
+    dot.AutoButtonColor = false
+    dot.ZIndex = 4
+    dot.Parent = accentRow
+    corner(dot, 6)
+
+    if i == 1 then stroke(dot, Color3.fromRGB(255, 255, 255), 2) end
+
+    dot.MouseButton1Click:Connect(function()
+        -- update Theme accent globally
+        Theme.accent = preset.color
+        Theme.accentHover = Color3.fromRGB(
+            math.min(255, preset.color.R * 255 + 30),
+            math.min(255, preset.color.G * 255 + 35),
+            math.min(255, preset.color.B * 255 + 20)
+        )
+        Theme.accentDim = Color3.fromRGB(
+            math.floor(preset.color.R * 255 * 0.42),
+            math.floor(preset.color.G * 255 * 0.44),
+            math.floor(preset.color.B * 255 * 0.43)
+        )
+        Theme.toggleOn = preset.color
+
+        -- update key UI elements
+        pcall(function() accentLine.BackgroundColor3 = preset.color end)
+        pcall(function() titleLogo.BackgroundColor3 = preset.color end)
+        pcall(function() logoGlow.BackgroundColor3 = preset.color end)
+
+        -- update stroke selection ring
+        for _, child in ipairs(accentRow:GetChildren()) do
+            if child:IsA("TextButton") then
+                for _, s in ipairs(child:GetChildren()) do
+                    if s:IsA("UIStroke") then s:Destroy() end
+                end
+            end
+        end
+        stroke(dot, Color3.fromRGB(255, 255, 255), 2)
+
+        pushLog("> accent: " .. preset.name, COL_ON)
+        showToast("Accent: " .. preset.name, preset.color, 2)
+    end)
+end
+
+-- KEYBIND INFO
+local keybindRow = makeSettingsRow(8)
+keybindRow.BackgroundTransparency = 0.3
+local keybindLbl = Instance.new("TextLabel")
+keybindLbl.Size = UDim2.new(1, -28, 1, 0)
+keybindLbl.Position = UDim2.new(0, 14, 0, 0)
+keybindLbl.BackgroundTransparency = 1
+keybindLbl.Font = Enum.Font.GothamMedium
+keybindLbl.TextSize = 10
+keybindLbl.TextColor3 = Theme.textMuted
+keybindLbl.TextXAlignment = Enum.TextXAlignment.Left
+keybindLbl.Text = "Toggle UI: RightShift"
+keybindLbl.ZIndex = 4
+keybindLbl.Parent = keybindRow
+
 -- CREDITS ROW
 local creditsRow = makeSettingsRow(10)
 creditsRow.BackgroundTransparency = 0.3
@@ -9219,6 +9332,7 @@ creditsLbl.TextXAlignment = Enum.TextXAlignment.Left
 creditsLbl.Text = '<font color="rgb(130,80,255)">PhantomHub</font> v2.1 · made with 💜'
 creditsLbl.ZIndex = 4
 creditsLbl.Parent = creditsRow
+end -- do (Settings page)
 
 -- ======================== FOOTER ========================
 local footer = Instance.new("Frame")
