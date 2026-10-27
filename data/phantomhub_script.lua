@@ -6892,35 +6892,41 @@ local function startRiddler()
         task.wait(0.05)
         local text = nil
         pcall(function() text = obj.Text end)
-        if text and text ~= "" and #text > 8 then
-            local lower = text:lower()
-            -- broad keywords for new screen elements (game-created, not player chat)
-            local isRiddle = lower:find("what") or lower:find("who")
+        if text and text ~= "" and #text > 15 then
+            local stripped = text:gsub("<[^>]+>", "")
+            local lower = stripped:lower()
+            local wordCount = 0
+            for _ in lower:gmatch("%S+") do wordCount = wordCount + 1 end
+
+            -- SAB-specific: always trigger with 3+ words
+            local isSAB = lower:find("riddle") or lower:find("sammy")
+                or lower:find("brainrot") or lower:find("mutation")
+                or lower:find("machine") or lower:find("rarity")
+                or lower:find("admin abuse") or lower:find("caylus")
+                or lower:find("steak")
+            -- question words: need "?" or 4+ words
+            local hasQuestion = lower:find("?")
+            local hasQuestionWord = lower:find("what") or lower:find("who")
                 or lower:find("how") or lower:find("where")
-                or lower:find("which") or lower:find("name")
-                or lower:find("?") or lower:find("favorite")
-                or lower:find("colour") or lower:find("color")
-                or lower:find("mutation") or lower:find("machine")
-                or lower:find("rarity") or lower:find("brainrot")
-                or lower:find("sammy") or lower:find("spell")
+                or lower:find("which") or lower:find("spell")
                 or lower:find("reverse") or lower:find("backward")
-                or lower:find("letter") or lower:find("times")
-                or lower:find("twice") or lower:find("plus")
-                or lower:find("minus") or lower:find("add")
-                or lower:find("admin") or lower:find("steak")
-                or lower:find("caylus") or lower:find("taco")
-                or lower:find("trait") or lower:find("fuse")
-                or lower:find("code") or lower:find("riddle")
+                or lower:find("favorite") or lower:find("colour")
+                or lower:find("color")
+
+            local isRiddle = false
+            if isSAB and wordCount >= 3 then isRiddle = true
+            elseif hasQuestion and hasQuestionWord then isRiddle = true
+            elseif hasQuestionWord and wordCount >= 4 then isRiddle = true end
+
             if isRiddle then
-                onRiddleDetected(text)
+                onRiddleDetected(stripped)
             end
         end
     end)
     table.insert(_riddlerConns, conn3)
 
     -- HEARTBEAT SCANNER: scans ALL visible TextLabels every 0.4s
-    -- Screen TextLabels are game-created (announcements), so broad keywords are safe here
-    -- (unlike chat, which comes from players and needs strict filtering)
+    -- STRICT filtering to avoid false positives on normal UI text
     local scanConn = RunService.Heartbeat:Connect(function()
         if not state.riddlerToggled then return end
         local now = os.clock()
@@ -6936,27 +6942,41 @@ local function startRiddler()
                     if d:IsA("TextLabel") and d.Visible then
                         local text = nil
                         pcall(function() text = d.Text end)
-                        if text and #text > 8 then
-                            local lower = text:lower()
-                            -- broad keyword match — screen labels are trusted game content
-                            local isRiddle = lower:find("what") or lower:find("who")
+                        if text and #text > 15 then
+                            local stripped = text:gsub("<[^>]+>", "")
+                            local lower = stripped:lower()
+
+                            -- count words: riddles are sentences (4+ words), UI labels are 1-2 words
+                            local wordCount = 0
+                            for _ in lower:gmatch("%S+") do wordCount = wordCount + 1 end
+
+                            -- TIER 1: SAB-specific words — always trigger if 3+ words
+                            local isSAB = lower:find("riddle") or lower:find("sammy")
+                                or lower:find("brainrot") or lower:find("mutation")
+                                or lower:find("machine") or lower:find("rarity")
+                                or lower:find("admin abuse") or lower:find("caylus")
+                                or lower:find("steak")
+
+                            -- TIER 2: question words — only trigger with "?" OR 4+ words
+                            local hasQuestion = lower:find("?")
+                            local hasQuestionWord = lower:find("what") or lower:find("who")
                                 or lower:find("how") or lower:find("where")
-                                or lower:find("which") or lower:find("name")
-                                or lower:find("?") or lower:find("favorite")
-                                or lower:find("colour") or lower:find("color")
-                                or lower:find("mutation") or lower:find("machine")
-                                or lower:find("rarity") or lower:find("brainrot")
-                                or lower:find("sammy") or lower:find("spell")
+                                or lower:find("which") or lower:find("spell")
                                 or lower:find("reverse") or lower:find("backward")
-                                or lower:find("letter") or lower:find("times")
-                                or lower:find("twice") or lower:find("plus")
-                                or lower:find("minus") or lower:find("add")
-                                or lower:find("admin") or lower:find("steak")
-                                or lower:find("caylus") or lower:find("taco")
-                                or lower:find("trait") or lower:find("fuse")
-                                or lower:find("code") or lower:find("riddle")
+                                or lower:find("favorite") or lower:find("colour")
+                                or lower:find("color")
+
+                            local isRiddle = false
+                            if isSAB and wordCount >= 3 then
+                                isRiddle = true
+                            elseif hasQuestion and hasQuestionWord then
+                                isRiddle = true
+                            elseif hasQuestionWord and wordCount >= 4 then
+                                isRiddle = true
+                            end
+
                             if isRiddle then
-                                pcall(onRiddleDetected, text)
+                                pcall(onRiddleDetected, stripped)
                             end
                         end
                     end
