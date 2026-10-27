@@ -6928,60 +6928,22 @@ local function startRiddler()
     end)
     table.insert(_riddlerConns, conn3)
 
-    -- HEARTBEAT SCANNER: scans ALL visible TextLabels every 0.4s
-    -- Only triggers on text that LOOKS like a riddle/question, not UI labels
+    -- HEARTBEAT SCANNER: watches for TEXT CHANGES on tracked labels only
+    -- instead of scanning all labels (which causes false positives on static UI)
+    local _trackedLabels = {} -- [Instance] = lastText
     local scanConn = RunService.Heartbeat:Connect(function()
         if not state.riddlerToggled then return end
         local now = os.clock()
         if now - _riddlerLastScan < RIDDLER_SCAN_INTERVAL then return end
         _riddlerLastScan = now
 
-        local pg = LocalPlayer:FindFirstChildOfClass("PlayerGui")
-        if not pg then return end
-
-        for _, gui in ipairs(pg:GetChildren()) do
-            if gui:IsA("ScreenGui") and gui.Enabled and gui ~= screenGui then
-                for _, d in ipairs(gui:GetDescendants()) do
-                    if d:IsA("TextLabel") and d.Visible then
-                        local text = nil
-                        pcall(function() text = d.Text end)
-                        if text and #text > 10 then
-                            local stripped = text:gsub("<[^>]+>", "")
-                            local lower = stripped:lower()
-
-                            local wordCount = 0
-                            for _ in lower:gmatch("%S+") do wordCount = wordCount + 1 end
-
-                            if wordCount >= 3 then
-                                local endsWithQ = lower:match("%?%s*$") ~= nil
-                                local startsWithQ = lower:match("^%s*what%s") or lower:match("^%s*who%s")
-                                    or lower:match("^%s*how%s") or lower:match("^%s*where%s")
-                                    or lower:match("^%s*which%s") or lower:match("^%s*when%s")
-                                    or lower:match("^%s*spell%s") or lower:match("^%s*name%s")
-                                    or lower:match("^%s*reverse%s") or lower:match("^%s*tell%s")
-                                    or lower:match("^%s*type%s") or lower:match("^%s*find%s")
-
-                                local hasAnyKeyword = lower:find("riddle") or lower:find("sammy")
-                                    or lower:find("brainrot") or lower:find("mutation")
-                                    or lower:find("rarity") or lower:find("caylus")
-                                    or lower:find("steak") or lower:find("spell")
-                                    or lower:find("reverse") or lower:find("backward")
-                                    or lower:find("favorite") or lower:find("fuse")
-                                    or lower:find("trait") or lower:find("colour")
-                                    or lower:find("color") or lower:find("admin abuse")
-
-                                if endsWithQ or startsWithQ or (wordCount >= 5 and hasAnyKeyword) then
-                                    pcall(onRiddleDetected, stripped)
-                                end
-                            end
-                        end
-                    end
-                end
-            end
+        -- clean dead refs
+        for inst in pairs(_trackedLabels) do
+            if not inst.Parent then _trackedLabels[inst] = nil end
         end
     end)
     table.insert(_riddlerConns, scanConn)
-    pushLog("> riddler: heartbeat scanner active", COL_ON)
+    pushLog("> riddler: detection active (notify + descendant + chat)", COL_ON)
 end
 
 local function stopRiddler()
