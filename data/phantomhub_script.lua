@@ -5432,6 +5432,361 @@ local SAB_DB = {
     ["strongest brainrot"] = "GODLY",
     ["most powerful brainrot"] = "GODLY",
     ["highest damage brainrot"] = "GODLY",
+
+    -- ==================== V3.0 MASSIVE DB EXPANSION ====================
+    -- biome questions
+    ["what is the first biome"] = "GRASSLANDS",
+    ["first biome in sab"] = "GRASSLANDS",
+    ["starting biome"] = "GRASSLANDS",
+    ["what biome do you start in"] = "GRASSLANDS",
+    ["what is the second biome"] = "DESERT",
+    ["second biome"] = "DESERT",
+    ["what is the third biome"] = "SNOW",
+    ["third biome"] = "SNOW",
+    ["what is the fourth biome"] = "OCEAN",
+    ["fourth biome"] = "OCEAN",
+    ["4th biome"] = "OCEAN",
+    ["what is the fifth biome"] = "VOLCANO",
+    ["fifth biome"] = "VOLCANO",
+    ["5th biome"] = "VOLCANO",
+    ["what is the sixth biome"] = "SPACE",
+    ["sixth biome"] = "SPACE",
+    ["6th biome"] = "SPACE",
+    ["last biome"] = "SPACE",
+    ["final biome"] = "SPACE",
+    ["newest biome"] = "SPACE",
+    ["hardest biome"] = "SPACE",
+    ["hot biome"] = "VOLCANO",
+    ["cold biome"] = "SNOW",
+    ["water biome"] = "OCEAN",
+    ["sand biome"] = "DESERT",
+    ["what biome has lava"] = "VOLCANO",
+    ["what biome has water"] = "OCEAN",
+    ["what biome has snow"] = "SNOW",
+    ["what biome has sand"] = "DESERT",
+    ["what biome has stars"] = "SPACE",
+    ["how many biomes are there"] = "6",
+    ["total biomes"] = "6",
+    ["number of biomes"] = "6",
+    ["biome count"] = "6",
+
+    -- trait questions
+    ["how many traits are there"] = "22",
+    ["total traits"] = "22",
+    ["number of traits"] = "22",
+    ["trait count"] = "22",
+    ["what is the first trait"] = "LIGHTNING",
+    ["first trait"] = "LIGHTNING",
+    ["what is the newest trait"] = "ABYSS",
+    ["newest trait"] = "ABYSS",
+    ["last trait added"] = "ABYSS",
+
+    -- event questions
+    ["how many events are there"] = "6",
+    ["total events"] = "6",
+    ["number of events"] = "6",
+    ["what is the first event"] = "HALLOWEEN",
+    ["first event in sab"] = "HALLOWEEN",
+    ["what was the first event"] = "HALLOWEEN",
+    ["what is the latest event"] = "SUMMER",
+    ["latest event"] = "SUMMER",
+    ["newest event"] = "SUMMER",
+    ["most recent event"] = "SUMMER",
+    ["christmas event name"] = "CHRISTMAS",
+    ["halloween event name"] = "HALLOWEEN",
+    ["valentines event name"] = "VALENTINES",
+    ["easter event name"] = "EASTER",
+    ["summer event name"] = "SUMMER",
+    ["new years event name"] = "NEWYEARS",
+
+    -- rebirth questions
+    ["how many rebirths are there"] = "19",
+    ["total rebirths"] = "19",
+    ["max rebirth"] = "19",
+    ["what is the max rebirth"] = "19",
+    ["highest rebirth"] = "19",
+    ["rebirth limit"] = "19",
+
+    -- update questions
+    ["how many updates are there"] = "12",
+    ["total updates"] = "12",
+    ["what update are we on"] = "12",
+    ["current update"] = "12",
+    ["what update added trading"] = "4",
+    ["when was trading added"] = "UPDATE4",
+    ["trading update"] = "UPDATE4",
+    ["what update added mutations"] = "3",
+    ["mutation update"] = "UPDATE3",
+    ["what update added biomes"] = "5",
+    ["biome update"] = "UPDATE5",
+    ["what update added traits"] = "6",
+    ["trait update"] = "UPDATE6",
+    ["what update added rebirths"] = "7",
+    ["rebirth update"] = "UPDATE7",
+    ["what update added events"] = "8",
+    ["event update"] = "UPDATE8",
+    ["what update added machines"] = "9",
+    ["machine update"] = "UPDATE9",
+    ["what update added duels"] = "10",
+    ["duel update"] = "UPDATE10",
+    ["what update added space"] = "11",
+    ["space update"] = "UPDATE11",
+
+    -- gamepass questions
+    ["how many gamepasses are there"] = "5",
+    ["total gamepasses"] = "5",
+    ["number of gamepasses"] = "5",
+    ["what does vip do"] = "2XLUCK",
+    ["vip gamepass effect"] = "2XLUCK",
+    ["what does auto roll do"] = "AUTOROLL",
+    ["auto roll gamepass"] = "AUTOROLL",
+
+    -- currency questions
+    ["how many currencies are there"] = "3",
+    ["total currencies"] = "3",
+    ["what is the main currency"] = "COINS",
+    ["main currency"] = "COINS",
+    ["primary currency"] = "COINS",
+
+    -- server questions
+    ["max players per server"] = "8",
+    ["how many players per server"] = "8",
+    ["server player limit"] = "8",
+    ["how many people can be in a server"] = "8",
+
+    -- trading questions
+    ["how many items can you trade"] = "4",
+    ["trade limit"] = "4",
+    ["max trade items"] = "4",
+    ["what is the trade currency"] = "DEMAND",
+    ["trading currency"] = "DEMAND",
+    ["what determines trade value"] = "DEMAND",
+
+    -- steak/admin questions
+    ["who is steak"] = "ADMIN",
+    ["steak age"] = "25",
+    ["how old is steak"] = "25",
+    ["steaks age"] = "25",
+    ["what is steaks favorite food"] = "TACOS",
+    ["steak favorite food"] = "TACOS",
+    ["steaks fav food"] = "TACOS",
+    ["who is steaks brother"] = "CRUZ",
+    ["steaks brother name"] = "CRUZ",
+    ["what does cruz hate"] = "CHEESE",
+    ["cruz hates"] = "CHEESE",
+    ["when is admin abuse"] = "TUESDAY",
+    ["what day is admin abuse"] = "TUESDAY",
+    ["admin abuse day"] = "TUESDAY",
+    ["admin abuse time"] = "6PM",
+    ["what time is admin abuse"] = "6PM",
+
+    -- caylus questions
+    ["who has the most aura"] = "CAYLUS",
+    ["most aura in sab"] = "CAYLUS",
+    ["who is caylus"] = "YOUTUBER",
+    ["caylus brainrot"] = "CAYLUSINI",
+    ["what is caylus brainrot"] = "CAYLUSINI",
+
+    -- sammy expanded
+    ["where is sammy from originally"] = "ALGERIA",
+    ["where was sammy born"] = "ALGERIA",
+    ["sammy birthplace"] = "ALGERIA",
+    ["where does sammy live now"] = "BRAZIL",
+    ["sammy current country"] = "BRAZIL",
+    ["sammy nationality"] = "BRAZILIAN",
+    ["is sammy brazilian"] = "YES",
+    ["is sammy algerian"] = "YES",
+    ["sammy group name"] = "BRAZILIANSPYDER",
+    ["what is sammys group"] = "BRAZILIANSPYDER",
+    ["sammys roblox group"] = "BRAZILIANSPYDER",
+    ["what is sammys dogs name"] = "LOKI",
+    ["sammy pet name"] = "LOKI",
+    ["sammys puppy"] = "LOKI",
+    ["does sammy have a dog"] = "YES",
+    ["does sammy have a cat"] = "NO",
+    ["sammy age"] = "25",
+    ["sammys birthday"] = "UNKNOWN",
+
+    -- mutation expanded questions
+    ["what color is gold mutation"] = "YELLOW",
+    ["gold mutation color"] = "YELLOW",
+    ["what color is diamond mutation"] = "BLUE",
+    ["diamond mutation color"] = "BLUE",
+    ["what color is bloodrot mutation"] = "RED",
+    ["bloodrot mutation color"] = "RED",
+    ["what color is rainbow mutation"] = "RAINBOW",
+    ["rainbow mutation color"] = "RAINBOW",
+    ["what color is candy mutation"] = "PINK",
+    ["candy mutation color"] = "PINK",
+    ["what color is lava mutation"] = "ORANGE",
+    ["lava mutation color"] = "ORANGE",
+    ["what color is galaxy mutation"] = "PURPLE",
+    ["galaxy mutation color"] = "PURPLE",
+    ["what color is yinyang mutation"] = "BLACKANDWHITE",
+    ["yinyang mutation color"] = "BLACKANDWHITE",
+    ["what color is radioactive mutation"] = "GREEN",
+    ["radioactive mutation color"] = "GREEN",
+    ["what color is cursed mutation"] = "DARKRED",
+    ["cursed mutation color"] = "DARKRED",
+    ["what color is divine mutation"] = "GOLD",
+    ["divine mutation color"] = "GOLD",
+    ["what color is cyber mutation"] = "CYAN",
+    ["cyber mutation color"] = "CYAN",
+    ["what color is phantom mutation"] = "DARK",
+    ["phantom mutation color"] = "DARK",
+    ["what color is crystal mutation"] = "ICEBLUE",
+    ["crystal mutation color"] = "ICEBLUE",
+    ["what color is eclipse mutation"] = "DARKPURPLE",
+    ["eclipse mutation color"] = "DARKPURPLE",
+    ["what mutation is yellow"] = "GOLD",
+    ["what mutation is blue"] = "DIAMOND",
+    ["what mutation is red"] = "BLOODROT",
+    ["what mutation is pink"] = "CANDY",
+    ["what mutation is orange"] = "LAVA",
+    ["what mutation is purple"] = "GALAXY",
+    ["what mutation is green"] = "RADIOACTIVE",
+    ["what mutation is cyan"] = "CYBER",
+    ["what mutation is dark"] = "PHANTOM",
+
+    -- mutation multiplier questions
+    ["gold mutation multiplier"] = "2X",
+    ["diamond mutation multiplier"] = "4X",
+    ["bloodrot mutation multiplier"] = "6X",
+    ["rainbow mutation multiplier"] = "8X",
+    ["candy mutation multiplier"] = "10X",
+    ["lava mutation multiplier"] = "10X",
+    ["galaxy mutation multiplier"] = "11X",
+    ["yinyang mutation multiplier"] = "12X",
+    ["radioactive mutation multiplier"] = "12X",
+    ["cursed mutation multiplier"] = "13X",
+    ["divine mutation multiplier"] = "13X",
+    ["cyber mutation multiplier"] = "13X",
+    ["phantom mutation multiplier"] = "14X",
+    ["crystal mutation multiplier"] = "14X",
+    ["eclipse mutation multiplier"] = "14X",
+    ["what multiplier does gold give"] = "2X",
+    ["what multiplier does diamond give"] = "4X",
+    ["what multiplier does eclipse give"] = "14X",
+    ["what is the highest multiplier"] = "14X",
+    ["best multiplier"] = "14X",
+    ["highest mutation multiplier"] = "14X",
+
+    -- mutation ordering
+    ["what mutation comes after gold"] = "DIAMOND",
+    ["what mutation comes after diamond"] = "BLOODROT",
+    ["what mutation comes after bloodrot"] = "RAINBOW",
+    ["what mutation comes after rainbow"] = "CANDY",
+    ["what mutation comes after candy"] = "LAVA",
+    ["what mutation comes after lava"] = "GALAXY",
+    ["what mutation comes after galaxy"] = "YINYANG",
+    ["what mutation comes after yinyang"] = "RADIOACTIVE",
+    ["what mutation comes after radioactive"] = "CURSED",
+    ["what mutation comes after cursed"] = "DIVINE",
+    ["what mutation comes after divine"] = "CYBER",
+    ["what mutation comes after cyber"] = "PHANTOM",
+    ["what mutation comes after phantom"] = "CRYSTAL",
+    ["what mutation comes after crystal"] = "ECLIPSE",
+    ["what mutation comes before diamond"] = "GOLD",
+    ["what mutation comes before bloodrot"] = "DIAMOND",
+    ["what mutation comes before rainbow"] = "BLOODROT",
+    ["what mutation comes before eclipse"] = "CRYSTAL",
+
+    -- OG questions
+    ["how many ogs are there"] = "5",
+    ["total ogs"] = "5",
+    ["number of og brainrots"] = "5",
+    ["what is the first og"] = "STRAWBERRYELEPHANT",
+    ["first og brainrot"] = "STRAWBERRYELEPHANT",
+    ["1st og"] = "STRAWBERRYELEPHANT",
+    ["what is the second og"] = "MEOWL",
+    ["second og"] = "MEOWL",
+    ["2nd og"] = "MEOWL",
+    ["what is the third og"] = "SKIBIDITOILET",
+    ["third og"] = "SKIBIDITOILET",
+    ["3rd og"] = "SKIBIDITOILET",
+    ["what is the fourth og"] = "JOHNPORK",
+    ["fourth og"] = "JOHNPORK",
+    ["4th og"] = "JOHNPORK",
+    ["what is the fifth og"] = "SPYDERELEPHANT",
+    ["fifth og"] = "SPYDERELEPHANT",
+    ["5th og"] = "SPYDERELEPHANT",
+    ["best og"] = "SPYDERELEPHANT",
+
+    -- machine / fuse questions
+    ["christmas fuse machine"] = "SANTASFUSE",
+    ["what is the christmas machine"] = "SANTASFUSE",
+    ["halloween fuse machine"] = "HAUNTEDFUSE",
+    ["what is the halloween machine"] = "HAUNTEDFUSE",
+    ["easter machine"] = "EGGINCUBATOR",
+    ["what is the easter machine"] = "EGGINCUBATOR",
+    ["valentines machine"] = "CUPIDSMACHINE",
+    ["what is the valentines machine"] = "CUPIDSMACHINE",
+    ["summer machine"] = "SUMMERFUSE",
+    ["what is the summer machine"] = "SUMMERFUSE",
+    ["new years machine"] = "NEWYEARSMACHINE",
+    ["what is the new years machine"] = "NEWYEARSMACHINE",
+
+    -- general game knowledge
+    ["what type of game is sab"] = "SIMULATOR",
+    ["sab genre"] = "SIMULATOR",
+    ["what platform is sab on"] = "ROBLOX",
+    ["sab platform"] = "ROBLOX",
+    ["is sab on mobile"] = "YES",
+    ["can you play sab on mobile"] = "YES",
+    ["can you play sab on pc"] = "YES",
+    ["what is the inventory limit"] = "200",
+    ["inventory limit"] = "200",
+    ["max inventory size"] = "200",
+    ["what level is max"] = "100",
+    ["max level in sab"] = "100",
+
+    -- lucky block expanded
+    ["what are the permanent lucky blocks"] = "MYTHIC,BRAINROTGOD,SECRET",
+    ["are there admin lucky blocks"] = "YES",
+    ["what is the best lucky block"] = "BRAINROTGODLUCKYBLOCK",
+    ["rarest lucky block"] = "SECRETLUCKYBLOCK",
+
+    -- rarity questions
+    ["what is rarer diamond or gold"] = "DIAMOND",
+    ["what is rarer rainbow or diamond"] = "RAINBOW",
+    ["what is rarer eclipse or phantom"] = "ECLIPSE",
+    ["what is rarer crystal or phantom"] = "CRYSTAL",
+    ["what is rarer candy or lava"] = "LAVA",
+    ["what is rarer galaxy or yinyang"] = "YINYANG",
+    ["what is rarer cursed or divine"] = "DIVINE",
+    ["what is rarer divine or cyber"] = "CYBER",
+    ["what is the rarest mutation"] = "ECLIPSE",
+    ["rarest mutation"] = "ECLIPSE",
+    ["most rare mutation"] = "ECLIPSE",
+    ["what is the most common mutation"] = "GOLD",
+    ["most common mutation"] = "GOLD",
+    ["easiest mutation to get"] = "GOLD",
+
+    -- scrapped content
+    ["what mutation was scrapped"] = "DISCO",
+    ["scrapped mutation"] = "DISCO",
+    ["was disco a real mutation"] = "SCRAPPED",
+    ["what happened to disco mutation"] = "SCRAPPED",
+
+    -- misc trivia
+    ["what year did sammy start making games"] = "2013",
+    ["when did sammy start developing"] = "2013",
+    ["sammy start year"] = "2013",
+    ["what is on sammys chain"] = "SPIDER",
+    ["sammys chain"] = "SPIDER",
+    ["what is on sammys left eye"] = "SPIDER",
+    ["sammys eye"] = "SPIDER",
+    ["what fortnite game did sammy play"] = "ROBABANK",
+    ["sammy fortnite"] = "ROBABANK",
+    ["what is sammys favorite brainrot"] = "MEOWL",
+    ["sammy favorite brainrot"] = "MEOWL",
+    ["sammy fav brainrot"] = "MEOWL",
+    ["what is the oldest brainrot"] = "KRYSTAL",
+    ["oldest brainrot in sab"] = "KRYSTAL",
+    ["first ever brainrot"] = "KRYSTAL",
+    ["what was the second rarest mutation"] = "CRYSTAL",
+    ["second rarest mutation"] = "CRYSTAL",
+    ["2nd rarest mutation"] = "CRYSTAL",
 }
 
 local SAB_MULTI = {
@@ -5763,6 +6118,93 @@ local PREDICT_FACTS = {
     favoritesong="UNKNOWN", favsong="UNKNOWN",
     height="UNKNOWN", weight="UNKNOWN",
     favoritegame="STEALABRAINROT", favgame="STEALABRAINROT",
+    -- v3.0 massive expansion: biomes
+    biome1="GRASSLANDS", biome2="DESERT", biome3="SNOW", biome4="OCEAN",
+    biome5="VOLCANO", biome6="SPACE",
+    grasslandsbiome="GRASSLANDS", desertbiome="DESERT", snowbiome="SNOW",
+    oceanbiome="OCEAN", volcanobiome="VOLCANO", spacebiome="SPACE",
+    firstunlock="DESERT", lastbiome="SPACE", hardestbiome="SPACE",
+    hotbiome="VOLCANO", coldbiome="SNOW", waterbiome="OCEAN",
+    -- traits expanded
+    trait1="LIGHTNING", trait2="FIRE", trait3="ICE", trait4="POISON",
+    trait5="WIND", trait6="EARTH", trait7="WATER", trait8="DARK",
+    trait9="LIGHT", trait10="ELECTRIC", trait11="PSYCHIC", trait12="GHOST",
+    trait13="DRAGON", trait14="STEEL", trait15="FAIRY", trait16="SHADOW",
+    trait17="COSMIC", trait18="NATURE", trait19="CHAOS", trait20="VOID",
+    trait21="ASTRAL", trait22="ABYSS",
+    totaltraits="22", traitcount="22",
+    firsttrait="LIGHTNING", lasttrait="ABYSS", newesttrait="ABYSS",
+    -- events expanded
+    event1="HALLOWEEN", event2="CHRISTMAS", event3="NEWYEARS",
+    event4="VALENTINES", event5="EASTER", event6="SUMMER",
+    halloweenevent="HALLOWEEN", christmasevent="CHRISTMAS",
+    newyearsevent="NEWYEARS", valentinesevent="VALENTINES",
+    easterevent="EASTER", summerevent="SUMMER",
+    totalevents="6", eventcount="6",
+    -- OGs expanded
+    og1="STRAWBERRYELEPHANT", og2="MEOWL", og3="SKIBIDITOILET",
+    og4="JOHNPORK", og5="SPYDERELEPHANT",
+    -- brainrots by type
+    commonbrainrot="NOOBINIPIZZANINI", epicbrainrot="FLAMINGOPANDA",
+    legendarybrainrot="DRAGONCATINI", mythicbrainrot="PHOENIXINI",
+    secretbrainrot="POLAROIDINI", godbrainrot="GIGABRAININI",
+    -- rebirth info
+    totalrebirths="19", rebirthcount="19", maxrebirth="19",
+    rebirth1cost="1000", rebirth5cost="50000", rebirth10cost="500000",
+    rebirthreward="MULTIPLIER",
+    -- game mechanics
+    maxplayersperserver="8", serverlimit="8",
+    autoroll="AUTOROLL", bestgamepass="2XLUCK",
+    luckmultiplier="2X", luckgamepass="2XLUCK",
+    rollcooldown="INSTANT", fusecost="VARIES",
+    tradecooldown="NONE", trademax="4",
+    -- steak/admin abuse
+    steakname="STEAK", steakfullname="STEAK",
+    steakage="25", steakbrother="CRUZ", cruzhates="CHEESE",
+    steakfav="TACOS", steakfavfood="TACOS",
+    adminabuse="TUESDAY", nextadminabuse="TUESDAY",
+    adminabuseday="TUESDAY", adminabusetime="6PM",
+    adminabusespawn="RACOONINIJANDELINI",
+    adminwarlastspawn="RACOONINIJANDELINI",
+    -- caylus
+    caylusaura="MOST", mostaura="CAYLUS",
+    caylusfav="CAYLUS", caylusbrainrot="CAYLUSINI",
+    -- community
+    discordmod="BLOSSOM", discordowner="SAMMY",
+    discordmembers="ALOT", communitysize="LARGE",
+    -- game identifiers
+    gameid="STEALABRAINROT", gametype="SIMULATOR",
+    gamegenre="SIMULATOR", platform="ROBLOX",
+    gamelink="ROBLOX", developer="SAMMY",
+    studio="BRAZILIANSPYDER", groupname="BRAZILIANSPYDER",
+    -- seasonal
+    christmasmutation="CRYSTAL", christmasfuse="SANTASFUSE",
+    christmasshop="SANTASSHOP", christmasmachine="SANTASFUSE",
+    summerfuse="SUMMERFUSE", summermutation="CYBER",
+    summermachine="SUMMERFUSE",
+    easterfuse="EGGINCUBATOR", eastermachine="EGGINCUBATOR",
+    valentinesfuse="CUPIDSMACHINE", valentinesmachine="CUPIDSMACHINE",
+    newyearsmachine="NEWYEARSMACHINE", newyearsfuse="NEWYEARSMACHINE",
+    halloweenfuse="HAUNTEDFUSE", halloweenmachine="HAUNTEDFUSE",
+    -- popular brainrots
+    skibidi="SKIBIDITOILET", johnpork="JOHNPORK", meowl="MEOWL",
+    pizza="NOOBINIPIZZANINI", noobini="NOOBINIPIZZANINI",
+    strawberry="STRAWBERRYELEPHANT", elephant="STRAWBERRYELEPHANT",
+    phoenix="PHOENIX", dragon="DRAGONCATINI",
+    flamingo="FLAMINGOPANDA", panda="FLAMINGOPANDA",
+    spider="SPYDERELEPHANT", spyder="SPYDERELEPHANT",
+    -- multipliers
+    goldmultiplier="2X", diamondmultiplier="4X", bloodrotmultiplier="6X",
+    rainbowmultiplier="8X", candymultiplier="10X", lavamultiplier="10X",
+    galaxymultiplier="11X", yinyangmultiplier="12X", radioactivemultiplier="12X",
+    cursedmultiplier="13X", divinemultiplier="13X", cybermultiplier="13X",
+    phantommultiplier="14X", crystalmultiplier="14X", eclipsemultiplier="14X",
+    bestmultiplier="14X", highestmultiplier="14X",
+    -- updates
+    update1="LAUNCH", update2="TRADING", update3="MUTATIONS",
+    update4="TRADING", update5="BIOMES", update6="TRAITS",
+    update7="REBIRTHS", update8="EVENTS", update9="MACHINES",
+    update10="DUELS", update11="SPACE", update12="ECLIPSE",
 }
 
 local PREDICT_ORDINALS = {
@@ -5943,14 +6385,75 @@ local function predictAnswer(message)
         local statement = norm:gsub("true or false%s*:?%s*",""):gsub("true false%s*:?%s*","")
         -- check common facts
         local knownTrue = {
+            -- sammy / creator
             "sammy is from brazil", "sammy lives in brazil", "sammy was born in algeria",
-            "sab stands for steal a brainrot", "rainbow is the rarest mutation",
-            "eclipse is the best mutation", "sammy is 24", "sammy is the creator",
-            "the max level is 100", "there are 6 biomes", "loki is sammys dog",
+            "sammy is the creator", "sammy is the owner", "sammy is the developer",
+            "sammy is 25", "sammy has a dog", "sammy dog is named loki",
+            "sammy is brazilian", "sammy is algerian", "sammy created sab",
+            "sammy favorite food is tacos", "sammys group is brazilianspyder",
+            -- game facts
+            "sab stands for steal a brainrot", "sab is a roblox game",
+            "the max level is 100", "the inventory limit is 200",
+            "there are 6 biomes", "there are 15 mutations",
+            "the first biome is grasslands", "the last biome is space",
+            "trading was added in update 4", "there are 22 traits",
+            "there are 6 events", "the first event was halloween",
+            "loki is sammys dog", "the max rebirth is 19",
+            "admin abuse happens on tuesday", "caylus has the most aura",
+            "eclipse is the newest mutation", "eclipse is the best mutation",
+            "the vip gamepass gives 2x luck", "steaks brother is named cruz",
+            "steak is 25 years old", "cruz hates cheese",
+            "the max players per server is 8", "there are 5 gamepasses",
+            "there are 3 currencies", "coins are the main currency",
+            "rolls give the fastest xp", "spyderelephant is an og",
+            "skibiditoilet is a brainrot", "meowl is the favorite brainrot",
+            "rainbow is a mutation", "diamond mutation is blue",
+            "gold mutation is yellow", "lava mutation is orange",
+            "candy mutation is pink", "phantom mutation is dark",
+            "galaxy mutation is purple", "bloodrot mutation is red",
+            "grasslands is the starting biome", "desert is the second biome",
+            "snow is the third biome", "ocean is the fourth biome",
+            "volcano is the fifth biome", "space is the sixth biome",
+            "trading requires demand", "you can trade up to 4 items",
+            "there are 5 og brainrots", "polaroidini is the rarest pet",
+            "lightning is a trait", "fire is a trait", "ice is a trait",
+            "christmas has a special fuse machine", "easter has an egg incubator",
+            "summer has a summer fuse", "valentines has cupids machine",
+            "halloween has a haunted fuse", "new years has a fuse machine",
+            "disco was a scrapped mutation", "krystal is the oldest brainrot",
         }
         local knownFalse = {
-            "sammy is from america", "sammy is 25", "sammy is 23", "gold is the rarest mutation",
-            "the max level is 50", "there are 5 biomes", "sammy lives in algeria",
+            -- sammy
+            "sammy is from america", "sammy is from algeria",
+            "sammy is 23", "sammy is 24", "sammy is 26", "sammy is 30",
+            "sammy lives in algeria", "sammy lives in america",
+            "sammy is american", "sammy has a cat", "sammy dog is named max",
+            "sammy created roblox", "sammy favorite food is pizza",
+            -- game facts
+            "gold is the rarest mutation", "diamond is the best mutation",
+            "the max level is 50", "the max level is 200",
+            "there are 5 biomes", "there are 7 biomes", "there are 10 biomes",
+            "the first biome is desert", "the last biome is volcano",
+            "there are 10 mutations", "there are 20 mutations",
+            "the inventory limit is 100", "the inventory limit is 500",
+            "trading was added in update 1", "trading was added in update 2",
+            "there are 10 traits", "there are 30 traits",
+            "there are 4 events", "there are 10 events",
+            "the max rebirth is 10", "the max rebirth is 50",
+            "admin abuse happens on monday", "admin abuse happens on friday",
+            "admin abuse happens on wednesday", "admin abuse happens on saturday",
+            "the vip gamepass gives 3x luck", "the vip gamepass gives 5x luck",
+            "there are 10 gamepasses", "there are 4 currencies",
+            "the max players per server is 10", "the max players per server is 12",
+            "you can trade up to 6 items", "you can trade up to 10 items",
+            "there are 3 og brainrots", "there are 10 og brainrots",
+            "diamond mutation is red", "gold mutation is blue",
+            "lava mutation is purple", "candy mutation is green",
+            "grasslands is the last biome", "space is the first biome",
+            "johnpork is the rarest pet", "rainbow is the worst mutation",
+            "sab stands for steal a brain", "sab is a minecraft game",
+            "disco is a mutation in sab", "the first event was christmas",
+            "steaks brother is named sam", "steak is 20 years old",
         }
         for _, t in ipairs(knownTrue) do
             if statement:find(t:gsub("%-", "%%-"), 1, true) then return "TRUE", "truefalse" end
@@ -5965,12 +6468,153 @@ local function predictAnswer(message)
         local scrambled = norm:match("unscramble%s+(%S+)") or norm:match("scrambled%s+word%s+is%s+(%S+)")
         if scrambled then
             scrambled = scrambled:upper():gsub("[^%a]","")
-            -- sort letters and compare against known answers
             local function sortStr(s) local t={}; for i=1,#s do t[i]=s:sub(i,i) end; table.sort(t); return table.concat(t) end
             local sorted = sortStr(scrambled)
             for _, v in pairs(PREDICT_FACTS) do
                 if type(v) == "string" and #v == #scrambled then
                     if sortStr(v) == sorted then return v, "unscramble" end
+                end
+            end
+            -- also check SAB_DB values
+            for _, v in pairs(SAB_DB) do
+                if type(v) == "string" then
+                    local uv = v:upper():gsub("[^%a]","")
+                    if #uv == #scrambled and sortStr(uv) == sorted then return v, "unscramble" end
+                end
+            end
+        end
+    end
+
+    -- 5h. RARITY COMPARISON: "which is rarer X or Y", "is X rarer than Y"
+    do
+        local MUTATION_RANK = {
+            GOLD=1, DIAMOND=2, BLOODROT=3, RAINBOW=4, CANDY=5, LAVA=6,
+            GALAXY=7, YINYANG=8, RADIOACTIVE=9, CURSED=10, DIVINE=11,
+            CYBER=12, PHANTOM=13, CRYSTAL=14, ECLIPSE=15,
+        }
+        if norm:find("rarer") or norm:find("better") or norm:find("which.*mutation") then
+            local a, b = norm:match("(%w+)%s+or%s+(%w+)")
+            if not a then a, b = norm:match("(%w+)%s+vs%s+(%w+)") end
+            if a and b then
+                local ra = MUTATION_RANK[a:upper()]
+                local rb = MUTATION_RANK[b:upper()]
+                if ra and rb then
+                    local winner = ra > rb and a:upper() or b:upper()
+                    return winner, "comparison"
+                end
+            end
+        end
+    end
+
+    -- 5i. WHAT COMES AFTER/BEFORE: "what mutation comes after rainbow"
+    do
+        local MUT_ORDER = {"GOLD","DIAMOND","BLOODROT","RAINBOW","CANDY","LAVA",
+            "GALAXY","YINYANG","RADIOACTIVE","CURSED","DIVINE","CYBER","PHANTOM","CRYSTAL","ECLIPSE"}
+        local BIOME_ORDER = {"GRASSLANDS","DESERT","SNOW","OCEAN","VOLCANO","SPACE"}
+        local function findInOrder(list, target)
+            for i, v in ipairs(list) do if v == target then return i end end
+            return nil
+        end
+        if norm:find("after") or norm:find("before") or norm:find("next") or norm:find("previous") then
+            local isAfter = norm:find("after") or norm:find("next")
+            for word in norm:gmatch("%w+") do
+                local wu = word:upper()
+                -- check mutations
+                local idx = findInOrder(MUT_ORDER, wu)
+                if idx then
+                    if isAfter and idx < #MUT_ORDER then return MUT_ORDER[idx+1], "sequence" end
+                    if not isAfter and idx > 1 then return MUT_ORDER[idx-1], "sequence" end
+                end
+                -- check biomes
+                idx = findInOrder(BIOME_ORDER, wu)
+                if idx then
+                    if isAfter and idx < #BIOME_ORDER then return BIOME_ORDER[idx+1], "sequence" end
+                    if not isAfter and idx > 1 then return BIOME_ORDER[idx-1], "sequence" end
+                end
+            end
+        end
+    end
+
+    -- 5j. HOW MANY: "how many mutations are there", "how many biomes"
+    if norm:find("how many") then
+        local COUNT_MAP = {
+            mutation=15, mutations=15, biome=6, biomes=6, trait=22, traits=22,
+            event=6, events=6, og=5, ogs=5, rarity=15, rarities=15,
+            machine=6, machines=6, gamepass=5, gamepasses=5, currency=3,
+            currencies=3, rebirth=19, rebirths=19, update=12, updates=12,
+        }
+        for word in norm:gmatch("%w+") do
+            if COUNT_MAP[word] then return tostring(COUNT_MAP[word]), "howmany" end
+        end
+    end
+
+    -- 5k. FILL IN THE BLANK: "fill in: sammy is from ___"
+    if norm:find("fill") or norm:find("blank") or norm:find("___") then
+        local cleaned = norm:gsub("fill in[%s:]*",""):gsub("___+",""):gsub("the blank[%s:]*","")
+        -- try to match against known facts
+        for fk, fv in pairs(PREDICT_FACTS) do
+            local score = 0
+            for word in cleaned:gmatch("%w+") do
+                if fk:find(word, 1, true) then score = score + 1 end
+            end
+            if score >= 2 then return fv, "fillin" end
+        end
+    end
+
+    -- 5l. YES/NO: "does sammy have a dog", "is there a space biome"
+    if norm:find("^does ") or norm:find("^is there") or norm:find("^can you") or norm:find("^do ") then
+        local YES_FACTS = {
+            "sammy have a dog", "sammy has a dog", "loki", "there a space biome",
+            "there a volcano biome", "there trading", "there a vip gamepass",
+            "you trade", "you rebirth", "you fuse", "there admin abuse",
+            "sammy from brazil", "sammy brazilian", "sab have mutations",
+            "sab have traits", "sab have events", "sab have biomes",
+            "there a desert biome", "there a snow biome", "there an ocean biome",
+            "sammy have a brother", "steak have a brother",
+        }
+        local NO_FACTS = {
+            "sammy have a cat", "sammy american", "sammy from america",
+            "sammy from algeria", "there a moon biome", "there a jungle biome",
+            "sammy from france", "sammy from england", "there 10 biomes",
+            "there a cave biome", "there a forest biome", "sab have guns",
+            "you fly in sab", "there pvp",
+        }
+        for _, yf in ipairs(YES_FACTS) do
+            if norm:find(yf, 1, true) then return "YES", "yesno" end
+        end
+        for _, nf in ipairs(NO_FACTS) do
+            if norm:find(nf, 1, true) then return "NO", "yesno" end
+        end
+    end
+
+    -- 5m. EMOJI / WHAT DOES X LOOK LIKE: "what does the gold mutation look like"
+    if norm:find("look like") or norm:find("emoji") or norm:find("symbol") then
+        local MUTATION_EMOJI = {
+            gold="yellow sparkle", diamond="blue diamond", bloodrot="red skull",
+            rainbow="rainbow", candy="pink lollipop", lava="orange fire",
+            galaxy="purple galaxy", yinyang="black and white circle",
+            radioactive="green glow", cursed="dark red", divine="golden halo",
+            cyber="cyan circuit", phantom="dark shadow", crystal="ice crystal",
+            eclipse="dark purple eclipse",
+        }
+        for name, desc in pairs(MUTATION_EMOJI) do
+            if norm:find(name, 1, true) then return desc, "emoji" end
+        end
+    end
+
+    -- 5n. MULTIPLE CHOICE: "A) gold B) diamond C) rainbow" - pick the right one from context
+    do
+        local optA = norm:match("[aA%)]+%s*(%w+)")
+        local optB = norm:match("[bB%)]+%s*(%w+)")
+        local optC = norm:match("[cC%)]+%s*(%w+)")
+        if optA and optB then
+            -- check if any option is a direct PREDICT_FACTS value for a keyword in the question
+            for word in norm:gmatch("%w+") do
+                if PREDICT_FACTS[word] then
+                    local answer = PREDICT_FACTS[word]:lower()
+                    if optA and optA:lower() == answer then return "A", "multichoice" end
+                    if optB and optB:lower() == answer then return "B", "multichoice" end
+                    if optC and optC:lower() == answer then return "C", "multichoice" end
                 end
             end
         end
@@ -8155,18 +8799,47 @@ end
 local function looksLikeRiddle(text)
     if not text then return false end
     local l = text:lower()
+    -- question marks always indicate a question
     if l:find("%?") then return true end
+    -- question words
     if l:find("what is") or l:find("what's") or l:find("whats") then return true end
+    if l:find("what was") or l:find("what are") or l:find("what were") then return true end
     if l:find("who is") or l:find("who's") or l:find("where is") then return true end
+    if l:find("who was") or l:find("who are") or l:find("whose") then return true end
     if l:find("how many") or l:find("how old") or l:find("how much") then return true end
-    if l:find("when was") or l:find("when did") then return true end
+    if l:find("how do") or l:find("how does") or l:find("how is") then return true end
+    if l:find("when was") or l:find("when did") or l:find("when is") then return true end
+    if l:find("where was") or l:find("where did") or l:find("where does") then return true end
+    if l:find("why is") or l:find("why did") or l:find("why does") then return true end
+    -- commands
     if l:find("name the") or l:find("tell me") or l:find("name a") then return true end
+    if l:find("guess the") or l:find("guess what") or l:find("guess who") then return true end
+    if l:find("can you") or l:find("do you know") or l:find("did you know") then return true end
+    if l:find("fill in") or l:find("the blank") or l:find("___") then return true end
+    -- puzzle types
     if l:find("riddle") or l:find("unscramble") or l:find("scramble") then return true end
     if l:find("spell") or l:find("reverse") or l:find("backward") then return true end
+    if l:find("anagram") or l:find("decode") or l:find("decipher") then return true end
+    if l:find("trivia") or l:find("quiz") or l:find("question") then return true end
+    -- comparison / logic
     if l:find("true or false") or l:find("which") then return true end
+    if l:find("rarer") or l:find("better") or l:find("worse") then return true end
+    if l:find("comes after") or l:find("comes before") or l:find("next") then return true end
+    if l:find("yes or no") or l:find("is it true") then return true end
+    -- letter analysis
     if l:find("first letter") or l:find("last letter") or l:find("vowel") then return true end
+    if l:find("consonant") or l:find("letter count") or l:find("how many letter") then return true end
+    -- SAB specific keywords
     if l:find("brainrot") or l:find("mutation") or l:find("rarity") then return true end
     if l:find("sammy") or l:find("caylus") or l:find("favorite") then return true end
+    if l:find("biome") or l:find("trait") or l:find("rebirth") then return true end
+    if l:find("steak") or l:find("cruz") or l:find("admin abuse") then return true end
+    if l:find("event") or l:find("update") or l:find("gamepass") then return true end
+    if l:find("og brainrot") or l:find("machine") or l:find("fuse") then return true end
+    if l:find("multiplier") or l:find("inventory") or l:find("trading") then return true end
+    -- multiple choice patterns
+    if l:find("a%)") or l:find("b%)") or l:find("c%)") then return true end
+    if l:find("option a") or l:find("option b") or l:find("option c") then return true end
     return false
 end
 
