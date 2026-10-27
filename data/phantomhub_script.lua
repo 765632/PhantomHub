@@ -6951,34 +6951,29 @@ local function startRiddler()
 
                             local wordCount = 0
                             for _ in lower:gmatch("%S+") do wordCount = wordCount + 1 end
-                            if wordCount < 3 then goto scanContinue end
 
-                            -- a real riddle looks like a question or command sentence
-                            local endsWithQ = lower:match("%?%s*$") ~= nil
-                            local startsWithQ = lower:match("^%s*what%s") or lower:match("^%s*who%s")
-                                or lower:match("^%s*how%s") or lower:match("^%s*where%s")
-                                or lower:match("^%s*which%s") or lower:match("^%s*when%s")
-                                or lower:match("^%s*spell%s") or lower:match("^%s*name%s")
-                                or lower:match("^%s*reverse%s") or lower:match("^%s*tell%s")
-                                or lower:match("^%s*type%s") or lower:match("^%s*find%s")
+                            if wordCount >= 3 then
+                                local endsWithQ = lower:match("%?%s*$") ~= nil
+                                local startsWithQ = lower:match("^%s*what%s") or lower:match("^%s*who%s")
+                                    or lower:match("^%s*how%s") or lower:match("^%s*where%s")
+                                    or lower:match("^%s*which%s") or lower:match("^%s*when%s")
+                                    or lower:match("^%s*spell%s") or lower:match("^%s*name%s")
+                                    or lower:match("^%s*reverse%s") or lower:match("^%s*tell%s")
+                                    or lower:match("^%s*type%s") or lower:match("^%s*find%s")
 
-                            -- long text (5+ words) with SAB or question keywords
-                            local hasAnyKeyword = lower:find("riddle") or lower:find("sammy")
-                                or lower:find("brainrot") or lower:find("mutation")
-                                or lower:find("rarity") or lower:find("caylus")
-                                or lower:find("steak") or lower:find("spell")
-                                or lower:find("reverse") or lower:find("backward")
-                                or lower:find("favorite") or lower:find("fuse")
-                                or lower:find("trait") or lower:find("colour")
-                                or lower:find("color") or lower:find("admin abuse")
+                                local hasAnyKeyword = lower:find("riddle") or lower:find("sammy")
+                                    or lower:find("brainrot") or lower:find("mutation")
+                                    or lower:find("rarity") or lower:find("caylus")
+                                    or lower:find("steak") or lower:find("spell")
+                                    or lower:find("reverse") or lower:find("backward")
+                                    or lower:find("favorite") or lower:find("fuse")
+                                    or lower:find("trait") or lower:find("colour")
+                                    or lower:find("color") or lower:find("admin abuse")
 
-                            local isRiddle = endsWithQ or startsWithQ or (wordCount >= 5 and hasAnyKeyword)
-
-                            if isRiddle then
-                                pcall(onRiddleDetected, stripped)
+                                if endsWithQ or startsWithQ or (wordCount >= 5 and hasAnyKeyword) then
+                                    pcall(onRiddleDetected, stripped)
+                                end
                             end
-
-                            ::scanContinue::
                         end
                     end
                 end
