@@ -608,6 +608,11 @@ local _footerLabel = nil -- forward-declared, assigned when footer is built
 local playNotifySound -- forward-declared, defined after trim()
 local _lastBox = nil
 local _redeemCooldown = 0
+-- forward-declared UI refs (assigned in do-end scoped sections, used later)
+local titleLabel, accentLine, titleLogo, logoGlow
+local tabBar, content, footer
+local minBtn
+local showToast
 
 -- ======================== UI HELPERS ========================
 local function corner(parent, radius)
@@ -650,7 +655,7 @@ local _toastQueue = {}
 local _toastActive = false
 local _toastContainer -- assigned after screenGui creation
 
-local function showToast(message, toastColor, duration)
+showToast = function(message, toastColor, duration)
     table.insert(_toastQueue, { msg = message, col = toastColor or Theme.accent, dur = duration or 2.5 })
     if _toastActive then return end
     _toastActive = true
@@ -768,6 +773,7 @@ if _isMobile then
 end
 
 -- ======================== TITLE BAR ========================
+do
 local titleBar = Instance.new("Frame")
 titleBar.Size = UDim2.new(1, 0, 0, 44)
 titleBar.BackgroundColor3 = Theme.bgDark
@@ -787,7 +793,7 @@ titleFix.ZIndex = 2
 titleFix.Parent = titleBar
 
 -- accent line under title bar
-local accentLine = Instance.new("Frame")
+accentLine = Instance.new("Frame")
 accentLine.Size = UDim2.new(1, -24, 0, 2)
 accentLine.Position = UDim2.new(0, 12, 1, -1)
 accentLine.BackgroundColor3 = Theme.accent
@@ -798,7 +804,7 @@ accentLine.Parent = titleBar
 corner(accentLine, 1)
 
 -- logo circle with accent
-local titleLogo = Instance.new("Frame")
+titleLogo = Instance.new("Frame")
 titleLogo.Size = UDim2.fromOffset(26, 26)
 titleLogo.Position = UDim2.new(0, 12, 0.5, -13)
 titleLogo.BackgroundColor3 = Theme.accent
@@ -808,7 +814,7 @@ titleLogo.Parent = titleBar
 corner(titleLogo, 8)
 
 -- glow ring behind logo
-local logoGlow = Instance.new("Frame")
+logoGlow = Instance.new("Frame")
 logoGlow.Size = UDim2.fromOffset(34, 34)
 logoGlow.Position = UDim2.new(0, 8, 0.5, -17)
 logoGlow.BackgroundColor3 = Theme.accent
@@ -838,7 +844,7 @@ titleLogoText.TextSize = 14
 titleLogoText.ZIndex = 5
 titleLogoText.Parent = titleLogo
 
-local titleLabel = Instance.new("TextLabel")
+titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(0, 160, 0, 20)
 titleLabel.Position = UDim2.new(0, 44, 0.5, -10)
 titleLabel.BackgroundTransparency = 1
@@ -864,7 +870,7 @@ versionTag.ZIndex = 4
 versionTag.Parent = titleBar
 corner(versionTag, 4)
 
-local minBtn = Instance.new("TextButton")
+minBtn = Instance.new("TextButton")
 minBtn.Size = UDim2.new(0, 26, 0, 26)
 minBtn.Position = UDim2.new(1, -88, 0.5, -13)
 minBtn.BackgroundColor3 = Theme.bgCard
@@ -924,9 +930,11 @@ closeBtn.MouseButton1Click:Connect(function()
     stopSniper()
     screenGui:Destroy()
 end)
+end -- do (Title bar)
 
 -- ======================== TAB BAR ========================
-local tabBar = Instance.new("Frame")
+do
+tabBar = Instance.new("Frame")
 tabBar.Size = UDim2.new(1, -24, 0, 34)
 tabBar.Position = UDim2.new(0, 12, 0, 52)
 tabBar.BackgroundColor3 = Theme.bgDark
@@ -1026,7 +1034,7 @@ tabUtilis.MouseButton1Click:Connect(function() setTab("Utilis") end)
 tabSettings.MouseButton1Click:Connect(function() setTab("Settings") end)
 
 -- ======================== CONTENT AREA ========================
-local content = Instance.new("Frame")
+content = Instance.new("Frame")
 content.Size = UDim2.new(1, -24, 1, -144)
 content.Position = UDim2.new(0, 12, 0, 94)
 content.BackgroundTransparency = 1
@@ -9251,6 +9259,7 @@ local ACCENT_PRESETS = {
     { name = "Green",  color = Color3.fromRGB(75, 210, 130) },
     { name = "Red",    color = Color3.fromRGB(255, 65, 100) },
     { name = "Gold",   color = Color3.fromRGB(255, 180, 55) },
+    { name = "White",  color = Color3.fromRGB(220, 220, 230) },
 }
 
 for i, preset in ipairs(ACCENT_PRESETS) do
@@ -9335,7 +9344,7 @@ creditsLbl.Parent = creditsRow
 end -- do (Settings page)
 
 -- ======================== FOOTER ========================
-local footer = Instance.new("Frame")
+footer = Instance.new("Frame")
 footer.Size = UDim2.new(1, 0, 0, 32)
 footer.Position = UDim2.new(0, 0, 1, -32)
 footer.BackgroundColor3 = Theme.bgDark
