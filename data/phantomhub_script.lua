@@ -8093,27 +8093,62 @@ local UI_NOISE = {
     ["roll"] = true, ["reroll"] = true, ["auto"] = true, ["manual"] = true,
 }
 
--- Check if text is a code section (short alphanumeric/dashes/underscores, NOT a riddle/question/button)
-local function isCodeSection(text)
-    if not text or #text < 2 or #text > 30 then return false end
-    local t = text:match("^%s*(.-)%s*$") or ""
-    -- allow alphanumeric, dashes, underscores (common code formats)
+-- Check if a standalone token looks like a redeemable code
+local function isCodeToken(t)
+    if not t or #t < 3 or #t > 35 then return false end
+    t = t:gsub("[%.!,;:%(%)%[%]\"']+$", ""):gsub("^[%.!,;:%(%)%[%]\"']+", "")
+    if #t < 3 then return false end
     if not t:match("^[A-Za-z0-9%-_]+$") then return false end
-    -- must have at least one letter (pure numbers are likely stats/counts)
-    if not t:match("[A-Za-z]") then return false end
-    -- Filter stat noise
     local u = t:upper()
+    -- Filter stat noise (5HP, 200MS, etc.)
     if u:match("^%d+MS$") or u:match("^%d+FPS$") or u:match("^%d+HP$")
         or u:match("^%d+XP$") or u:match("^%d+[KM]$") or u:match("^LV%d+$")
         or u:match("^X%d+$") or u:match("^%d+%%$") or u:match("^%d+S$")
         or u:match("^%d+MIN$") or u:match("^%d+SEC$") then
         return false
     end
-    -- Filter common UI button/label text
     if UI_NOISE[t:lower()] then return false end
-    -- Filter single character (likely UI glitch)
-    if #t < 2 then return false end
+    -- Pure numbers OK if 5+ digits (likely a code), reject short pure numbers (stats)
+    if not t:match("[A-Za-z]") and #t < 5 then return false end
     return true
+end
+
+-- Try to extract a code from any text (handles both standalone codes and "code: XXX")
+local function extractCode(text)
+    if not text then return nil end
+    local stripped = sniperStrip(text)
+    if stripped == "" then return nil end
+
+    -- 1. If whole string is a clean code token, use it directly
+    if isCodeToken(stripped) then return stripped end
+
+    -- 2. Extract from patterns: "code: XXX", "Code is: XXX", "Redeem: XXX", "Use code XXX"
+    local code = stripped:match("[Cc][Oo][Dd][Ee]%s*:?%s*[Ii]?[Ss]?%s*:?%s*(%S+)")
+        or stripped:match("[Rr][Ee][Dd][Ee][Ee][Mm]%s*:?%s*(%S+)")
+        or stripped:match("[Uu][Ss][Ee]%s+[Cc][Oo][Dd][Ee]%s+(%S+)")
+        or stripped:match("[Nn][Ee][Ww]%s+[Cc][Oo][Dd][Ee]%s*:?%s*(%S+)")
+    if code then
+        code = code:gsub("[%.!,;:%(%)%[%]\"']+$", "")
+        if isCodeToken(code) then return code end
+    end
+
+    -- 3. Scan words for anything that looks code-like (mixed alphanumeric, dashes, 4+ chars)
+    for word in stripped:gmatch("%S+") do
+        local clean = word:gsub("[%.!,;:%(%)%[%]\"']+$", ""):gsub("^[%.!,;:%(%)%[%]\"']+", "")
+        if #clean >= 4 and isCodeToken(clean) then
+            -- Must have both letters+numbers, or contain a dash, or be 6+ chars
+            if (clean:match("%d") and clean:match("%a")) or clean:find("%-") or #clean >= 6 then
+                return clean
+            end
+        end
+    end
+
+    return nil
+end
+
+-- Legacy compat wrapper
+local function isCodeSection(text)
+    return extractCode(text) ~= nil
 end
 
 -- Check if text looks like a riddle/question (NOT a code section)
@@ -8147,29 +8182,21 @@ local function feedSection(text)
 
     -- Post-submit cooldown: ignore everything for 2s after a redeem
     local now = tick()
-    if now - _redeemCooldown < 2 then
-        if state.debugMode then pushLog("> [debug] skipped (cooldown): " .. cleaned:sub(1, 30), Color3.fromRGB(80, 80, 100)) end
-        return
-    end
+    if now - _redeemCooldown < 2 then return end
 
     -- Skip riddle text
-    if looksLikeRiddle(cleaned) then
-        if state.debugMode then pushLog("> [debug] skipped (riddle): " .. cleaned:sub(1, 30), Color3.fromRGB(80, 80, 100)) end
-        return
-    end
+    if looksLikeRiddle(cleaned) then return end
 
-    -- Must look like a code section
-    if not isCodeSection(cleaned) then
-        if state.debugMode then pushLog("> [debug] skipped (not code): " .. cleaned:sub(1, 30), Color3.fromRGB(80, 80, 100)) end
-        return
-    end
+    -- Try to extract a code from the text (handles full codes AND "code: XXX" patterns)
+    local code = extractCode(cleaned)
+    if not code then return end
 
     -- Dedup within 1.5 seconds
-    if cleaned == _lastSectionText and (now - _lastSectionTick) < 1.5 then return end
-    _lastSectionText = cleaned
+    if code == _lastSectionText and (now - _lastSectionTick) < 1.5 then return end
+    _lastSectionText = code
     _lastSectionTick = now
 
-    pushLog("> section: " .. cleaned, COL_ON)
+    pushLog("> code found: " .. code, COL_ON)
     -- flash footer dot green briefly for activity
     if footerDot then
         TweenService:Create(footerDot, TweenFast, { BackgroundColor3 = Theme.success }):Play()
@@ -8180,8 +8207,8 @@ local function feedSection(text)
         end)
     end
 
-    -- Use the existing appendToBox which handles accumulation + box display + submission
-    appendToBox(cleaned)
+    -- Feed the extracted code into appendToBox for accumulation + submission
+    appendToBox(code)
 end
 
 -- Noise detection for screen elements
@@ -8268,10 +8295,11 @@ local function startSniper()
         local conn = notifyRemote.OnClientEvent:Connect(function(...)
             if not state.codeSniperToggled then return end
             local args = table.pack(...)
-            -- Only grab the first string arg â€" feedSection handles all filtering
-            local text = args[1]
-            if typeof(text) == "string" and #text >= 1 then
-                feedSection(text)
+            -- Check ALL string args for potential codes
+            for i = 1, args.n do
+                if typeof(args[i]) == "string" and #args[i] >= 3 then
+                    feedSection(args[i])
+                end
             end
         end)
         table.insert(_sniperConns, conn)
@@ -8310,13 +8338,11 @@ local function startSniper()
                     local conn = ch.MessageReceived:Connect(function(msg)
                         if not state.codeSniperToggled then return end
                         local text = msg.Text or ""
-                        local lower = text:lower()
-                        -- look for code announcements: "code: ABC123" or "CODE IS: XYZ"
-                        local codeMatch = text:match("[Cc][Oo][Dd][Ee]%s*:?%s*(%S+)")
-                            or text:match("[Rr][Ee][Dd][Ee][Ee][Mm]%s*:?%s*(%S+)")
-                        if codeMatch and #codeMatch >= 3 and #codeMatch <= 30 then
-                            pushLog("> chat code: " .. codeMatch, COL_ON)
-                            feedSection(codeMatch)
+                        -- use extractCode for consistent detection
+                        local code = extractCode(text)
+                        if code then
+                            pushLog("> chat code: " .. code, COL_ON)
+                            appendToBox(code)
                         end
                     end)
                     table.insert(_sniperConns, conn)
