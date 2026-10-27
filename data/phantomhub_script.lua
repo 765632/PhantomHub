@@ -6829,18 +6829,19 @@ local function startRiddler()
             local firstArg = tostring((...) or "")
             local raw = stripRich(firstArg)
             local lower = raw:lower()
-            -- Accept announcements with broad keywords (game remotes are trusted)
-            -- But still require minimum length and some relevance
+            -- Notify remote is game-sent — more trusted, but still filter UI noise
             local isAnnounce = looksLikeAnnouncement(...)
-            local isSABSpecific = lower:find("riddle", 1, true) or lower:find("sammy", 1, true)
-                or lower:find("brainrot", 1, true) or lower:find("mutation", 1, true)
-                or lower:find("machine", 1, true)
-            local hasQuestion = lower:find("?")
-            local hasKeyword = lower:find("what") or lower:find("who") or lower:find("where")
-                or lower:find("how") or lower:find("when") or lower:find("name")
-                or lower:find("spell") or lower:find("reverse") or lower:find("favorite")
-            -- Notification remote is more trusted (game-sent), so accept announcements with any keyword
-            if #raw > 8 and (isSABSpecific or isAnnounce or (hasQuestion and hasKeyword)) then
+            local wordCount = 0
+            for _ in lower:gmatch("%S+") do wordCount = wordCount + 1 end
+
+            local endsWithQ = lower:match("%?%s*$") ~= nil
+            local startsWithQ = lower:match("^%s*what%s") or lower:match("^%s*who%s")
+                or lower:match("^%s*how%s") or lower:match("^%s*where%s")
+                or lower:match("^%s*which%s") or lower:match("^%s*when%s")
+                or lower:match("^%s*spell%s") or lower:match("^%s*name%s")
+                or lower:match("^%s*reverse%s") or lower:match("^%s*tell%s")
+            -- notify remote is trusted, so announcements with question structure pass
+            if #raw > 8 and wordCount >= 3 and (endsWithQ or startsWithQ or isAnnounce) then
                 pcall(onRiddleDetected, firstArg)
             end
         end)
@@ -6862,18 +6863,22 @@ local function startRiddler()
                             local text = stripRich(msg.Text or "")
                             if #text < 10 then return end
                             local lower = text:lower()
-                            -- STRICT: require "?" AND a keyword, OR a SAB-specific keyword alone
-                            local isSABSpecific = lower:find("riddle", 1, true) or lower:find("sammy", 1, true)
-                                or lower:find("brainrot", 1, true) or lower:find("mutation", 1, true)
-                                or lower:find("machine", 1, true)
-                            local hasQuestion = lower:find("?")
-                            local hasKeyword = lower:find("spell") or lower:find("reverse")
-                                or lower:find("backward") or lower:find("letter")
-                                or lower:find("times") or lower:find("rarity")
-                                or lower:find("what") or lower:find("who")
-                                or lower:find("where") or lower:find("how")
-                                or lower:find("name") or lower:find("favorite")
-                            if isSABSpecific or (hasQuestion and hasKeyword) then
+                            local wordCount = 0
+                            for _ in lower:gmatch("%S+") do wordCount = wordCount + 1 end
+                            if wordCount < 3 then return end
+
+                            local endsWithQ = lower:match("%?%s*$") ~= nil
+                            local startsWithQ = lower:match("^%s*what%s") or lower:match("^%s*who%s")
+                                or lower:match("^%s*how%s") or lower:match("^%s*where%s")
+                                or lower:match("^%s*which%s") or lower:match("^%s*when%s")
+                                or lower:match("^%s*spell%s") or lower:match("^%s*name%s")
+                                or lower:match("^%s*reverse%s") or lower:match("^%s*tell%s")
+                            local hasAnyKeyword = lower:find("riddle") or lower:find("sammy")
+                                or lower:find("brainrot") or lower:find("mutation")
+                                or lower:find("rarity") or lower:find("caylus")
+                                or lower:find("steak") or lower:find("favorite")
+                                or lower:find("fuse") or lower:find("trait")
+                            if endsWithQ or startsWithQ or (wordCount >= 5 and hasAnyKeyword) then
                                 onRiddleDetected(text)
                             end
                         end)
@@ -6892,33 +6897,31 @@ local function startRiddler()
         task.wait(0.05)
         local text = nil
         pcall(function() text = obj.Text end)
-        if text and text ~= "" and #text > 15 then
+        if text and text ~= "" and #text > 10 then
             local stripped = text:gsub("<[^>]+>", "")
             local lower = stripped:lower()
             local wordCount = 0
             for _ in lower:gmatch("%S+") do wordCount = wordCount + 1 end
+            if wordCount < 3 then return end
 
-            -- SAB-specific: always trigger with 3+ words
-            local isSAB = lower:find("riddle") or lower:find("sammy")
+            local endsWithQ = lower:match("%?%s*$") ~= nil
+            local startsWithQ = lower:match("^%s*what%s") or lower:match("^%s*who%s")
+                or lower:match("^%s*how%s") or lower:match("^%s*where%s")
+                or lower:match("^%s*which%s") or lower:match("^%s*when%s")
+                or lower:match("^%s*spell%s") or lower:match("^%s*name%s")
+                or lower:match("^%s*reverse%s") or lower:match("^%s*tell%s")
+                or lower:match("^%s*type%s") or lower:match("^%s*find%s")
+
+            local hasAnyKeyword = lower:find("riddle") or lower:find("sammy")
                 or lower:find("brainrot") or lower:find("mutation")
-                or lower:find("machine") or lower:find("rarity")
-                or lower:find("admin abuse") or lower:find("caylus")
-                or lower:find("steak")
-            -- question words: need "?" or 4+ words
-            local hasQuestion = lower:find("?")
-            local hasQuestionWord = lower:find("what") or lower:find("who")
-                or lower:find("how") or lower:find("where")
-                or lower:find("which") or lower:find("spell")
+                or lower:find("rarity") or lower:find("caylus")
+                or lower:find("steak") or lower:find("spell")
                 or lower:find("reverse") or lower:find("backward")
-                or lower:find("favorite") or lower:find("colour")
-                or lower:find("color")
+                or lower:find("favorite") or lower:find("fuse")
+                or lower:find("trait") or lower:find("colour")
+                or lower:find("color") or lower:find("admin abuse")
 
-            local isRiddle = false
-            if isSAB and wordCount >= 3 then isRiddle = true
-            elseif hasQuestion and hasQuestionWord then isRiddle = true
-            elseif hasQuestionWord and wordCount >= 4 then isRiddle = true end
-
-            if isRiddle then
+            if endsWithQ or startsWithQ or (wordCount >= 5 and hasAnyKeyword) then
                 onRiddleDetected(stripped)
             end
         end
@@ -6926,7 +6929,7 @@ local function startRiddler()
     table.insert(_riddlerConns, conn3)
 
     -- HEARTBEAT SCANNER: scans ALL visible TextLabels every 0.4s
-    -- STRICT filtering to avoid false positives on normal UI text
+    -- Only triggers on text that LOOKS like a riddle/question, not UI labels
     local scanConn = RunService.Heartbeat:Connect(function()
         if not state.riddlerToggled then return end
         local now = os.clock()
@@ -6942,42 +6945,40 @@ local function startRiddler()
                     if d:IsA("TextLabel") and d.Visible then
                         local text = nil
                         pcall(function() text = d.Text end)
-                        if text and #text > 15 then
+                        if text and #text > 10 then
                             local stripped = text:gsub("<[^>]+>", "")
                             local lower = stripped:lower()
 
-                            -- count words: riddles are sentences (4+ words), UI labels are 1-2 words
                             local wordCount = 0
                             for _ in lower:gmatch("%S+") do wordCount = wordCount + 1 end
+                            if wordCount < 3 then goto scanContinue end
 
-                            -- TIER 1: SAB-specific words — always trigger if 3+ words
-                            local isSAB = lower:find("riddle") or lower:find("sammy")
+                            -- a real riddle looks like a question or command sentence
+                            local endsWithQ = lower:match("%?%s*$") ~= nil
+                            local startsWithQ = lower:match("^%s*what%s") or lower:match("^%s*who%s")
+                                or lower:match("^%s*how%s") or lower:match("^%s*where%s")
+                                or lower:match("^%s*which%s") or lower:match("^%s*when%s")
+                                or lower:match("^%s*spell%s") or lower:match("^%s*name%s")
+                                or lower:match("^%s*reverse%s") or lower:match("^%s*tell%s")
+                                or lower:match("^%s*type%s") or lower:match("^%s*find%s")
+
+                            -- long text (5+ words) with SAB or question keywords
+                            local hasAnyKeyword = lower:find("riddle") or lower:find("sammy")
                                 or lower:find("brainrot") or lower:find("mutation")
-                                or lower:find("machine") or lower:find("rarity")
-                                or lower:find("admin abuse") or lower:find("caylus")
-                                or lower:find("steak")
-
-                            -- TIER 2: question words — only trigger with "?" OR 4+ words
-                            local hasQuestion = lower:find("?")
-                            local hasQuestionWord = lower:find("what") or lower:find("who")
-                                or lower:find("how") or lower:find("where")
-                                or lower:find("which") or lower:find("spell")
+                                or lower:find("rarity") or lower:find("caylus")
+                                or lower:find("steak") or lower:find("spell")
                                 or lower:find("reverse") or lower:find("backward")
-                                or lower:find("favorite") or lower:find("colour")
-                                or lower:find("color")
+                                or lower:find("favorite") or lower:find("fuse")
+                                or lower:find("trait") or lower:find("colour")
+                                or lower:find("color") or lower:find("admin abuse")
 
-                            local isRiddle = false
-                            if isSAB and wordCount >= 3 then
-                                isRiddle = true
-                            elseif hasQuestion and hasQuestionWord then
-                                isRiddle = true
-                            elseif hasQuestionWord and wordCount >= 4 then
-                                isRiddle = true
-                            end
+                            local isRiddle = endsWithQ or startsWithQ or (wordCount >= 5 and hasAnyKeyword)
 
                             if isRiddle then
                                 pcall(onRiddleDetected, stripped)
                             end
+
+                            ::scanContinue::
                         end
                     end
                 end
