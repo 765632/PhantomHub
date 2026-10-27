@@ -559,25 +559,31 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local Camera = workspace.CurrentCamera
 
 local Theme = {
-    bg = Color3.fromRGB(10, 10, 10),
-    bgDark = Color3.fromRGB(5, 5, 5),
-    bgCard = Color3.fromRGB(18, 18, 18),
-    stroke = Color3.fromRGB(40, 40, 40),
-    accent = Color3.fromRGB(255, 255, 255),
-    accentHover = Color3.fromRGB(220, 220, 220),
-    accentDim = Color3.fromRGB(60, 60, 60),
-    text = Color3.fromRGB(245, 245, 245),
-    textMuted = Color3.fromRGB(140, 140, 140),
+    bg = Color3.fromRGB(8, 8, 14),
+    bgDark = Color3.fromRGB(4, 4, 10),
+    bgCard = Color3.fromRGB(16, 16, 24),
+    stroke = Color3.fromRGB(32, 32, 52),
+    accent = Color3.fromRGB(130, 80, 255),
+    accentHover = Color3.fromRGB(160, 115, 255),
+    accentDim = Color3.fromRGB(55, 35, 110),
+    text = Color3.fromRGB(238, 238, 245),
+    textMuted = Color3.fromRGB(105, 105, 130),
     white = Color3.fromRGB(255, 255, 255),
-    toggleOff = Color3.fromRGB(35, 35, 35),
-    toggleOn = Color3.fromRGB(255, 255, 255),
+    toggleOff = Color3.fromRGB(28, 28, 42),
+    toggleOn = Color3.fromRGB(130, 80, 255),
+    success = Color3.fromRGB(75, 210, 130),
+    warning = Color3.fromRGB(255, 180, 55),
+    danger = Color3.fromRGB(255, 65, 75),
+    accentGlow = Color3.fromRGB(100, 60, 200),
 }
 
-local COL_WHITE = Color3.fromRGB(245, 245, 245)
-local COL_ON = Color3.fromRGB(120, 255, 160)
+local COL_WHITE = Color3.fromRGB(238, 238, 245)
+local COL_ON = Color3.fromRGB(75, 210, 130)
+local COL_ACCENT = Color3.fromRGB(130, 80, 255)
 
 local TweenFast = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 local TweenMed = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+local TweenSmooth = TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
 
 local state = {
     guiSize = 100,
@@ -677,9 +683,9 @@ end
 
 -- ======================== TITLE BAR ========================
 local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1, 0, 0, 42)
+titleBar.Size = UDim2.new(1, 0, 0, 44)
 titleBar.BackgroundColor3 = Theme.bgDark
-titleBar.BackgroundTransparency = 0.3
+titleBar.BackgroundTransparency = 0.15
 titleBar.BorderSizePixel = 0
 titleBar.ZIndex = 2
 titleBar.Parent = main
@@ -689,77 +695,122 @@ local titleFix = Instance.new("Frame")
 titleFix.Size = UDim2.new(1, 0, 0, 14)
 titleFix.Position = UDim2.new(0, 0, 1, -14)
 titleFix.BackgroundColor3 = Theme.bgDark
-titleFix.BackgroundTransparency = 0.3
+titleFix.BackgroundTransparency = 0.15
 titleFix.BorderSizePixel = 0
 titleFix.ZIndex = 2
 titleFix.Parent = titleBar
 
+-- accent line under title bar
+local accentLine = Instance.new("Frame")
+accentLine.Size = UDim2.new(1, -24, 0, 2)
+accentLine.Position = UDim2.new(0, 12, 1, -1)
+accentLine.BackgroundColor3 = Theme.accent
+accentLine.BackgroundTransparency = 0.5
+accentLine.BorderSizePixel = 0
+accentLine.ZIndex = 3
+accentLine.Parent = titleBar
+corner(accentLine, 1)
+
+-- logo circle with accent
+local titleLogo = Instance.new("Frame")
+titleLogo.Size = UDim2.fromOffset(26, 26)
+titleLogo.Position = UDim2.new(0, 12, 0.5, -13)
+titleLogo.BackgroundColor3 = Theme.accent
+titleLogo.BorderSizePixel = 0
+titleLogo.ZIndex = 4
+titleLogo.Parent = titleBar
+corner(titleLogo, 8)
+
+local titleLogoText = Instance.new("TextLabel")
+titleLogoText.Size = UDim2.new(1, 0, 1, 0)
+titleLogoText.BackgroundTransparency = 1
+titleLogoText.Text = "P"
+titleLogoText.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLogoText.Font = Enum.Font.GothamBlack
+titleLogoText.TextSize = 14
+titleLogoText.ZIndex = 5
+titleLogoText.Parent = titleLogo
+
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(0, 160, 0, 20)
-titleLabel.Position = UDim2.new(0, 14, 0.5, -10)
+titleLabel.Position = UDim2.new(0, 44, 0.5, -10)
 titleLabel.BackgroundTransparency = 1
 titleLabel.Font = Enum.Font.GothamBlack
-titleLabel.TextSize = 15
+titleLabel.TextSize = 14
 titleLabel.TextColor3 = Theme.text
 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.Text = "PHANTOMHUB"
 titleLabel.ZIndex = 3
 titleLabel.Parent = titleBar
 
+-- version tag
+local versionTag = Instance.new("TextLabel")
+versionTag.Size = UDim2.new(0, 30, 0, 14)
+versionTag.Position = UDim2.new(0, 146, 0.5, -7)
+versionTag.BackgroundColor3 = Theme.accentDim
+versionTag.BackgroundTransparency = 0.3
+versionTag.Font = Enum.Font.GothamBold
+versionTag.TextSize = 9
+versionTag.TextColor3 = Theme.accent
+versionTag.Text = "v2.0"
+versionTag.ZIndex = 4
+versionTag.Parent = titleBar
+corner(versionTag, 4)
+
 local minBtn = Instance.new("TextButton")
-minBtn.Size = UDim2.new(0, 24, 0, 24)
-minBtn.Position = UDim2.new(1, -84, 0.5, -12)
+minBtn.Size = UDim2.new(0, 26, 0, 26)
+minBtn.Position = UDim2.new(1, -88, 0.5, -13)
 minBtn.BackgroundColor3 = Theme.bgCard
 minBtn.Font = Enum.Font.GothamBold
 minBtn.TextSize = 14
-minBtn.TextColor3 = Theme.text
-minBtn.Text = "-"
+minBtn.TextColor3 = Theme.textMuted
+minBtn.Text = "—"
 minBtn.AutoButtonColor = false
 minBtn.ZIndex = 3
 minBtn.Parent = titleBar
-corner(minBtn, 6)
+corner(minBtn, 7)
 hover(minBtn, Theme.bgCard, Theme.accentDim)
 
 local lockBtn = Instance.new("TextButton")
-lockBtn.Size = UDim2.new(0, 24, 0, 24)
-lockBtn.Position = UDim2.new(1, -56, 0.5, -12)
+lockBtn.Size = UDim2.new(0, 26, 0, 26)
+lockBtn.Position = UDim2.new(1, -58, 0.5, -13)
 lockBtn.BackgroundColor3 = Theme.bgCard
 lockBtn.Font = Enum.Font.GothamBold
-lockBtn.TextSize = 12
-lockBtn.TextColor3 = Theme.text
-lockBtn.Text = "L"
+lockBtn.TextSize = 11
+lockBtn.TextColor3 = Theme.textMuted
+lockBtn.Text = "🔓"
 lockBtn.AutoButtonColor = false
 lockBtn.ZIndex = 3
 lockBtn.Parent = titleBar
-corner(lockBtn, 6)
+corner(lockBtn, 7)
 hover(lockBtn, Theme.bgCard, Theme.accentDim)
 
 lockBtn.MouseButton1Click:Connect(function()
     state.locked = not state.locked
     if state.locked then
-        lockBtn.Text = "X"
-        lockBtn.BackgroundColor3 = Color3.fromRGB(255, 200, 80)
+        lockBtn.Text = "🔒"
+        TweenService:Create(lockBtn, TweenFast, { BackgroundColor3 = Theme.warning }):Play()
         lockBtn.TextColor3 = Theme.bg
     else
-        lockBtn.Text = "L"
-        lockBtn.BackgroundColor3 = Theme.bgCard
-        lockBtn.TextColor3 = Theme.text
+        lockBtn.Text = "🔓"
+        TweenService:Create(lockBtn, TweenFast, { BackgroundColor3 = Theme.bgCard }):Play()
+        lockBtn.TextColor3 = Theme.textMuted
     end
 end)
 
 local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 24, 0, 24)
-closeBtn.Position = UDim2.new(1, -28, 0.5, -12)
+closeBtn.Size = UDim2.new(0, 26, 0, 26)
+closeBtn.Position = UDim2.new(1, -28, 0.5, -13)
 closeBtn.BackgroundColor3 = Theme.bgCard
 closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 12
-closeBtn.TextColor3 = Theme.text
-closeBtn.Text = "X"
+closeBtn.TextSize = 11
+closeBtn.TextColor3 = Theme.textMuted
+closeBtn.Text = "✕"
 closeBtn.AutoButtonColor = false
 closeBtn.ZIndex = 3
 closeBtn.Parent = titleBar
-corner(closeBtn, 6)
-hover(closeBtn, Theme.bgCard, Color3.fromRGB(180, 50, 70))
+corner(closeBtn, 7)
+hover(closeBtn, Theme.bgCard, Theme.danger)
 
 closeBtn.MouseButton1Click:Connect(function()
     stopRiddler()
@@ -769,39 +820,61 @@ end)
 
 -- ======================== TAB BAR ========================
 local tabBar = Instance.new("Frame")
-tabBar.Size = UDim2.new(1, -24, 0, 32)
-tabBar.Position = UDim2.new(0, 12, 0, 50)
+tabBar.Size = UDim2.new(1, -24, 0, 34)
+tabBar.Position = UDim2.new(0, 12, 0, 52)
 tabBar.BackgroundColor3 = Theme.bgDark
-tabBar.BackgroundTransparency = 0.2
+tabBar.BackgroundTransparency = 0.15
 tabBar.BorderSizePixel = 0
 tabBar.ZIndex = 2
 tabBar.Parent = main
 corner(tabBar, 8)
+stroke(tabBar, Theme.stroke, 1)
 
 local tabLayout = Instance.new("UIListLayout")
 tabLayout.FillDirection = Enum.FillDirection.Horizontal
 tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 tabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-tabLayout.Padding = UDim.new(0, 4)
+tabLayout.Padding = UDim.new(0, 3)
 tabLayout.Parent = tabBar
-padding(tabBar, 4, 4, 4, 4)
+padding(tabBar, 4, 4, 3, 3)
 
 local tabs = {}
+local tabIndicators = {}
 local pages = {}
 
 local function makeTab(name)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(0.25, -4, 1, 0)
+    container.BackgroundTransparency = 1
+    container.ZIndex = 3
+    container.Parent = tabBar
+
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0.25, -4, 1, 0)
+    btn.Size = UDim2.new(1, 0, 1, -4)
     btn.BackgroundColor3 = Theme.bgDark
+    btn.BackgroundTransparency = 1
     btn.Font = Enum.Font.GothamBold
     btn.TextSize = 11
     btn.TextColor3 = Theme.textMuted
     btn.Text = name
     btn.AutoButtonColor = false
     btn.ZIndex = 3
-    btn.Parent = tabBar
+    btn.Parent = container
     corner(btn, 6)
+
+    -- accent underline indicator
+    local indicator = Instance.new("Frame")
+    indicator.Size = UDim2.new(0.6, 0, 0, 2)
+    indicator.Position = UDim2.new(0.2, 0, 1, -2)
+    indicator.BackgroundColor3 = Theme.accent
+    indicator.BackgroundTransparency = 1
+    indicator.BorderSizePixel = 0
+    indicator.ZIndex = 4
+    indicator.Parent = container
+    corner(indicator, 1)
+
     tabs[name] = btn
+    tabIndicators[name] = indicator
     return btn
 end
 
@@ -814,9 +887,11 @@ local function setTab(name)
     state.currentTab = name
     for n, btn in pairs(tabs) do
         if n == name then
-            TweenService:Create(btn, TweenFast, { BackgroundColor3 = Theme.accent, TextColor3 = Theme.bg }):Play()
+            TweenService:Create(btn, TweenFast, { TextColor3 = Theme.accent }):Play()
+            TweenService:Create(tabIndicators[n], TweenFast, { BackgroundTransparency = 0 }):Play()
         else
-            TweenService:Create(btn, TweenFast, { BackgroundColor3 = Theme.bgDark, TextColor3 = Theme.textMuted }):Play()
+            TweenService:Create(btn, TweenFast, { TextColor3 = Theme.textMuted }):Play()
+            TweenService:Create(tabIndicators[n], TweenFast, { BackgroundTransparency = 1 }):Play()
         end
     end
     for n, page in pairs(pages) do
@@ -831,8 +906,8 @@ tabSettings.MouseButton1Click:Connect(function() setTab("Settings") end)
 
 -- ======================== CONTENT AREA ========================
 local content = Instance.new("Frame")
-content.Size = UDim2.new(1, -24, 1, -140)
-content.Position = UDim2.new(0, 12, 0, 90)
+content.Size = UDim2.new(1, -24, 1, -144)
+content.Position = UDim2.new(0, 12, 0, 94)
 content.BackgroundTransparency = 1
 content.ZIndex = 2
 content.Parent = main
@@ -4959,6 +5034,70 @@ local SAB_DB = {
     ["how many headless horseman are in sab"] = "79",
     ["total number of headless horseman"] = "79",
     ["how many headless horsemans exist"] = "79",
+    -- v2.0 additions: more alternate phrasings
+    ["what is sammys dog name"] = "LOKI",
+    ["what is the name of sammys dog"] = "LOKI",
+    ["sammys dogs name"] = "LOKI",
+    ["what dog does sammy have"] = "LOKI",
+    ["name sammys dog"] = "LOKI",
+    ["what is the oldest aura"] = "KRYSTAL",
+    ["oldest aura in sab"] = "KRYSTAL",
+    ["first aura in sab"] = "KRYSTAL",
+    ["what was the first aura"] = "KRYSTAL",
+    ["what is the max level"] = "100",
+    ["max level"] = "100",
+    ["whats the max level in sab"] = "100",
+    ["what level is max"] = "100",
+    ["what is the rarest mutation color"] = "RAINBOW",
+    ["rarest mutation"] = "RAINBOW",
+    ["what mutation is the rarest"] = "RAINBOW",
+    ["hardest mutation to get"] = "RAINBOW",
+    ["what is the max inventory"] = "200",
+    ["max inventory space"] = "200",
+    ["how much inventory space do you get"] = "200",
+    ["inventory limit"] = "200",
+    ["what does the golden apple do"] = "2XLUCK",
+    ["golden apple effect"] = "2XLUCK",
+    ["what is the golden apple for"] = "2XLUCK",
+    ["how many biomes are there"] = "6",
+    ["total biomes"] = "6",
+    ["number of biomes in sab"] = "6",
+    ["how many biomes exist"] = "6",
+    ["what is the 2nd rarest mutation"] = "CELESTIAL",
+    ["second rarest mutation"] = "CELESTIAL",
+    ["2nd rarest mutation color"] = "CELESTIAL",
+    ["what update added trading"] = "UPDATE4",
+    ["when was trading added"] = "UPDATE4",
+    ["trading update"] = "UPDATE4",
+    ["what is the heaviest aura"] = "TITAN",
+    ["heaviest aura in sab"] = "TITAN",
+    ["which aura weighs the most"] = "TITAN",
+    ["what is the lightest aura"] = "FEATHER",
+    ["lightest aura in sab"] = "FEATHER",
+    ["which aura weighs the least"] = "FEATHER",
+    ["how many currencies are there"] = "3",
+    ["total currencies"] = "3",
+    ["number of currencies in sab"] = "3",
+    ["what currencies are in sab"] = "COINS",
+    ["what is the main currency"] = "COINS",
+    ["how do you get rainbow mutation"] = "LUCK",
+    ["how to get rainbow"] = "LUCK",
+    ["what gives rainbow mutation"] = "LUCK",
+    ["who made the game"] = "SAMMY",
+    ["who developed sab"] = "SAMMY",
+    ["who is the developer"] = "SAMMY",
+    ["who created this game"] = "SAMMY",
+    ["whos the dev"] = "SAMMY",
+    ["what does vip do"] = "2XLUCK",
+    ["vip gamepass effect"] = "2XLUCK",
+    ["what is vip for"] = "2XLUCK",
+    ["how many gamepasses are there"] = "5",
+    ["total gamepasses"] = "5",
+    ["number of gamepasses"] = "5",
+    ["what is the fastest way to level up"] = "ROLLS",
+    ["fastest way to level"] = "ROLLS",
+    ["best way to get xp"] = "ROLLS",
+    ["what gives the most xp"] = "ROLLS",
 }
 
 local SAB_MULTI = {
@@ -5264,6 +5403,32 @@ local PREDICT_FACTS = {
     onchain="SPIDER", onlefteye="SPIDER",
     fortnitegame="ROBABANK", startedmaking="2013",
     scrappedmutation="DISCO",
+    -- v2.0 additions
+    dogname="LOKI", sammysdog="LOKI", puppy="LOKI",
+    oldestbrainrot="KRYSTAL", firstaura="KRYSTAL",
+    maxlevel="100", maxinventory="200", inventorylimit="200",
+    goldenapple="2XLUCK", vipeffect="2XLUCK", vipgamepass="2XLUCK",
+    totalbiomes="6", biomecount="6",
+    secondrarestmutation="CELESTIAL",
+    tradingupdate="UPDATE4",
+    heaviestaura="TITAN", lightaura="FEATHER", lightestbrainrot="FEATHER",
+    totalcurrencies="3", currencies="COINS",
+    maincurrency="COINS", primarycurrency="COINS",
+    fastestlevelup="ROLLS", bestxp="ROLLS",
+    totalgamepasses="5", gamepasscount="5",
+    sammy="SAMMY", theowner="SAMMY", thedev="SAMMY", thecreator="SAMMY",
+    latestupdate="UPDATE12", newestupdate="UPDATE12",
+    totalupdates="12", updatecount="12",
+    latestbiome="SPACE", newestbiome="SPACE",
+    firstbiome="GRASSLANDS", startingbiome="GRASSLANDS",
+    tradevalue="DEMAND", tradingcurrency="DEMAND",
+    bestpet="POLAROIDINI", rarestpet="POLAROIDINI",
+    totalogs="5", ogcount="5",
+    firstevent="HALLOWEEN", latestevent="SUMMER",
+    favoritemovie="SPIDERMAN", favmovie="SPIDERMAN",
+    favoritesong="UNKNOWN", favsong="UNKNOWN",
+    height="UNKNOWN", weight="UNKNOWN",
+    favoritegame="STEALABRAINROT", favgame="STEALABRAINROT",
 }
 
 local PREDICT_ORDINALS = {
@@ -6270,7 +6435,7 @@ local function riddlerToggleRow(parent, yPos, label, default)
     local togBg = Instance.new("Frame")
     togBg.Size = UDim2.fromOffset(40, 20)
     togBg.Position = UDim2.new(1, -40, 0.5, -10)
-    togBg.BackgroundColor3 = default and COL_WHITE or Color3.fromRGB(50, 50, 50)
+    togBg.BackgroundColor3 = default and Color3.fromRGB(130, 80, 255) or Color3.fromRGB(35, 35, 55)
     togBg.BorderSizePixel = 0
     togBg.Parent = row
     corner(togBg, 9)
@@ -6291,7 +6456,7 @@ local function riddlerToggleRow(parent, yPos, label, default)
     togBtn.Parent = togBg
     togBtn.MouseButton1Click:Connect(function()
         isOn = not isOn
-        TweenService:Create(togBg, TweenFast, { BackgroundColor3 = isOn and COL_WHITE or Color3.fromRGB(50, 50, 50) }):Play()
+        TweenService:Create(togBg, TweenFast, { BackgroundColor3 = isOn and Color3.fromRGB(130, 80, 255) or Color3.fromRGB(35, 35, 55) }):Play()
         TweenService:Create(togDot, TweenFast, { Position = isOn and UDim2.fromOffset(22, 2) or UDim2.fromOffset(2, 2) }):Play()
     end)
 
@@ -6303,7 +6468,7 @@ local function riddlerFeedAddEntry(question, answer, timeStr)
     if not _riddlerFeedScroll then return end
     local entry = Instance.new("Frame")
     entry.Size = UDim2.new(1, -6, 0, 72)
-    entry.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
+    entry.BackgroundColor3 = Color3.fromRGB(12, 12, 20)
     entry.BorderSizePixel = 0
     entry.Parent = _riddlerFeedScroll
     corner(entry, 6)
@@ -6389,7 +6554,7 @@ local function riddlerSwitchTab(name)
     end
     for k, btn in pairs(_riddlerTabBtns) do
         if btn and btn.Parent then
-            btn.TextColor3 = (k == name) and COL_WHITE or Color3.fromRGB(90, 90, 90)
+            btn.TextColor3 = (k == name) and Color3.fromRGB(130, 80, 255) or Color3.fromRGB(75, 75, 95)
         end
     end
 end
@@ -6428,14 +6593,14 @@ local function buildRiddlerPanel()
     else
         panel.Position = UDim2.new(0.5, -(320/2) - W - 10, 0.5, -(H / 2))
     end
-    panel.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
+    panel.BackgroundColor3 = Color3.fromRGB(8, 8, 14)
     panel.BorderSizePixel = 0
     panel.ClipsDescendants = true
     panel.Active = true
     panel.ZIndex = 10
     panel.Parent = screenGui
-    corner(panel, 10)
-    stroke(panel, Color3.fromRGB(50, 50, 50), 1)
+    corner(panel, 12)
+    stroke(panel, Color3.fromRGB(32, 32, 52), 1)
 
     -- scale for mobile
     if _scale ~= 1 then
@@ -6447,37 +6612,48 @@ local function buildRiddlerPanel()
     -- ═══ HEADER BAR ═══
     local header = Instance.new("Frame")
     header.Size = UDim2.new(1, 0, 0, 46)
-    header.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
+    header.BackgroundColor3 = Color3.fromRGB(4, 4, 10)
     header.BorderSizePixel = 0
     header.ZIndex = 11
     header.Active = true
     header.Parent = panel
-    corner(header, 10)
+    corner(header, 12)
 
     local hdrFill = Instance.new("Frame")
     hdrFill.Size = UDim2.new(1, 0, 0, 10)
     hdrFill.Position = UDim2.new(0, 0, 1, -10)
-    hdrFill.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
+    hdrFill.BackgroundColor3 = Color3.fromRGB(4, 4, 10)
     hdrFill.BorderSizePixel = 0
     hdrFill.ZIndex = 11
     hdrFill.Parent = header
 
-    -- logo circle
+    -- accent line under riddler header
+    local rdrAccent = Instance.new("Frame")
+    rdrAccent.Size = UDim2.new(1, -20, 0, 2)
+    rdrAccent.Position = UDim2.new(0, 10, 1, -1)
+    rdrAccent.BackgroundColor3 = Color3.fromRGB(130, 80, 255)
+    rdrAccent.BackgroundTransparency = 0.5
+    rdrAccent.BorderSizePixel = 0
+    rdrAccent.ZIndex = 12
+    rdrAccent.Parent = header
+    corner(rdrAccent, 1)
+
+    -- logo circle with accent
     local logo = Instance.new("Frame")
     logo.Size = UDim2.fromOffset(30, 30)
     logo.Position = UDim2.fromOffset(10, 8)
-    logo.BackgroundColor3 = COL_WHITE
+    logo.BackgroundColor3 = Color3.fromRGB(130, 80, 255)
     logo.BorderSizePixel = 0
     logo.ZIndex = 12
     logo.Parent = header
-    corner(logo, 12)
+    corner(logo, 10)
     local logoT = Instance.new("TextLabel")
     logoT.Size = UDim2.new(1, 0, 1, 0)
     logoT.BackgroundTransparency = 1
-    logoT.Text = "P"
-    logoT.TextColor3 = Color3.fromRGB(8, 8, 8)
+    logoT.Text = "R"
+    logoT.TextColor3 = Color3.fromRGB(255, 255, 255)
     logoT.Font = Enum.Font.GothamBlack
-    logoT.TextSize = 16
+    logoT.TextSize = 15
     logoT.ZIndex = 13
     logoT.Parent = logo
 
@@ -6494,15 +6670,24 @@ local function buildRiddlerPanel()
     brand.ZIndex = 12
     brand.Parent = header
 
-    -- green dot
+    -- status dot (purple pulse)
     local dot = Instance.new("Frame")
     dot.Size = UDim2.fromOffset(9, 9)
     dot.Position = UDim2.fromOffset(128, 19)
-    dot.BackgroundColor3 = COL_WHITE
+    dot.BackgroundColor3 = Color3.fromRGB(130, 80, 255)
     dot.BorderSizePixel = 0
     dot.ZIndex = 12
     dot.Parent = header
     corner(dot, 4)
+    -- pulse the dot
+    task.spawn(function()
+        while dot and dot.Parent do
+            TweenService:Create(dot, TweenInfo.new(0.8, Enum.EasingStyle.Sine), { BackgroundTransparency = 0.6 }):Play()
+            task.wait(0.8)
+            TweenService:Create(dot, TweenInfo.new(0.8, Enum.EasingStyle.Sine), { BackgroundTransparency = 0 }):Play()
+            task.wait(0.8)
+        end
+    end)
 
     -- ═══ TAB BUTTONS (Rag / Test / Feed / Settings) ═══
     local tabNames = {"Rag", "Test", "Feed", "Settings"}
@@ -6514,7 +6699,7 @@ local function buildRiddlerPanel()
         tb.Position = UDim2.fromOffset(tabX, 8)
         tb.BackgroundTransparency = 1
         tb.Text = tName
-        tb.TextColor3 = tName == "Rag" and COL_WHITE or Color3.fromRGB(90, 90, 90)
+        tb.TextColor3 = tName == "Rag" and Color3.fromRGB(130, 80, 255) or Color3.fromRGB(75, 75, 95)
         tb.Font = Enum.Font.GothamBold
         tb.TextSize = 14
         tb.ZIndex = 12
@@ -6576,11 +6761,11 @@ local function buildRiddlerPanel()
     local aiBox = Instance.new("Frame")
     aiBox.Size = UDim2.new(1, -20, 0, 38)
     aiBox.Position = UDim2.fromOffset(10, ry)
-    aiBox.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
+    aiBox.BackgroundColor3 = Color3.fromRGB(12, 12, 20)
     aiBox.BorderSizePixel = 0
     aiBox.Parent = ragPage
     corner(aiBox, 6)
-    stroke(aiBox, Color3.fromRGB(50, 50, 50), 1)
+    stroke(aiBox, Color3.fromRGB(32, 32, 52), 1)
     local aiLbl = Instance.new("TextLabel")
     aiLbl.Size = UDim2.new(1, -12, 1, 0)
     aiLbl.Position = UDim2.fromOffset(10, 0)
@@ -6597,11 +6782,11 @@ local function buildRiddlerPanel()
     local lisBox = Instance.new("Frame")
     lisBox.Size = UDim2.new(1, -20, 0, 38)
     lisBox.Position = UDim2.fromOffset(10, ry)
-    lisBox.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
+    lisBox.BackgroundColor3 = Color3.fromRGB(12, 12, 20)
     lisBox.BorderSizePixel = 0
     lisBox.Parent = ragPage
     corner(lisBox, 6)
-    stroke(lisBox, Color3.fromRGB(50, 50, 50), 1)
+    stroke(lisBox, Color3.fromRGB(32, 32, 52), 1)
     local lisLbl = Instance.new("TextLabel")
     lisLbl.Size = UDim2.new(1, -12, 1, 0)
     lisLbl.Position = UDim2.fromOffset(10, 0)
@@ -6657,11 +6842,11 @@ local function buildRiddlerPanel()
     local aBox = Instance.new("Frame")
     aBox.Size = UDim2.new(1, -20, 0, 40)
     aBox.Position = UDim2.fromOffset(10, ry)
-    aBox.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
+    aBox.BackgroundColor3 = Color3.fromRGB(12, 12, 20)
     aBox.BorderSizePixel = 0
     aBox.Parent = ragPage
     corner(aBox, 6)
-    stroke(aBox, Color3.fromRGB(50, 50, 50), 1)
+    stroke(aBox, Color3.fromRGB(32, 32, 52), 1)
     local aText = Instance.new("TextLabel")
     aText.Size = UDim2.new(1, -12, 1, 0)
     aText.Position = UDim2.fromOffset(6, 0)
@@ -6697,15 +6882,15 @@ local function buildRiddlerPanel()
         corner(b, 6)
         b.MouseButton1Click:Connect(cb or function() end)
     end
-    makeBtn(0, 84, "COPY", Color3.fromRGB(30,30,30), false, function()
+    makeBtn(0, 84, "COPY", Color3.fromRGB(22,22,35), false, function()
         if _riddlerALabel and _riddlerALabel.Text ~= "" then pcall(function() setclipboard(_riddlerALabel.Text) end) end
     end)
-    makeBtn(88, 84, "CLEAR", Color3.fromRGB(30,30,30), false, function()
+    makeBtn(88, 84, "CLEAR", Color3.fromRGB(22,22,35), false, function()
         if _riddlerALabel then _riddlerALabel.Text = "" end
         if _riddlerQLabel then _riddlerQLabel.Text = "waiting..."; _riddlerQLabel.TextColor3 = Color3.fromRGB(120,120,120) end
         if _riddlerStatusLabel then _riddlerStatusLabel.Text = '<font color="rgb(245,245,245)">●</font> ready - listening...' end
     end)
-    makeBtn(176, 120, "REDEEM", COL_WHITE, true, function()
+    makeBtn(176, 120, "REDEEM", Color3.fromRGB(130, 80, 255), true, function()
         if _riddlerALabel and _riddlerALabel.Text ~= "" then pcall(riddlerSubmitAnswer, _riddlerALabel.Text) end
     end)
     ry = ry + 38
@@ -6754,11 +6939,11 @@ local function buildRiddlerPanel()
     local testBox = Instance.new("TextBox")
     testBox.Size = UDim2.new(1, -20, 0, 60)
     testBox.Position = UDim2.fromOffset(10, 26)
-    testBox.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
+    testBox.BackgroundColor3 = Color3.fromRGB(12, 12, 20)
     testBox.BorderSizePixel = 0
     testBox.Text = ""
     testBox.PlaceholderText = "type a riddle to test..."
-    testBox.PlaceholderColor3 = Color3.fromRGB(80, 80, 80)
+    testBox.PlaceholderColor3 = Color3.fromRGB(60, 60, 80)
     testBox.TextColor3 = COL_WHITE
     testBox.Font = Enum.Font.GothamMedium
     testBox.TextSize = 13
@@ -6768,7 +6953,7 @@ local function buildRiddlerPanel()
     testBox.ClearTextOnFocus = false
     testBox.Parent = testPage
     corner(testBox, 6)
-    stroke(testBox, Color3.fromRGB(50, 50, 50), 1)
+    stroke(testBox, Color3.fromRGB(32, 32, 52), 1)
 
     local testResultLbl = Instance.new("TextLabel")
     testResultLbl.Size = UDim2.new(1, -20, 0, 14)
@@ -6796,10 +6981,10 @@ local function buildRiddlerPanel()
     local testBtn = Instance.new("TextButton")
     testBtn.Size = UDim2.new(1, -20, 0, 28)
     testBtn.Position = UDim2.fromOffset(10, 148)
-    testBtn.BackgroundColor3 = COL_WHITE
+    testBtn.BackgroundColor3 = Color3.fromRGB(130, 80, 255)
     testBtn.BorderSizePixel = 0
     testBtn.Text = "SOLVE"
-    testBtn.TextColor3 = Color3.fromRGB(8, 8, 8)
+    testBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     testBtn.Font = Enum.Font.GothamBlack
     testBtn.TextSize = 14
     testBtn.Parent = testPage
@@ -6881,8 +7066,8 @@ local function buildRiddlerPanel()
     feedScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
     feedScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
     feedScroll.ScrollBarThickness = 3
-    feedScroll.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
-    feedScroll.ScrollBarImageTransparency = 0.4
+    feedScroll.ScrollBarImageColor3 = Color3.fromRGB(130, 80, 255)
+    feedScroll.ScrollBarImageTransparency = 0.5
     feedScroll.ScrollingDirection = Enum.ScrollingDirection.Y
     feedScroll.Parent = feedPage
     _riddlerFeedScroll = feedScroll
@@ -7242,9 +7427,9 @@ local pageMain = Instance.new("ScrollingFrame")
 pageMain.Size = UDim2.new(1, 0, 1, 0)
 pageMain.BackgroundTransparency = 1
 pageMain.BorderSizePixel = 0
-pageMain.ScrollBarThickness = 4
-pageMain.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
-pageMain.ScrollBarImageTransparency = 0.3
+pageMain.ScrollBarThickness = 3
+pageMain.ScrollBarImageColor3 = Theme.accent
+pageMain.ScrollBarImageTransparency = 0.5
 pageMain.CanvasSize = UDim2.new(0, 0, 0, 0)
 pageMain.AutomaticCanvasSize = Enum.AutomaticSize.Y
 pageMain.ScrollingDirection = Enum.ScrollingDirection.Y
@@ -7264,9 +7449,9 @@ mainPad.Parent = pageMain
 
 local function makeMainRow(order)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, -4, 0, 40)
+    row.Size = UDim2.new(1, -4, 0, 42)
     row.BackgroundColor3 = Theme.bgCard
-    row.BackgroundTransparency = 0.15
+    row.BackgroundTransparency = 0.1
     row.BorderSizePixel = 0
     row.LayoutOrder = order
     row.ZIndex = 3
@@ -7279,21 +7464,32 @@ end
 local function makeToggle(parent, order, labelText, default, onToggle)
     local row = makeMainRow(order)
 
+    -- left accent pip when active
+    local activePip = Instance.new("Frame")
+    activePip.Size = UDim2.new(0, 3, 0, 18)
+    activePip.Position = UDim2.new(0, 0, 0.5, -9)
+    activePip.BackgroundColor3 = Theme.accent
+    activePip.BackgroundTransparency = default and 0 or 1
+    activePip.BorderSizePixel = 0
+    activePip.ZIndex = 5
+    activePip.Parent = row
+    corner(activePip, 2)
+
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(0.7, 0, 1, 0)
     label.Position = UDim2.new(0, 14, 0, 0)
     label.BackgroundTransparency = 1
     label.Font = Enum.Font.GothamBold
     label.TextSize = 12
-    label.TextColor3 = Theme.text
+    label.TextColor3 = default and Theme.text or Theme.textMuted
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Text = labelText
     label.ZIndex = 4
     label.Parent = row
 
     local track = Instance.new("Frame")
-    track.Size = UDim2.new(0, 42, 0, 22)
-    track.Position = UDim2.new(1, -56, 0.5, -11)
+    track.Size = UDim2.new(0, 44, 0, 22)
+    track.Position = UDim2.new(1, -58, 0.5, -11)
     track.BackgroundColor3 = default and Theme.toggleOn or Theme.toggleOff
     track.ZIndex = 4
     track.Parent = row
@@ -7301,7 +7497,7 @@ local function makeToggle(parent, order, labelText, default, onToggle)
 
     local knob = Instance.new("Frame")
     knob.Size = UDim2.new(0, 16, 0, 16)
-    knob.Position = default and UDim2.new(0, 23, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+    knob.Position = default and UDim2.new(0, 25, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
     knob.BackgroundColor3 = Theme.white
     knob.ZIndex = 5
     knob.Parent = track
@@ -7319,11 +7515,15 @@ local function makeToggle(parent, order, labelText, default, onToggle)
     btn.MouseButton1Click:Connect(function()
         toggled = not toggled
         if toggled then
-            TweenService:Create(track, TweenFast, { BackgroundColor3 = Theme.toggleOn }):Play()
-            TweenService:Create(knob, TweenFast, { Position = UDim2.new(0, 23, 0.5, -8) }):Play()
+            TweenService:Create(track, TweenSmooth, { BackgroundColor3 = Theme.toggleOn }):Play()
+            TweenService:Create(knob, TweenSmooth, { Position = UDim2.new(0, 25, 0.5, -8) }):Play()
+            TweenService:Create(label, TweenFast, { TextColor3 = Theme.text }):Play()
+            TweenService:Create(activePip, TweenFast, { BackgroundTransparency = 0 }):Play()
         else
-            TweenService:Create(track, TweenFast, { BackgroundColor3 = Theme.toggleOff }):Play()
-            TweenService:Create(knob, TweenFast, { Position = UDim2.new(0, 3, 0.5, -8) }):Play()
+            TweenService:Create(track, TweenSmooth, { BackgroundColor3 = Theme.toggleOff }):Play()
+            TweenService:Create(knob, TweenSmooth, { Position = UDim2.new(0, 3, 0.5, -8) }):Play()
+            TweenService:Create(label, TweenFast, { TextColor3 = Theme.textMuted }):Play()
+            TweenService:Create(activePip, TweenFast, { BackgroundTransparency = 1 }):Play()
         end
         onToggle(toggled)
     end)
@@ -7363,22 +7563,46 @@ local UI_NOISE = {
     ["leave"] = true, ["join"] = true, ["invite"] = true, ["gift"] = true,
     ["send"] = true, ["share"] = true, ["copy"] = true, ["paste"] = true,
     ["login"] = true, ["logout"] = true, ["save"] = true, ["load"] = true,
+    ["level"] = true, ["rank"] = true, ["tier"] = true, ["coins"] = true,
+    ["gems"] = true, ["stars"] = true, ["luck"] = true, ["power"] = true,
+    ["speed"] = true, ["damage"] = true, ["health"] = true, ["mana"] = true,
+    ["energy"] = true, ["rare"] = true, ["common"] = true, ["epic"] = true,
+    ["legendary"] = true, ["mythic"] = true, ["vote"] = true, ["reward"] = true,
+    ["teleport"] = true, ["fly"] = true, ["jump"] = true, ["run"] = true,
+    ["walk"] = true, ["chat"] = true, ["mute"] = true, ["unmute"] = true,
+    ["report"] = true, ["block"] = true, ["unblock"] = true, ["friend"] = true,
+    ["unfriend"] = true, ["follow"] = true, ["unfollow"] = true, ["menu"] = true,
+    ["lobby"] = true, ["arena"] = true, ["battle"] = true, ["fight"] = true,
+    ["win"] = true, ["lose"] = true, ["draw"] = true, ["score"] = true,
+    ["time"] = true, ["timer"] = true, ["countdown"] = true, ["round"] = true,
+    ["wave"] = true, ["bonus"] = true, ["free"] = true, ["premium"] = true,
+    ["vip"] = true, ["plus"] = true, ["pro"] = true, ["max"] = true,
+    ["min"] = true, ["low"] = true, ["high"] = true, ["medium"] = true,
+    ["normal"] = true, ["hard"] = true, ["easy"] = true, ["extreme"] = true,
+    ["aura"] = true, ["mutation"] = true, ["craft"] = true, ["fuse"] = true,
+    ["roll"] = true, ["reroll"] = true, ["auto"] = true, ["manual"] = true,
 }
 
--- Check if text is a code section (short alphanumeric, NOT a riddle/question/button)
+-- Check if text is a code section (short alphanumeric/dashes/underscores, NOT a riddle/question/button)
 local function isCodeSection(text)
-    if not text or #text < 2 or #text > 25 then return false end
+    if not text or #text < 2 or #text > 30 then return false end
     local t = text:match("^%s*(.-)%s*$") or ""
-    if not t:match("^[A-Za-z0-9]+$") then return false end
+    -- allow alphanumeric, dashes, underscores (common code formats)
+    if not t:match("^[A-Za-z0-9%-_]+$") then return false end
+    -- must have at least one letter (pure numbers are likely stats/counts)
+    if not t:match("[A-Za-z]") then return false end
     -- Filter stat noise
     local u = t:upper()
     if u:match("^%d+MS$") or u:match("^%d+FPS$") or u:match("^%d+HP$")
         or u:match("^%d+XP$") or u:match("^%d+[KM]$") or u:match("^LV%d+$")
-        or u:match("^X%d+$") then
+        or u:match("^X%d+$") or u:match("^%d+%%$") or u:match("^%d+S$")
+        or u:match("^%d+MIN$") or u:match("^%d+SEC$") then
         return false
     end
     -- Filter common UI button/label text
     if UI_NOISE[t:lower()] then return false end
+    -- Filter single character (likely UI glitch)
+    if #t < 2 then return false end
     return true
 end
 
@@ -7532,6 +7756,32 @@ local function startSniper()
         trackTextElement(obj)
     end
 
+    -- 4. Chat listener for code announcements
+    pcall(function()
+        local TextChatService = game:GetService("TextChatService")
+        local channels = TextChatService:FindFirstChild("TextChannels")
+        if channels then
+            for _, ch in ipairs(channels:GetChildren()) do
+                if ch:IsA("TextChannel") then
+                    local conn = ch.MessageReceived:Connect(function(msg)
+                        if not state.codeSniperToggled then return end
+                        local text = msg.Text or ""
+                        local lower = text:lower()
+                        -- look for code announcements: "code: ABC123" or "CODE IS: XYZ"
+                        local codeMatch = text:match("[Cc][Oo][Dd][Ee]%s*:?%s*(%S+)")
+                            or text:match("[Rr][Ee][Dd][Ee][Ee][Mm]%s*:?%s*(%S+)")
+                        if codeMatch and #codeMatch >= 3 and #codeMatch <= 30 then
+                            pushLog("> chat code: " .. codeMatch, COL_ON)
+                            feedSection(codeMatch)
+                        end
+                    end)
+                    table.insert(_sniperConns, conn)
+                end
+            end
+            pushLog("> phantom: chat listener hooked", COL_ON)
+        end
+    end)
+
     pushLog("> phantom ON (" .. _submitAfter .. " sections)", COL_ON)
 end
 
@@ -7576,21 +7826,22 @@ secMinus.Position = UDim2.new(1, -100, 0.5, -13)
 secMinus.BackgroundColor3 = Theme.bgDark
 secMinus.Font = Enum.Font.GothamBold
 secMinus.TextSize = 14
-secMinus.TextColor3 = Theme.text
-secMinus.Text = "-"
+secMinus.TextColor3 = Theme.accent
+secMinus.Text = "−"
 secMinus.AutoButtonColor = false
 secMinus.ZIndex = 4
 secMinus.Parent = sectionsRow
 corner(secMinus, 6)
+stroke(secMinus, Theme.stroke, 1)
 hover(secMinus, Theme.bgDark, Theme.accentDim)
 
 local secValue = Instance.new("TextLabel")
 secValue.Size = UDim2.new(0, 30, 0, 26)
 secValue.Position = UDim2.new(1, -68, 0.5, -13)
 secValue.BackgroundTransparency = 1
-secValue.Font = Enum.Font.GothamBold
-secValue.TextSize = 14
-secValue.TextColor3 = Theme.white
+secValue.Font = Enum.Font.GothamBlack
+secValue.TextSize = 15
+secValue.TextColor3 = Theme.accent
 secValue.Text = tostring(_submitAfter)
 secValue.ZIndex = 4
 secValue.Parent = sectionsRow
@@ -7601,12 +7852,13 @@ secPlus.Position = UDim2.new(1, -34, 0.5, -13)
 secPlus.BackgroundColor3 = Theme.bgDark
 secPlus.Font = Enum.Font.GothamBold
 secPlus.TextSize = 14
-secPlus.TextColor3 = Theme.text
+secPlus.TextColor3 = Theme.accent
 secPlus.Text = "+"
 secPlus.AutoButtonColor = false
 secPlus.ZIndex = 4
 secPlus.Parent = sectionsRow
 corner(secPlus, 6)
+stroke(secPlus, Theme.stroke, 1)
 hover(secPlus, Theme.bgDark, Theme.accentDim)
 
 secMinus.MouseButton1Click:Connect(function()
@@ -7705,19 +7957,19 @@ manualLabel.Parent = manualRow
 local manualBox = Instance.new("TextBox")
 manualBox.Size = UDim2.new(0, 110, 0, 26)
 manualBox.Position = UDim2.new(1, -180, 0.5, -13)
-manualBox.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+manualBox.BackgroundColor3 = Theme.bgDark
 manualBox.BorderSizePixel = 0
 manualBox.Text = ""
-manualBox.PlaceholderText = "code..."
-manualBox.PlaceholderColor3 = Color3.fromRGB(70, 70, 70)
-manualBox.TextColor3 = COL_WHITE
+manualBox.PlaceholderText = "enter code..."
+manualBox.PlaceholderColor3 = Color3.fromRGB(60, 60, 80)
+manualBox.TextColor3 = Theme.accent
 manualBox.Font = Enum.Font.Code
 manualBox.TextSize = 11
 manualBox.ClearTextOnFocus = false
 manualBox.ZIndex = 4
 manualBox.Parent = manualRow
 corner(manualBox, 6)
-stroke(manualBox, Color3.fromRGB(50, 50, 50), 1)
+stroke(manualBox, Theme.stroke, 1)
 
 local manualBtn = Instance.new("TextButton")
 manualBtn.Size = UDim2.fromOffset(56, 26)
@@ -7725,13 +7977,14 @@ manualBtn.Position = UDim2.new(1, -64, 0.5, -13)
 manualBtn.BackgroundColor3 = Theme.accent
 manualBtn.BorderSizePixel = 0
 manualBtn.Text = "GO"
-manualBtn.TextColor3 = Theme.bg
+manualBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 manualBtn.Font = Enum.Font.GothamBlack
 manualBtn.TextSize = 12
 manualBtn.ZIndex = 4
-manualBtn.AutoButtonColor = true
+manualBtn.AutoButtonColor = false
 manualBtn.Parent = manualRow
 corner(manualBtn, 6)
+hover(manualBtn, Theme.accent, Theme.accentHover)
 manualBtn.MouseButton1Click:Connect(function()
     local code = manualBox.Text:gsub("%s+", "")
     if code == "" then return end
@@ -7763,13 +8016,14 @@ hopBtn.Position = UDim2.new(1, -64, 0.5, -13)
 hopBtn.BackgroundColor3 = Theme.accent
 hopBtn.BorderSizePixel = 0
 hopBtn.Text = "HOP"
-hopBtn.TextColor3 = Theme.bg
+hopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 hopBtn.Font = Enum.Font.GothamBlack
 hopBtn.TextSize = 12
 hopBtn.ZIndex = 4
-hopBtn.AutoButtonColor = true
+hopBtn.AutoButtonColor = false
 hopBtn.Parent = hopRow
 corner(hopBtn, 6)
+hover(hopBtn, Theme.accent, Theme.accentHover)
 hopBtn.MouseButton1Click:Connect(function()
     pushLog("> hopping server...", COL_ON)
     task.spawn(function()
@@ -7800,17 +8054,29 @@ end)
 
 -- ═══ STATS ROW ═══
 local statsRow = makeMainRow(11)
-statsRow.BackgroundTransparency = 0.3
+statsRow.BackgroundTransparency = 0.05
+
+-- subtle accent left border on stats
+local statsAccent = Instance.new("Frame")
+statsAccent.Size = UDim2.new(0, 3, 0.6, 0)
+statsAccent.Position = UDim2.new(0, 0, 0.2, 0)
+statsAccent.BackgroundColor3 = Theme.accent
+statsAccent.BackgroundTransparency = 0.3
+statsAccent.BorderSizePixel = 0
+statsAccent.ZIndex = 5
+statsAccent.Parent = statsRow
+corner(statsAccent, 2)
 
 local _statsLabel = Instance.new("TextLabel")
 _statsLabel.Size = UDim2.new(1, -28, 1, 0)
 _statsLabel.Position = UDim2.new(0, 14, 0, 0)
 _statsLabel.BackgroundTransparency = 1
-_statsLabel.Font = Enum.Font.GothamMedium
+_statsLabel.RichText = true
+_statsLabel.Font = Enum.Font.Code
 _statsLabel.TextSize = 11
-_statsLabel.TextColor3 = Color3.fromRGB(160, 160, 160)
+_statsLabel.TextColor3 = Theme.textMuted
 _statsLabel.TextXAlignment = Enum.TextXAlignment.Left
-_statsLabel.Text = "Redeemed: 0  |  Riddles: 0  |  Uptime: 0m"
+_statsLabel.Text = '<font color="rgb(75,210,130)">0</font> redeemed  ·  <font color="rgb(130,80,255)">0</font> riddles  ·  0m uptime'
 _statsLabel.ZIndex = 4
 _statsLabel.Parent = statsRow
 
@@ -7822,7 +8088,9 @@ task.spawn(function()
     while task.wait(5) do
         if _statsLabel and _statsLabel.Parent then
             local mins = math.floor((tick() - _startTime) / 60)
-            _statsLabel.Text = "Redeemed: " .. tostring(state._redeemCount or 0) .. "  |  Riddles: " .. tostring(state._riddleCount or 0) .. "  |  Uptime: " .. mins .. "m"
+            local hrs = math.floor(mins / 60)
+            local upStr = hrs > 0 and (hrs .. "h " .. (mins % 60) .. "m") or (mins .. "m")
+            _statsLabel.Text = '<font color="rgb(75,210,130)">' .. tostring(state._redeemCount or 0) .. '</font> redeemed  ·  <font color="rgb(130,80,255)">' .. tostring(state._riddleCount or 0) .. '</font> riddles  ·  ' .. upStr .. ' uptime'
         else
             break
         end
@@ -7862,26 +8130,27 @@ logTitle.Parent = logTopBar
 local clearLogsBtn = Instance.new("TextButton")
 clearLogsBtn.Size = UDim2.new(0, 50, 0, 20)
 clearLogsBtn.Position = UDim2.new(1, -56, 0.5, -10)
-clearLogsBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+clearLogsBtn.BackgroundColor3 = Theme.bgCard
 clearLogsBtn.Font = Enum.Font.GothamBold
 clearLogsBtn.TextSize = 10
-clearLogsBtn.TextColor3 = Color3.fromRGB(230, 230, 230)
+clearLogsBtn.TextColor3 = Theme.danger
 clearLogsBtn.Text = "CLEAR"
 clearLogsBtn.AutoButtonColor = false
 clearLogsBtn.ZIndex = 10
 clearLogsBtn.Parent = logTopBar
 corner(clearLogsBtn, 4)
-hover(clearLogsBtn, Color3.fromRGB(40, 40, 45), Color3.fromRGB(180, 50, 70))
+stroke(clearLogsBtn, Theme.stroke, 1)
+hover(clearLogsBtn, Theme.bgCard, Theme.danger)
 
 -- Scrollable log area
 _logScroll = Instance.new("ScrollingFrame")
 _logScroll.Size = UDim2.new(1, -4, 1, -32)
 _logScroll.Position = UDim2.new(0, 2, 0, 30)
-_logScroll.BackgroundColor3 = Color3.fromRGB(12, 12, 14)
+_logScroll.BackgroundColor3 = Theme.bgDark
 _logScroll.BorderSizePixel = 0
-_logScroll.ScrollBarThickness = 4
-_logScroll.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
-_logScroll.ScrollBarImageTransparency = 0.3
+_logScroll.ScrollBarThickness = 3
+_logScroll.ScrollBarImageColor3 = Theme.accent
+_logScroll.ScrollBarImageTransparency = 0.5
 _logScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 _logScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 _logScroll.ScrollingDirection = Enum.ScrollingDirection.Y
@@ -7929,9 +8198,9 @@ local utilisScroll = Instance.new("ScrollingFrame")
 utilisScroll.Size = UDim2.new(1, 0, 1, 0)
 utilisScroll.BackgroundTransparency = 1
 utilisScroll.BorderSizePixel = 0
-utilisScroll.ScrollBarThickness = 4
-utilisScroll.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
-utilisScroll.ScrollBarImageTransparency = 0.3
+utilisScroll.ScrollBarThickness = 3
+utilisScroll.ScrollBarImageColor3 = Theme.accent
+utilisScroll.ScrollBarImageTransparency = 0.5
 utilisScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 utilisScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
 utilisScroll.ScrollingDirection = Enum.ScrollingDirection.Y
@@ -7950,9 +8219,9 @@ utilisPad.Parent = utilisScroll
 
 local function makeUtilisRow(order)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, -4, 0, 40)
+    row.Size = UDim2.new(1, -4, 0, 42)
     row.BackgroundColor3 = Theme.bgCard
-    row.BackgroundTransparency = 0.15
+    row.BackgroundTransparency = 0.1
     row.BorderSizePixel = 0
     row.LayoutOrder = order
     row.ZIndex = 3
@@ -7965,21 +8234,31 @@ end
 local function makeUtilisToggle(order, labelText, default, onToggle)
     local row = makeUtilisRow(order)
 
+    local activePip = Instance.new("Frame")
+    activePip.Size = UDim2.new(0, 3, 0, 18)
+    activePip.Position = UDim2.new(0, 0, 0.5, -9)
+    activePip.BackgroundColor3 = Theme.accent
+    activePip.BackgroundTransparency = default and 0 or 1
+    activePip.BorderSizePixel = 0
+    activePip.ZIndex = 5
+    activePip.Parent = row
+    corner(activePip, 2)
+
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(0.7, 0, 1, 0)
     label.Position = UDim2.new(0, 14, 0, 0)
     label.BackgroundTransparency = 1
     label.Font = Enum.Font.GothamBold
     label.TextSize = 12
-    label.TextColor3 = Theme.text
+    label.TextColor3 = default and Theme.text or Theme.textMuted
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Text = labelText
     label.ZIndex = 4
     label.Parent = row
 
     local track = Instance.new("Frame")
-    track.Size = UDim2.new(0, 42, 0, 22)
-    track.Position = UDim2.new(1, -56, 0.5, -11)
+    track.Size = UDim2.new(0, 44, 0, 22)
+    track.Position = UDim2.new(1, -58, 0.5, -11)
     track.BackgroundColor3 = default and Theme.toggleOn or Theme.toggleOff
     track.ZIndex = 4
     track.Parent = row
@@ -7987,7 +8266,7 @@ local function makeUtilisToggle(order, labelText, default, onToggle)
 
     local knob = Instance.new("Frame")
     knob.Size = UDim2.new(0, 16, 0, 16)
-    knob.Position = default and UDim2.new(0, 23, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+    knob.Position = default and UDim2.new(0, 25, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
     knob.BackgroundColor3 = Theme.white
     knob.ZIndex = 5
     knob.Parent = track
@@ -8004,11 +8283,15 @@ local function makeUtilisToggle(order, labelText, default, onToggle)
     btn.MouseButton1Click:Connect(function()
         toggled = not toggled
         if toggled then
-            TweenService:Create(track, TweenFast, { BackgroundColor3 = Theme.toggleOn }):Play()
-            TweenService:Create(knob, TweenFast, { Position = UDim2.new(0, 23, 0.5, -8) }):Play()
+            TweenService:Create(track, TweenSmooth, { BackgroundColor3 = Theme.toggleOn }):Play()
+            TweenService:Create(knob, TweenSmooth, { Position = UDim2.new(0, 25, 0.5, -8) }):Play()
+            TweenService:Create(label, TweenFast, { TextColor3 = Theme.text }):Play()
+            TweenService:Create(activePip, TweenFast, { BackgroundTransparency = 0 }):Play()
         else
-            TweenService:Create(track, TweenFast, { BackgroundColor3 = Theme.toggleOff }):Play()
-            TweenService:Create(knob, TweenFast, { Position = UDim2.new(0, 3, 0.5, -8) }):Play()
+            TweenService:Create(track, TweenSmooth, { BackgroundColor3 = Theme.toggleOff }):Play()
+            TweenService:Create(knob, TweenSmooth, { Position = UDim2.new(0, 3, 0.5, -8) }):Play()
+            TweenService:Create(label, TweenFast, { TextColor3 = Theme.textMuted }):Play()
+            TweenService:Create(activePip, TweenFast, { BackgroundTransparency = 1 }):Play()
         end
         onToggle(toggled)
     end)
@@ -8171,30 +8454,97 @@ RunService.Stepped:Connect(function(_, dt)
 end)
 
 -- ======================== SETTINGS PAGE ========================
-local pageSettings = Instance.new("Frame")
+local pageSettings = Instance.new("ScrollingFrame")
 pageSettings.Size = UDim2.new(1, 0, 1, 0)
 pageSettings.BackgroundTransparency = 1
 pageSettings.Visible = false
+pageSettings.BorderSizePixel = 0
+pageSettings.ScrollBarThickness = 3
+pageSettings.ScrollBarImageColor3 = Theme.accent
+pageSettings.ScrollBarImageTransparency = 0.5
+pageSettings.CanvasSize = UDim2.new(0, 0, 0, 0)
+pageSettings.AutomaticCanvasSize = Enum.AutomaticSize.Y
+pageSettings.ScrollingDirection = Enum.ScrollingDirection.Y
 pageSettings.ZIndex = 2
 pageSettings.Parent = content
 pages["Settings"] = pageSettings
 
 local settingsLayout = Instance.new("UIListLayout")
-settingsLayout.Padding = UDim.new(0, 10)
+settingsLayout.Padding = UDim.new(0, 8)
 settingsLayout.SortOrder = Enum.SortOrder.LayoutOrder
 settingsLayout.Parent = pageSettings
 
+local settingsPad = Instance.new("UIPadding")
+settingsPad.PaddingBottom = UDim.new(0, 12)
+settingsPad.PaddingRight = UDim.new(0, 4)
+settingsPad.Parent = pageSettings
+
 local function makeSettingsRow(order)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, 0, 0, 40)
+    row.Size = UDim2.new(1, -4, 0, 42)
     row.BackgroundColor3 = Theme.bgCard
-    row.BackgroundTransparency = 0.15
+    row.BackgroundTransparency = 0.1
     row.BorderSizePixel = 0
     row.LayoutOrder = order
     row.ZIndex = 3
     row.Parent = pageSettings
     corner(row, 10)
     stroke(row, Theme.stroke, 1)
+    return row
+end
+
+local function makeSettingsToggle(order, labelText, default, onToggle)
+    local row = makeSettingsRow(order)
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.Position = UDim2.new(0, 14, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 12
+    label.TextColor3 = default and Theme.text or Theme.textMuted
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Text = labelText
+    label.ZIndex = 4
+    label.Parent = row
+
+    local track = Instance.new("Frame")
+    track.Size = UDim2.new(0, 44, 0, 22)
+    track.Position = UDim2.new(1, -58, 0.5, -11)
+    track.BackgroundColor3 = default and Theme.toggleOn or Theme.toggleOff
+    track.ZIndex = 4
+    track.Parent = row
+    corner(track, 11)
+
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 16, 0, 16)
+    knob.Position = default and UDim2.new(0, 25, 0.5, -8) or UDim2.new(0, 3, 0.5, -8)
+    knob.BackgroundColor3 = Theme.white
+    knob.ZIndex = 5
+    knob.Parent = track
+    corner(knob, 8)
+
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 1, 0)
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
+    btn.ZIndex = 5
+    btn.Parent = row
+
+    local toggled = default or false
+    btn.MouseButton1Click:Connect(function()
+        toggled = not toggled
+        if toggled then
+            TweenService:Create(track, TweenSmooth, { BackgroundColor3 = Theme.toggleOn }):Play()
+            TweenService:Create(knob, TweenSmooth, { Position = UDim2.new(0, 25, 0.5, -8) }):Play()
+            TweenService:Create(label, TweenFast, { TextColor3 = Theme.text }):Play()
+        else
+            TweenService:Create(track, TweenSmooth, { BackgroundColor3 = Theme.toggleOff }):Play()
+            TweenService:Create(knob, TweenSmooth, { Position = UDim2.new(0, 3, 0.5, -8) }):Play()
+            TweenService:Create(label, TweenFast, { TextColor3 = Theme.textMuted }):Play()
+        end
+        onToggle(toggled)
+    end)
     return row
 end
 
@@ -8218,20 +8568,22 @@ sizeMinus.Position = UDim2.new(1, -118, 0.5, -13)
 sizeMinus.BackgroundColor3 = Theme.bgDark
 sizeMinus.Font = Enum.Font.GothamBold
 sizeMinus.TextSize = 14
-sizeMinus.TextColor3 = Theme.text
-sizeMinus.Text = "-"
+sizeMinus.TextColor3 = Theme.accent
+sizeMinus.Text = "−"
 sizeMinus.AutoButtonColor = false
 sizeMinus.ZIndex = 4
 sizeMinus.Parent = sizeRow
 corner(sizeMinus, 6)
+stroke(sizeMinus, Theme.stroke, 1)
+hover(sizeMinus, Theme.bgDark, Theme.accentDim)
 
 local sizeValue = Instance.new("TextLabel")
 sizeValue.Size = UDim2.new(0, 50, 0, 26)
 sizeValue.Position = UDim2.new(1, -86, 0.5, -13)
 sizeValue.BackgroundTransparency = 1
-sizeValue.Font = Enum.Font.GothamBold
-sizeValue.TextSize = 12
-sizeValue.TextColor3 = Theme.text
+sizeValue.Font = Enum.Font.GothamBlack
+sizeValue.TextSize = 13
+sizeValue.TextColor3 = Theme.accent
 sizeValue.Text = "100%"
 sizeValue.ZIndex = 4
 sizeValue.Parent = sizeRow
@@ -8242,12 +8594,14 @@ sizePlus.Position = UDim2.new(1, -34, 0.5, -13)
 sizePlus.BackgroundColor3 = Theme.bgDark
 sizePlus.Font = Enum.Font.GothamBold
 sizePlus.TextSize = 14
-sizePlus.TextColor3 = Theme.text
+sizePlus.TextColor3 = Theme.accent
 sizePlus.Text = "+"
 sizePlus.AutoButtonColor = false
 sizePlus.ZIndex = 4
 sizePlus.Parent = sizeRow
 corner(sizePlus, 6)
+stroke(sizePlus, Theme.stroke, 1)
+hover(sizePlus, Theme.bgDark, Theme.accentDim)
 
 local uiScale = Instance.new("UIScale")
 uiScale.Scale = 1
@@ -8281,7 +8635,7 @@ resetBtn.Position = UDim2.new(1, -84, 0.5, -13)
 resetBtn.BackgroundColor3 = Theme.accent
 resetBtn.Font = Enum.Font.GothamBold
 resetBtn.TextSize = 11
-resetBtn.TextColor3 = Theme.bg
+resetBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 resetBtn.Text = "RESET"
 resetBtn.AutoButtonColor = false
 resetBtn.ZIndex = 4
@@ -8293,15 +8647,138 @@ resetBtn.MouseButton1Click:Connect(function()
     main.Position = UDim2.new(0.5, 0, 0.5, 0)
 end)
 
+-- DEBUG MODE
+state.debugMode = false
+makeSettingsToggle(3, "Debug Mode", false, function(on)
+    state.debugMode = on
+    pushLog("> debug mode: " .. (on and "ON" or "OFF"), on and COL_ON or Color3.fromRGB(140, 140, 150))
+end)
+
+-- NOTIFICATION SOUNDS
+state.soundNotify = true
+makeSettingsToggle(4, "Sound Alerts", true, function(on)
+    state.soundNotify = on
+    pushLog("> sound alerts: " .. (on and "ON" or "OFF"), on and COL_ON or Color3.fromRGB(140, 140, 150))
+end)
+
+-- AUTO SERVER HOP (hop if no codes detected for X minutes)
+state.autoHop = false
+state.autoHopMins = 10
+makeSettingsToggle(5, "Auto Server Hop", false, function(on)
+    state.autoHop = on
+    if on then
+        pushLog("> auto hop: ON (after " .. state.autoHopMins .. "m idle)", COL_ON)
+        state._lastActivity = tick()
+        task.spawn(function()
+            while state.autoHop and screenGui and screenGui.Parent do
+                task.wait(30)
+                if state.autoHop and (tick() - (state._lastActivity or tick())) > (state.autoHopMins * 60) then
+                    pushLog("> auto hopping — no activity for " .. state.autoHopMins .. "m", Theme.warning)
+                    pcall(function()
+                        local TPS = game:GetService("TeleportService")
+                        TPS:Teleport(game.PlaceId)
+                    end)
+                    break
+                end
+            end
+        end)
+    else
+        pushLog("> auto hop: OFF", Color3.fromRGB(140, 140, 150))
+    end
+end)
+
+-- COMPACT MODE
+state.compactMode = false
+makeSettingsToggle(6, "Compact Mode", false, function(on)
+    state.compactMode = on
+    if on then
+        TweenService:Create(main, TweenSmooth, { Size = UDim2.new(0, 280, 0, 400) }):Play()
+    else
+        TweenService:Create(main, TweenSmooth, { Size = UDim2.new(0, 320, 0, 460) }):Play()
+    end
+    pushLog("> compact mode: " .. (on and "ON" or "OFF"), on and COL_ON or Color3.fromRGB(140, 140, 150))
+end)
+
+-- CREDITS ROW
+local creditsRow = makeSettingsRow(10)
+creditsRow.BackgroundTransparency = 0.3
+local creditsLbl = Instance.new("TextLabel")
+creditsLbl.Size = UDim2.new(1, -28, 1, 0)
+creditsLbl.Position = UDim2.new(0, 14, 0, 0)
+creditsLbl.BackgroundTransparency = 1
+creditsLbl.RichText = true
+creditsLbl.Font = Enum.Font.GothamMedium
+creditsLbl.TextSize = 10
+creditsLbl.TextColor3 = Theme.textMuted
+creditsLbl.TextXAlignment = Enum.TextXAlignment.Left
+creditsLbl.Text = '<font color="rgb(130,80,255)">PhantomHub</font> v2.0 · made with 💜'
+creditsLbl.ZIndex = 4
+creditsLbl.Parent = creditsRow
+
 -- ======================== FOOTER ========================
 local footer = Instance.new("Frame")
-footer.Size = UDim2.new(1, 0, 0, 36)
-footer.Position = UDim2.new(0, 0, 1, -36)
+footer.Size = UDim2.new(1, 0, 0, 32)
+footer.Position = UDim2.new(0, 0, 1, -32)
 footer.BackgroundColor3 = Theme.bgDark
-footer.BackgroundTransparency = 0.3
+footer.BackgroundTransparency = 0.15
 footer.BorderSizePixel = 0
 footer.ZIndex = 2
 footer.Parent = main
+
+-- footer accent line on top
+local footerLine = Instance.new("Frame")
+footerLine.Size = UDim2.new(1, -24, 0, 1)
+footerLine.Position = UDim2.new(0, 12, 0, 0)
+footerLine.BackgroundColor3 = Theme.stroke
+footerLine.BorderSizePixel = 0
+footerLine.ZIndex = 3
+footerLine.Parent = footer
+
+-- status dot
+local footerDot = Instance.new("Frame")
+footerDot.Size = UDim2.fromOffset(7, 7)
+footerDot.Position = UDim2.new(0, 14, 0.5, -3)
+footerDot.BackgroundColor3 = Theme.success
+footerDot.BorderSizePixel = 0
+footerDot.ZIndex = 3
+footerDot.Parent = footer
+corner(footerDot, 4)
+
+-- footer status text
+local _footerLabel = Instance.new("TextLabel")
+_footerLabel.Size = UDim2.new(1, -50, 1, 0)
+_footerLabel.Position = UDim2.new(0, 26, 0, 0)
+_footerLabel.BackgroundTransparency = 1
+_footerLabel.Font = Enum.Font.Code
+_footerLabel.TextSize = 10
+_footerLabel.TextColor3 = Theme.textMuted
+_footerLabel.TextXAlignment = Enum.TextXAlignment.Left
+_footerLabel.Text = "idle"
+_footerLabel.ZIndex = 3
+_footerLabel.Parent = footer
+
+-- footer version right
+local footerVer = Instance.new("TextLabel")
+footerVer.Size = UDim2.new(0, 40, 1, 0)
+footerVer.Position = UDim2.new(1, -50, 0, 0)
+footerVer.BackgroundTransparency = 1
+footerVer.Font = Enum.Font.Code
+footerVer.TextSize = 9
+footerVer.TextColor3 = Color3.fromRGB(60, 60, 80)
+footerVer.TextXAlignment = Enum.TextXAlignment.Right
+footerVer.Text = "v2.0"
+footerVer.ZIndex = 3
+footerVer.Parent = footer
+
+-- pulse the status dot
+task.spawn(function()
+    while footerDot and footerDot.Parent do
+        TweenService:Create(footerDot, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { BackgroundTransparency = 0.5 }):Play()
+        task.wait(1)
+        TweenService:Create(footerDot, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { BackgroundTransparency = 0 }):Play()
+        task.wait(1)
+    end
+end)
 
 -- ======================== DRAG ========================
 local dragging = false
@@ -8330,7 +8807,7 @@ end)
 
 -- ======================== MINIMIZE ========================
 local fullSize = UDim2.new(0, 320, 0, 460)
-local minSize = UDim2.new(0, 320, 0, 42)
+local minSize = UDim2.new(0, 320, 0, 44)
 
 minBtn.MouseButton1Click:Connect(function()
     state.minimized = not state.minimized
@@ -8363,16 +8840,18 @@ corner(particleBg, 14)
 
 local _bgElements = {}
 
--- LAYER 1: Medium floating shapes (dots + diamonds, all white/gray)
+-- LAYER 1: Medium floating shapes (dots + diamonds, purple-tinted)
 for i = 1, 16 do
     local isDiamond = (i % 3 == 0)
     local sz = isDiamond and math.random(4, 7) or math.random(2, 5)
-    local shade = math.random(180, 255)
+    local r = math.random(100, 160)
+    local g = math.random(60, 120)
+    local b = math.random(180, 255)
     local p = Instance.new("Frame")
     p.Size = UDim2.fromOffset(sz, sz)
     p.Position = UDim2.new(math.random() * 0.92 + 0.02, 0, math.random() * 0.92 + 0.02, 0)
-    p.BackgroundColor3 = Color3.fromRGB(shade, shade, shade)
-    p.BackgroundTransparency = math.random(65, 88) / 100
+    p.BackgroundColor3 = Color3.fromRGB(r, g, b)
+    p.BackgroundTransparency = math.random(70, 92) / 100
     p.BorderSizePixel = 0
     p.ZIndex = 1
     p.Rotation = isDiamond and 45 or 0
@@ -8388,13 +8867,13 @@ for i = 1, 16 do
     }
 end
 
--- LAYER 3: Rising sparkles (tiny white, drift upward, twinkle)
+-- LAYER 3: Rising sparkles (tiny, drift upward, twinkle in accent hue)
 for i = 1, 16 do
     local sz = math.random(1, 3)
     local sp = Instance.new("Frame")
     sp.Size = UDim2.fromOffset(sz, sz)
     sp.Position = UDim2.new(math.random() * 0.95 + 0.02, 0, math.random() * 0.95 + 0.02, 0)
-    sp.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    sp.BackgroundColor3 = (i % 2 == 0) and Color3.fromRGB(180, 140, 255) or Color3.fromRGB(255, 255, 255)
     sp.BackgroundTransparency = 0.7
     sp.BorderSizePixel = 0
     sp.ZIndex = 1
@@ -8410,13 +8889,13 @@ for i = 1, 16 do
     }
 end
 
--- LAYER 4: Faint white scan lines (subtle, slow scroll)
+-- LAYER 4: Faint accent scan lines (subtle, slow scroll)
 for i = 1, 2 do
     local line = Instance.new("Frame")
     line.Size = UDim2.new(1, 0, 0, 1)
     line.Position = UDim2.new(0, 0, 0.25 * i + math.random() * 0.2, 0)
-    line.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    line.BackgroundTransparency = 0.94
+    line.BackgroundColor3 = Color3.fromRGB(130, 80, 255)
+    line.BackgroundTransparency = 0.96
     line.BorderSizePixel = 0
     line.ZIndex = 1
     line.Parent = particleBg
@@ -8469,10 +8948,11 @@ local function stripFontTags(s)
     return s:gsub("<font[^>]*>", ""):gsub("</font>", "")
 end
 
-local function rgbStr(v)
-    local n = math.floor(math.clamp(v, 0, 255))
-    return "rgb(" .. n .. "," .. n .. "," .. n .. ")"
+local function rgbStr3(r, g, b)
+    return "rgb(" .. math.floor(r) .. "," .. math.floor(g) .. "," .. math.floor(b) .. ")"
 end
+
+local function lerpNum(a, b, t) return a + (b - a) * t end
 
 local function splitColorText(text, colLeft, colRight)
     if not text or text == "" then return "" end
@@ -8486,13 +8966,14 @@ local function splitColorText(text, colLeft, colRight)
 end
 
 task.spawn(function()
-    local WAVE_SPEED = 1.0 -- slow smooth wave
+    local WAVE_SPEED = 0.8
+    -- wave between bright accent and soft white
+    local AR, AG, AB = 130, 80, 255 -- accent purple
+    local WR, WG, WB = 220, 220, 240 -- soft cool white
     while screenGui and screenGui.Parent do
-        local wave = (math.sin(tick() * WAVE_SPEED) + 1) / 2 -- 0 to 1 continuous
-        local leftVal = wave * 255
-        local rightVal = (1 - wave) * 255
-        local colLeft = rgbStr(leftVal)
-        local colRight = rgbStr(rightVal)
+        local wave = (math.sin(tick() * WAVE_SPEED) + 1) / 2
+        local colLeft = rgbStr3(lerpNum(WR, AR, wave), lerpNum(WG, AG, wave), lerpNum(WB, AB, wave))
+        local colRight = rgbStr3(lerpNum(AR, WR, wave), lerpNum(AG, WG, wave), lerpNum(AB, WB, wave))
 
         for _, obj in ipairs(screenGui:GetDescendants()) do
             pcall(function()
@@ -8538,17 +9019,17 @@ do
         fc.CornerRadius = UDim.new(0, 12)
         fc.Parent = frame
         local fs = Instance.new("UIStroke")
-        fs.Color = Color3.fromRGB(255, 255, 255)
+        fs.Color = Color3.fromRGB(130, 80, 255)
         fs.Thickness = 1.5
-        fs.Transparency = 0.2
+        fs.Transparency = 0.15
         fs.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
         fs.Parent = frame
 
         local glowFrame = Instance.new("Frame")
         glowFrame.Size = UDim2.new(1, 12, 1, 12)
         glowFrame.Position = UDim2.new(0, -6, 0, -6)
-        glowFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        glowFrame.BackgroundTransparency = 0.85
+        glowFrame.BackgroundColor3 = Color3.fromRGB(130, 80, 255)
+        glowFrame.BackgroundTransparency = 0.88
         glowFrame.BorderSizePixel = 0
         glowFrame.ZIndex = 0
         glowFrame.Parent = bb
@@ -8559,7 +9040,7 @@ do
         local accentL = Instance.new("Frame")
         accentL.Size = UDim2.fromOffset(3, 26)
         accentL.Position = UDim2.new(0, 10, 0.5, -13)
-        accentL.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        accentL.BackgroundColor3 = Color3.fromRGB(130, 80, 255)
         accentL.BorderSizePixel = 0
         accentL.Parent = frame
         local alc = Instance.new("UICorner")
@@ -8569,7 +9050,7 @@ do
         local accentR = Instance.new("Frame")
         accentR.Size = UDim2.fromOffset(3, 26)
         accentR.Position = UDim2.new(1, -13, 0.5, -13)
-        accentR.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        accentR.BackgroundColor3 = Color3.fromRGB(130, 80, 255)
         accentR.BorderSizePixel = 0
         accentR.Parent = frame
         local arc = Instance.new("UICorner")
@@ -8602,7 +9083,21 @@ do
     LocalPlayer.CharacterAdded:Connect(attachTag)
 end
 
+-- ======================== FOOTER STATUS UPDATER ========================
+-- hook into key events to update footer text
+local _origPushLog = pushLog
+pushLog = function(text, color)
+    _origPushLog(text, color)
+    -- update footer status with latest log
+    if _footerLabel and _footerLabel.Parent then
+        local short = text:sub(1, 40)
+        _footerLabel.Text = short
+    end
+    -- update activity timestamp for auto-hop
+    if state then state._lastActivity = tick() end
+end
+
 -- ======================== INIT ========================
 setTab("Main")
-pushLog("> PhantomHub loaded", COL_ON)
-print("PhantomHub loaded")
+pushLog("> PhantomHub v2.0 loaded", COL_ON)
+print("PhantomHub v2.0 loaded")
