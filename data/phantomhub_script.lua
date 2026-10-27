@@ -4718,6 +4718,247 @@ local SAB_DB = {
     ["bestbrainrotever reward"] = "LAVACCASATURNOSATURNITA",
     ["how many active codes"] = "2",
     ["code rewards"] = "LAVACCASATURNOSATURNITA",
+
+    -- ═══════════════════════════════════════════════════════════════
+    -- ===== EXTRA CATCH-ALL PHRASINGS (added Oct 27 2026) =====
+    -- ═══════════════════════════════════════════════════════════════
+
+    -- alternate question forms that SAB riddles actually use
+    ["whats sammys name"] = "SAMMY",
+    ["what is sammys name"] = "SAMMY",
+    ["what is the owners name"] = "SAMMY",
+    ["what is the creators name"] = "SAMMY",
+    ["what is the developers name"] = "SAMMY",
+    ["who made this game"] = "SAMMY",
+    ["who created this game"] = "SAMMY",
+    ["who owns this game"] = "SAMMY",
+    ["who developed sab"] = "SAMMY",
+    ["who developed steal a brainrot"] = "SAMMY",
+    ["whos the owner of sab"] = "SAMMY",
+    ["whos the creator of sab"] = "SAMMY",
+    ["what age is sammy"] = "24",
+    ["what is sammys age"] = "24",
+    ["what is the owners age"] = "24",
+    ["sammy how old"] = "24",
+    ["whats sammy age"] = "24",
+    ["how old is the owner of sab"] = "24",
+    ["how old is the creator of sab"] = "24",
+    ["how old is spydersammy"] = "24",
+    ["what year was sammy born in"] = "2002",
+    ["what year sammy was born"] = "2002",
+    ["what is sammys birth year"] = "2002",
+    ["in what year was sammy born"] = "2002",
+    ["what month was sammy born"] = "FEBRUARY",
+    ["what month was sammy born in"] = "FEBRUARY",
+    ["in what month was sammy born"] = "FEBRUARY",
+    ["what is sammys birth month"] = "FEBRUARY",
+    ["where does the owner live"] = "BRAZIL",
+    ["where does the creator live"] = "BRAZIL",
+    ["where does sammy currently live"] = "BRAZIL",
+    ["where does spydersammy live"] = "BRAZIL",
+    ["what country does sammy live in"] = "BRAZIL",
+    ["what country was sammy born in"] = "ALGERIA",
+    ["where was the owner born"] = "ALGERIA",
+    ["where was spydersammy born"] = "ALGERIA",
+    ["what is the name of sammys cat"] = "NOVA",
+    ["what is sammys cats name"] = "NOVA",
+    ["what did sammy name his cat"] = "NOVA",
+    ["whats sammys cats name"] = "NOVA",
+    ["what is the cats name"] = "NOVA",
+    ["what is the name of the cat"] = "NOVA",
+    ["whats the cats name"] = "NOVA",
+    ["what is the full name of the game"] = "STEALABRAINROT",
+    ["what is the games full name"] = "STEALABRAINROT",
+    ["spell the games name"] = "STEALABRAINROT",
+    ["type the games name"] = "STEALABRAINROT",
+    ["what is this games name"] = "STEALABRAINROT",
+    ["how many people can join a server"] = "EIGHT",
+    ["how many people can be in one server"] = "EIGHT",
+    ["what is the max player count"] = "EIGHT",
+    ["what is the server limit"] = "EIGHT",
+    ["maximum players per server"] = "EIGHT",
+    ["how many players per server"] = "EIGHT",
+    ["when did this game come out"] = "MAY162025",
+    ["when was this game released"] = "MAY162025",
+    ["what is the games release date"] = "MAY162025",
+    ["what date did sab release"] = "MAY162025",
+    ["what date did sab come out"] = "MAY162025",
+    ["what is the release date of sab"] = "MAY162025",
+    ["what was the first trait in sab"] = "LIGHTNING",
+    ["what is the first trait in the game"] = "LIGHTNING",
+    ["what trait was added first"] = "LIGHTNING",
+    ["what was the very first trait"] = "LIGHTNING",
+    ["name the first trait"] = "LIGHTNING",
+    ["what is the lead programmers name"] = "HASTED",
+    ["who is the lead programmer of sab"] = "HASTED",
+    ["who is the programmer of steal a brainrot"] = "HASTED",
+    ["what is the discord server called"] = "BLOSSOM",
+    ["what is the name of the discord server"] = "BLOSSOM",
+    ["whats the name of the discord"] = "BLOSSOM",
+    ["what is sab discord called"] = "BLOSSOM",
+    ["how many total mutations are there"] = "15",
+    ["how many mutations does sab have"] = "15",
+    ["how many mutations exist"] = "15",
+    ["how many mutations exist in sab"] = "15",
+    ["how many total machines are there"] = "20",
+    ["how many machines does sab have"] = "20",
+    ["how many machines exist"] = "20",
+    ["how many machines exist in sab"] = "20",
+    ["how many rarities does sab have"] = "NINE",
+    ["how many rarities exist"] = "NINE",
+    ["how many total rarities are there"] = "NINE",
+    ["what is the rarest brainrot in sab"] = "POLAROIDINI",
+    ["what is the rarest brainrot in the game"] = "POLAROIDINI",
+    ["what brainrot is the rarest"] = "POLAROIDINI",
+    ["name the rarest brainrot"] = "POLAROIDINI",
+    ["which brainrot is the rarest"] = "POLAROIDINI",
+    ["what is the highest rarity in sab"] = "OG",
+    ["what is the highest rarity in the game"] = "OG",
+    ["what rarity is the highest"] = "OG",
+    ["name the highest rarity"] = "OG",
+    ["what is the best mutation in sab"] = "ECLIPSE",
+    ["what is the newest mutation in sab"] = "ECLIPSE",
+    ["what mutation is the newest"] = "ECLIPSE",
+    ["what mutation is the best"] = "ECLIPSE",
+    ["name the newest mutation"] = "ECLIPSE",
+    ["what is the newest machine in sab"] = "HAUNTEDFUSE",
+    ["what machine is the newest"] = "HAUNTEDFUSE",
+    ["what machine was added last"] = "HAUNTEDFUSE",
+    ["name the newest machine"] = "HAUNTEDFUSE",
+    ["what is the current season in sab"] = "HALLOWEEN",
+    ["what season is sab in"] = "HALLOWEEN",
+    ["what season is sab in right now"] = "HALLOWEEN",
+    ["what is the current event in sab"] = "ECLIPSE",
+    ["what event is happening in sab"] = "ECLIPSE",
+    ["what event is currently happening"] = "ECLIPSE",
+    ["what update is sab on"] = "69",
+    ["what update number is sab on"] = "69",
+    ["what is the current update number"] = "69",
+    ["what is the latest update number"] = "69",
+    ["how many rebirths are there in sab"] = "19",
+    ["how many rebirths does sab have"] = "19",
+    ["how many total rebirths"] = "19",
+    ["whats the total number of rebirths"] = "19",
+    ["what group is sab under"] = "BRAZILIANSPYDER",
+    ["what is the roblox group called"] = "BRAZILIANSPYDER",
+    ["sab roblox group name"] = "BRAZILIANSPYDER",
+    ["what is the group name"] = "BRAZILIANSPYDER",
+    ["what is sammy short for"] = "SAM",
+    ["what is the name sammy short for"] = "SAM",
+    ["what is sammys nickname"] = "SAM",
+    ["whats sammys favorite color"] = "BLUE",
+    ["what is sammys favorite color"] = "BLUE",
+    ["what is the owners favorite color"] = "BLUE",
+    ["whats sammys favorite food"] = "PIZZA",
+    ["what is sammys favorite food"] = "PIZZA",
+    ["what is the owners favorite food"] = "PIZZA",
+    ["whats sammys favorite sport"] = "FOOTBALL",
+    ["what is sammys favorite sport"] = "FOOTBALL",
+    ["whats sammys favorite animal"] = "SPIDER",
+    ["what is sammys favorite animal"] = "SPIDER",
+    ["whats sammys favorite player"] = "RONALDO",
+    ["what is sammys favorite player"] = "RONALDO",
+    ["whats sammys favorite number"] = "SEVEN",
+    ["what is sammys favorite number"] = "SEVEN",
+    ["whats sammys favorite brainrot"] = "MEOWL",
+    ["what is sammys favorite brainrot"] = "MEOWL",
+    ["what is sammys roblox username"] = "SPYDERSAMMY",
+    ["what is the owners roblox username"] = "SPYDERSAMMY",
+    ["what is sammys youtube channel"] = "SPYDERSAMMY",
+    ["what is the owners youtube"] = "SPYDERSAMMY",
+    ["what brainrot has the lightning trait"] = "MATEO",
+    ["which brainrot has lightning"] = "MATEO",
+    ["what brainrot was struck by lightning"] = "MATEO",
+    ["which brainrot got struck by lightning"] = "MATEO",
+    ["who won the 2026 fifa world cup"] = "SPAIN",
+    ["what country won the world cup"] = "SPAIN",
+    ["world cup 2026 champion"] = "SPAIN",
+    ["who is the worst game owner on roblox"] = "SECRETLOKII",
+    ["what is the most boring roblox game"] = "KEYBOARDESCAPE",
+    ["who has the most aura in the game"] = "CAYLUS",
+    ["who has the most aura in sab"] = "CAYLUS",
+    ["what spawned during admin abuse war"] = "RACOONINIJANDELINI",
+    ["what brainrot spawned during the admin war"] = "RACOONINIJANDELINI",
+    ["who did sammy fight in the admin abuse war"] = "JANDEL",
+    ["who fought sammy in the admin war"] = "JANDEL",
+    ["what game won the admin abuse war"] = "GROWAGARDEN",
+    ["which game won the admin war"] = "GROWAGARDEN",
+    ["who is steaks brother"] = "CRUZ",
+    ["what is steaks brothers name"] = "CRUZ",
+    ["how old is steak in sab"] = "25",
+    ["what food does steaks brother hate"] = "CHEESE",
+    ["what does cruz hate eating"] = "CHEESE",
+    ["how many gold brainrots for rainbow machine"] = "25",
+    ["gold brainrots needed for rainbow"] = "25",
+    ["how many gold do you need for rainbow machine"] = "25",
+    ["where was griffin from"] = "DIVINEFUSE",
+    ["what machine did griffin come from"] = "DIVINEFUSE",
+    ["which machine was griffin from"] = "DIVINEFUSE",
+    ["who is an egg in sab"] = "STEAK",
+    ["who is the egg"] = "STEAK",
+    ["what is the worst secret brainrot"] = "KARKERKARKURKUR",
+    ["worst secret brainrot"] = "KARKERKARKURKUR",
+    ["what brainrot is the worst secret"] = "KARKERKARKURKUR",
+    ["what is on sammys chain"] = "SPIDER",
+    ["what does sammy have on his chain"] = "SPIDER",
+    ["what is on sammys left eye"] = "SPIDER",
+    ["what does sammy have on his left eye"] = "SPIDER",
+    ["when did sammy start making roblox games"] = "2013",
+    ["what year did sammy start making games"] = "2013",
+    ["when did sammy begin developing"] = "2013",
+    ["what game did sammy make on fortnite"] = "ROBABANK",
+    ["name the game sammy made on fortnite"] = "ROBABANK",
+    ["what fortnite game did sammy make"] = "ROBABANK",
+    ["what was sammys first game"] = "CRABGAME",
+    ["name sammys first game"] = "CRABGAME",
+    ["what was the first game sammy created"] = "CRABGAME",
+    ["what color is sammys car"] = "RED",
+    ["what colour is sammys car"] = "RED",
+    ["what is the color of sammys car"] = "RED",
+    ["when is admin abuse in sab"] = "TUESDAYANDSATURDAY",
+    ["when does admin abuse happen"] = "TUESDAYANDSATURDAY",
+    ["what days is admin abuse"] = "TUESDAYANDSATURDAY",
+    ["what time is admin abuse"] = "6PMET",
+    ["what time does admin abuse start"] = "6PMET",
+    ["how long does admin abuse last"] = "30TO45MINUTES",
+    ["how long is an admin abuse session"] = "30TO45MINUTES",
+    ["who hosts admin abuse in sab"] = "STEAK",
+    ["who is the admin abuse host"] = "STEAK",
+    ["what was the admin abuse war date"] = "AUGUST232025",
+    ["when did the admin abuse war happen"] = "AUGUST232025",
+    ["what is sammys name backwards"] = "YMMAS",
+    ["spell sammys name backwards"] = "YMMAS",
+    ["type sammys name backwards"] = "YMMAS",
+    ["reverse sammys name"] = "YMMAS",
+    ["what is nova backwards"] = "AVON",
+    ["spell nova backwards"] = "AVON",
+    ["type nova backwards"] = "AVON",
+    ["reverse nova"] = "AVON",
+    ["what is the sleepy trait"] = "SLEEPY",
+    ["what is the worst trait"] = "SLEEPY",
+    ["what trait is the worst"] = "SLEEPY",
+    ["what trait gives 0.5x"] = "SLEEPY",
+    ["negative trait"] = "SLEEPY",
+    ["what trait reduces income"] = "SLEEPY",
+    ["what is the best trait"] = "STRAWBERRY",
+    ["what trait is the best"] = "STRAWBERRY",
+    ["what trait gives the most"] = "STRAWBERRY",
+    ["highest trait multiplier in sab"] = "8",
+    ["what is the best og trait"] = "STRAWBERRY",
+    ["what mutation was scrapped"] = "DISCO",
+    ["what mutation got removed"] = "DISCO",
+    ["which mutation was removed"] = "DISCO",
+    ["what replaced disco mutation"] = "CYBER",
+    ["what mutation replaced disco"] = "CYBER",
+    ["what is the eclipse mutation multiplier"] = "14",
+    ["eclipse mutation multiplier"] = "14",
+    ["what multiplier is eclipse"] = "14",
+    ["how many polaroidini are in the game"] = "24",
+    ["how many polaroidini exist in sab"] = "24",
+    ["total number of polaroidini"] = "24",
+    ["how many headless horseman are in sab"] = "79",
+    ["total number of headless horseman"] = "79",
+    ["how many headless horsemans exist"] = "79",
 }
 
 local SAB_MULTI = {
@@ -4856,18 +5097,27 @@ local function localExactAnswer(text)
     clean = clean:gsub("where%s+is", ""):gsub("where%s+are", ""):gsub("how%s+old", ""):gsub("how%s+tall", "")
     clean = clean:gsub("how%s+many", ""):gsub("how%s+much", ""):gsub("do%s+you%s+know", ""):gsub("can%s+you%s+tell", "")
     clean = clean:gsub("tell%s+me", ""):gsub("i%s+need", ""):gsub("give%s+me", ""):gsub("what's", ""):gsub("whats", "")
-    clean = clean:gsub("am%s+i", ""):gsub("do%s+i", ""):gsub("did%s+i", ""):gsub("have%s+i", "")
-    clean = clean:gsub("^my%s+", ""):gsub("%s+my%s+", " "):gsub("^sammy[s]?%s+", ""):gsub("^sammys%s+", "")
+    clean = clean:gsub("who's", ""):gsub("whos", ""):gsub("where's", ""):gsub("wheres", "")
+    clean = clean:gsub("how's", ""):gsub("when's", ""):gsub("which%s+is", ""):gsub("which%s+are", "")
+    clean = clean:gsub("name%s+the", ""):gsub("spell%s+out", "spell")
+    clean = clean:gsub("am%s+i", ""):gsub("do%s+i", ""):gsub("did%s+i", ""):gsub("have%s+i", ""):gsub("was%s+i", "")
+    clean = clean:gsub("^my%s+", ""):gsub("%s+my%s+", " "):gsub("^sammy[s']?%s+", ""):gsub("^sammys%s+", "")
     clean = clean:gsub("the%s+", ""):gsub("%f[%a]a%f[%A]", ""):gsub("%f[%a]an%f[%A]", ""):gsub("of%s+", ""):gsub("for%s+", "")
+    clean = clean:gsub("in%s+sab%s*$", ""):gsub("in%s+steal%s+a%s+brainrot%s*$", "")
+    clean = clean:gsub("in%s+the%s+game%s*$", ""):gsub("right%s+now%s*$", "")
     clean = clean:gsub("[%?%.%,!]", ""):gsub("^%s+", ""):gsub("%s+$", "")
     clean = clean:gsub("%d+", ""):gsub("%s+", " ")
     clean = trim(clean)
     local raw = trim(l:gsub("['\"']", ""):gsub("[%?%.%,!]", ""):gsub("%s+", " "))
+    -- also try without "in sab" / "in the game" suffix
+    local rawNoSuffix = raw:gsub("%s+in%s+sab%s*$", ""):gsub("%s+in%s+the%s+game%s*$", ""):gsub("%s+right%s+now%s*$", "")
 
     if SAB_MULTI[clean] then return SAB_MULTI[clean][1] end
     if SAB_MULTI[raw] then return SAB_MULTI[raw][1] end
+    if SAB_MULTI[rawNoSuffix] then return SAB_MULTI[rawNoSuffix][1] end
     if SAB_DB[clean] then return SAB_DB[clean] end
     if SAB_DB[raw] then return SAB_DB[raw] end
+    if SAB_DB[rawNoSuffix] then return SAB_DB[rawNoSuffix] end
 
     local ordinals = {one=1,two=2,three=3,four=4,five=5,six=6,seven=7,eight=8,nine=9,ten=10,
         eleven=11,twelve=12,thirteen=13,fourteen=14,fifteen=15,sixteen=16,seventeen=17,eighteen=18,
@@ -4915,15 +5165,21 @@ local function localExactAnswers(text)
     clean = clean:gsub("where%s+is", ""):gsub("where%s+are", ""):gsub("how%s+old", ""):gsub("how%s+tall", "")
     clean = clean:gsub("how%s+many", ""):gsub("how%s+much", ""):gsub("do%s+you%s+know", ""):gsub("can%s+you%s+tell", "")
     clean = clean:gsub("tell%s+me", ""):gsub("i%s+need", ""):gsub("give%s+me", ""):gsub("what's", ""):gsub("whats", "")
-    clean = clean:gsub("am%s+i", ""):gsub("do%s+i", ""):gsub("did%s+i", ""):gsub("have%s+i", "")
-    clean = clean:gsub("^my%s+", ""):gsub("%s+my%s+", " "):gsub("^sammy[s]?%s+", ""):gsub("^sammys%s+", "")
+    clean = clean:gsub("who's", ""):gsub("whos", ""):gsub("where's", ""):gsub("wheres", "")
+    clean = clean:gsub("how's", ""):gsub("when's", ""):gsub("which%s+is", ""):gsub("which%s+are", "")
+    clean = clean:gsub("name%s+the", ""):gsub("spell%s+out", "spell")
+    clean = clean:gsub("am%s+i", ""):gsub("do%s+i", ""):gsub("did%s+i", ""):gsub("have%s+i", ""):gsub("was%s+i", "")
+    clean = clean:gsub("^my%s+", ""):gsub("%s+my%s+", " "):gsub("^sammy[s']?%s+", ""):gsub("^sammys%s+", "")
     clean = clean:gsub("the%s+", ""):gsub("%f[%a]a%f[%A]", ""):gsub("%f[%a]an%f[%A]", ""):gsub("of%s+", ""):gsub("for%s+", "")
+    clean = clean:gsub("in%s+sab%s*$", ""):gsub("in%s+steal%s+a%s+brainrot%s*$", "")
+    clean = clean:gsub("in%s+the%s+game%s*$", ""):gsub("right%s+now%s*$", "")
     clean = clean:gsub("[%?%.%,!]", ""):gsub("^%s+", ""):gsub("%s+$", "")
     clean = clean:gsub("%d+", ""):gsub("%s+", " ")
     clean = trim(clean)
     local raw = trim(l:gsub("['\"']", ""):gsub("[%?%.%,!]", ""):gsub("%s+", " "))
+    local rawNoSuffix = raw:gsub("%s+in%s+sab%s*$", ""):gsub("%s+in%s+the%s+game%s*$", ""):gsub("%s+right%s+now%s*$", "")
 
-    local multi = SAB_MULTI[clean] or SAB_MULTI[raw]
+    local multi = SAB_MULTI[clean] or SAB_MULTI[raw] or SAB_MULTI[rawNoSuffix]
     if multi then
         local out = {}
         for _, v in ipairs(multi) do
@@ -6695,11 +6951,11 @@ local function destroyRiddlerPanel()
 end
 
 local _riddleQueue = nil -- stores one pending riddle while solving
+local _riddlerStartTime = 0 -- set when riddler starts, used to skip old elements
 
-local function onRiddleDetected(text)
+local function onRiddleDetected(text, source)
     if not state.riddlerToggled then return end
     if _riddlerSolving then
-        -- queue one riddle instead of dropping it
         _riddleQueue = text
         return
     end
@@ -6718,7 +6974,8 @@ local function onRiddleDetected(text)
         if now - t > 60 then _riddlerSeenTexts[k] = nil end
     end
 
-    pushLog("> riddle: " .. cleaned:sub(1, 50), Color3.fromRGB(200, 180, 100))
+    local src = source or "?"
+    pushLog("> [" .. src .. "] " .. cleaned:sub(1, 50), Color3.fromRGB(200, 180, 100))
     pushLog("> solving...", COL_ON)
 
     -- update riddler panel question
@@ -6865,7 +7122,7 @@ local function startRiddler()
                 or lower:match("^%s*reverse%s") or lower:match("^%s*tell%s")
             -- notify remote is trusted, so announcements with question structure pass
             if #raw > 8 and wordCount >= 3 and (endsWithQ or startsWithQ or isAnnounce) then
-                pcall(onRiddleDetected, firstArg)
+                pcall(onRiddleDetected, firstArg, "notify")
             end
         end)
         table.insert(_riddlerConns, conn)
@@ -6902,7 +7159,7 @@ local function startRiddler()
                                 or lower:find("steak") or lower:find("favorite")
                                 or lower:find("fuse") or lower:find("trait")
                             if endsWithQ or startsWithQ or (wordCount >= 5 and hasAnyKeyword) then
-                                onRiddleDetected(text)
+                                onRiddleDetected(text, "chat")
                             end
                         end)
                     end)
@@ -6913,8 +7170,12 @@ local function startRiddler()
     end)
 
     -- watch screen announcements too (DescendantAdded)
+    -- skip elements that exist at startup (they're static UI, not riddles)
+    _riddlerStartTime = os.clock()
     local conn3 = PlayerGui.DescendantAdded:Connect(function(obj)
         if not state.riddlerToggled then return end
+        -- ignore elements added during the first 2 seconds (static UI loading)
+        if os.clock() - _riddlerStartTime < 2 then return end
         if obj:IsDescendantOf(screenGui) then return end
         if not (obj:IsA("TextLabel") or obj:IsA("TextButton")) then return end
         task.wait(0.05)
@@ -6945,7 +7206,7 @@ local function startRiddler()
                 or lower:find("color") or lower:find("admin abuse")
 
             if endsWithQ or startsWithQ or (wordCount >= 5 and hasAnyKeyword) then
-                onRiddleDetected(stripped)
+                onRiddleDetected(stripped, "gui")
             end
         end
     end)
