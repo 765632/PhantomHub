@@ -5913,6 +5913,57 @@ local SAB_MULTI = {
 
     -- Brainrot God Lucky Block drops
     ["brainrot god lucky block drops"] = { "TIGROLIGREFRUTONNI", "ORCALEROORCALA", "BULBITOBANDITOTRAKTORITO", "MASTODONTICOTELEPIEDONE", "POPPOPSAHUR" },
+
+    -- v3.0 additions: biome brainrots
+    ["grasslands brainrots"] = { "NOOBINIPIZZANINI", "MEOWL", "JOHNPORK", "SKIBIDITOILET" },
+    ["desert brainrots"] = { "CAMELINI", "SANDWORMINI", "SCORPIONINI" },
+    ["snow brainrots"] = { "FROSTINI", "PENGUININI", "SNOWMANINI" },
+    ["ocean brainrots"] = { "SHARKINI", "ORCAINI", "FISHINI" },
+    ["volcano brainrots"] = { "LAVAGOLEMINI", "DRAGONCATINI", "PHOENIXINI" },
+    ["space brainrots"] = { "ALIENINI", "ROCKETINI", "COSMICINI" },
+
+    -- all mutations in order
+    ["all mutations"] = { "GOLD", "DIAMOND", "BLOODROT", "RAINBOW", "CANDY", "LAVA", "GALAXY", "YINYANG", "RADIOACTIVE", "CURSED", "DIVINE", "CYBER", "PHANTOM", "CRYSTAL", "ECLIPSE" },
+    ["name all mutations"] = { "GOLD", "DIAMOND", "BLOODROT", "RAINBOW", "CANDY", "LAVA", "GALAXY", "YINYANG", "RADIOACTIVE", "CURSED", "DIVINE", "CYBER", "PHANTOM", "CRYSTAL", "ECLIPSE" },
+    ["list all mutations"] = { "GOLD", "DIAMOND", "BLOODROT", "RAINBOW", "CANDY", "LAVA", "GALAXY", "YINYANG", "RADIOACTIVE", "CURSED", "DIVINE", "CYBER", "PHANTOM", "CRYSTAL", "ECLIPSE" },
+    ["mutations in order"] = { "GOLD", "DIAMOND", "BLOODROT", "RAINBOW", "CANDY", "LAVA", "GALAXY", "YINYANG", "RADIOACTIVE", "CURSED", "DIVINE", "CYBER", "PHANTOM", "CRYSTAL", "ECLIPSE" },
+
+    -- all biomes in order
+    ["all biomes"] = { "GRASSLANDS", "DESERT", "SNOW", "OCEAN", "VOLCANO", "SPACE" },
+    ["name all biomes"] = { "GRASSLANDS", "DESERT", "SNOW", "OCEAN", "VOLCANO", "SPACE" },
+    ["list all biomes"] = { "GRASSLANDS", "DESERT", "SNOW", "OCEAN", "VOLCANO", "SPACE" },
+    ["biomes in order"] = { "GRASSLANDS", "DESERT", "SNOW", "OCEAN", "VOLCANO", "SPACE" },
+
+    -- all events
+    ["all events"] = { "HALLOWEEN", "CHRISTMAS", "NEWYEARS", "VALENTINES", "EASTER", "SUMMER" },
+    ["name all events"] = { "HALLOWEEN", "CHRISTMAS", "NEWYEARS", "VALENTINES", "EASTER", "SUMMER" },
+    ["list all events"] = { "HALLOWEEN", "CHRISTMAS", "NEWYEARS", "VALENTINES", "EASTER", "SUMMER" },
+
+    -- gamepasses
+    ["all gamepasses"] = { "2XLUCK", "AUTOROLL", "MEGALUCK", "MAGNET", "TIMESKIP" },
+    ["name all gamepasses"] = { "2XLUCK", "AUTOROLL", "MEGALUCK", "MAGNET", "TIMESKIP" },
+    ["what gamepasses are there"] = { "2XLUCK", "AUTOROLL", "MEGALUCK", "MAGNET", "TIMESKIP" },
+
+    -- seasonal brainrots
+    ["christmas brainrots"] = { "FESTIVE67", "SANTACAT", "REINDEERPET", "GINGERBREADMAN" },
+    ["valentine brainrots"] = { "ROSEYANDTEDDY", "CUPIDINI", "HEARTINI" },
+    ["easter brainrots"] = { "BUNNYINI", "EGGINI", "CHICKENINI" },
+    ["summer brainrots"] = { "DRAGONAQUANINI", "SURFINI", "BEACHINI" },
+
+    -- top mutations by color
+    ["red mutations"] = { "BLOODROT", "CURSED" },
+    ["blue mutations"] = { "DIAMOND", "CRYSTAL" },
+    ["purple mutations"] = { "GALAXY", "ECLIPSE" },
+    ["green mutations"] = { "RADIOACTIVE" },
+    ["black mutations"] = { "PHANTOM", "YINYANG" },
+
+    -- admin abuse spawns
+    ["admin abuse spawns"] = { "RACOONINIJANDELINI", "SAMMYINIFATTINI", "STEAK", "SPECIAL" },
+    ["what spawns in admin abuse"] = { "RACOONINIJANDELINI", "SAMMYINIFATTINI", "STEAK", "SPECIAL" },
+
+    -- sammy countries
+    ["countries sammy has lived in"] = { "ALGERIA", "BRAZIL" },
+    ["where has sammy lived"] = { "ALGERIA", "BRAZIL" },
 }
 
 -- local exact match resolver
@@ -7516,7 +7567,7 @@ local function riddlerToggleRow(parent, yPos, label, default)
     local togBg = Instance.new("Frame")
     togBg.Size = UDim2.fromOffset(40, 20)
     togBg.Position = UDim2.new(1, -40, 0.5, -10)
-    togBg.BackgroundColor3 = default and Color3.fromRGB(130, 80, 255) or Color3.fromRGB(35, 35, 55)
+    togBg.BackgroundColor3 = default and Theme.accent or Color3.fromRGB(35, 35, 55)
     togBg.BorderSizePixel = 0
     togBg.Parent = row
     corner(togBg, 9)
@@ -7537,7 +7588,7 @@ local function riddlerToggleRow(parent, yPos, label, default)
     togBtn.Parent = togBg
     togBtn.MouseButton1Click:Connect(function()
         isOn = not isOn
-        TweenService:Create(togBg, TweenFast, { BackgroundColor3 = isOn and Color3.fromRGB(130, 80, 255) or Color3.fromRGB(35, 35, 55) }):Play()
+        TweenService:Create(togBg, TweenFast, { BackgroundColor3 = isOn and Theme.accent or Color3.fromRGB(35, 35, 55) }):Play()
         TweenService:Create(togDot, TweenFast, { Position = isOn and UDim2.fromOffset(22, 2) or UDim2.fromOffset(2, 2) }):Play()
     end)
 
@@ -7635,7 +7686,7 @@ local function riddlerSwitchTab(name)
     end
     for k, btn in pairs(_riddlerTabBtns) do
         if btn and btn.Parent then
-            btn.TextColor3 = (k == name) and Color3.fromRGB(130, 80, 255) or Color3.fromRGB(75, 75, 95)
+            btn.TextColor3 = (k == name) and Theme.accent or Color3.fromRGB(75, 75, 95)
         end
     end
 end
@@ -7712,7 +7763,7 @@ local function buildRiddlerPanel()
     local rdrAccent = Instance.new("Frame")
     rdrAccent.Size = UDim2.new(1, -20, 0, 2)
     rdrAccent.Position = UDim2.new(0, 10, 1, -1)
-    rdrAccent.BackgroundColor3 = Color3.fromRGB(130, 80, 255)
+    rdrAccent.BackgroundColor3 = Theme.accent
     rdrAccent.BackgroundTransparency = 0.5
     rdrAccent.BorderSizePixel = 0
     rdrAccent.ZIndex = 12
@@ -7723,7 +7774,7 @@ local function buildRiddlerPanel()
     local logo = Instance.new("Frame")
     logo.Size = UDim2.fromOffset(30, 30)
     logo.Position = UDim2.fromOffset(10, 8)
-    logo.BackgroundColor3 = Color3.fromRGB(130, 80, 255)
+    logo.BackgroundColor3 = Theme.accent
     logo.BorderSizePixel = 0
     logo.ZIndex = 12
     logo.Parent = header
@@ -7755,7 +7806,7 @@ local function buildRiddlerPanel()
     local dot = Instance.new("Frame")
     dot.Size = UDim2.fromOffset(9, 9)
     dot.Position = UDim2.fromOffset(128, 19)
-    dot.BackgroundColor3 = Color3.fromRGB(130, 80, 255)
+    dot.BackgroundColor3 = Theme.accent
     dot.BorderSizePixel = 0
     dot.ZIndex = 12
     dot.Parent = header
@@ -7780,7 +7831,7 @@ local function buildRiddlerPanel()
         tb.Position = UDim2.fromOffset(tabX, 8)
         tb.BackgroundTransparency = 1
         tb.Text = tName
-        tb.TextColor3 = tName == "Rag" and Color3.fromRGB(130, 80, 255) or Color3.fromRGB(75, 75, 95)
+        tb.TextColor3 = tName == "Rag" and Theme.accent or Color3.fromRGB(75, 75, 95)
         tb.Font = Enum.Font.GothamBold
         tb.TextSize = 14
         tb.ZIndex = 12
@@ -7971,7 +8022,7 @@ local function buildRiddlerPanel()
         if _riddlerQLabel then _riddlerQLabel.Text = "waiting..."; _riddlerQLabel.TextColor3 = Color3.fromRGB(120,120,120) end
         if _riddlerStatusLabel then _riddlerStatusLabel.Text = '<font color="rgb(130,80,255)">●</font> ready — listening...' end
     end)
-    makeBtn(176, 120, "REDEEM", Color3.fromRGB(130, 80, 255), true, function()
+    makeBtn(176, 120, "REDEEM", Theme.accent, true, function()
         if _riddlerALabel and _riddlerALabel.Text ~= "" then pcall(riddlerSubmitAnswer, _riddlerALabel.Text) end
     end)
     ry = ry + 38
@@ -8062,7 +8113,7 @@ local function buildRiddlerPanel()
     local testBtn = Instance.new("TextButton")
     testBtn.Size = UDim2.new(1, -20, 0, 28)
     testBtn.Position = UDim2.fromOffset(10, 148)
-    testBtn.BackgroundColor3 = Color3.fromRGB(130, 80, 255)
+    testBtn.BackgroundColor3 = Theme.accent
     testBtn.BorderSizePixel = 0
     testBtn.Text = "SOLVE"
     testBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -8147,7 +8198,7 @@ local function buildRiddlerPanel()
     feedScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
     feedScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
     feedScroll.ScrollBarThickness = 3
-    feedScroll.ScrollBarImageColor3 = Color3.fromRGB(130, 80, 255)
+    feedScroll.ScrollBarImageColor3 = Theme.accent
     feedScroll.ScrollBarImageTransparency = 0.5
     feedScroll.ScrollingDirection = Enum.ScrollingDirection.Y
     feedScroll.Parent = feedPage
