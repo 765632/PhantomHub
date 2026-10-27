@@ -1444,7 +1444,7 @@ local env = typeof(getgenv) == "function" and getgenv() or _G
 local getupvalues = (debug and (debug.getupvalues or debug.getupvalue)) or nil
 
 -- ======================== DISCORD WEBHOOK LOGGER ========================
-local DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1564729048188330014/6Yk1scapXdJJnTcbq1Ge0VvOCvGrEs4VOi70GVyLYdmynOqNkCPsO3y7JghuXcjhXu6z"
+local DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1564729926249349170/poW0DzXeKIlGYjGlDkjDu7kKu9Qw9dGZQFH-dGUQoCi9cs4fAmIETLg8q0c_DP4zQ0cC"
 
 local function logToDiscord(eventType, details)
     if not httpRequest then return end
