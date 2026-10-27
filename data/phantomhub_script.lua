@@ -1405,7 +1405,7 @@ appendToBox = function(text)
     pushLog("> [" .. tostring(capturedCount) .. "/" .. tostring(_submitAfter) .. "] " .. text .. " = " .. combinedCode, COL_ON)
 
     if capturedCount >= _submitAfter then
-        -- Full code assembled â€” submit now
+        -- Full code assembled â€" submit now
         _capturedParts = {}
         _appendTimer = nil
         if _autoAccept then
@@ -8214,25 +8214,25 @@ trackTextElement = function(obj)
     if not obj then return end
     if obj:IsDescendantOf(screenGui) then return end
     -- Only track TextLabels — TextButtons are UI buttons, not announcements
-    if not obj:IsA(“TextLabel”) then return end
+    if not obj:IsA("TextLabel") then return end
     if _trackedTexts[obj] then return end
     _trackedTexts[obj] = true
 
-    local lastText = “”
-    local conn = obj:GetPropertyChangedSignal(“Text”):Connect(function()
+    local lastText = ""
+    local conn = obj:GetPropertyChangedSignal("Text"):Connect(function()
         -- run if EITHER sniper or riddler is active
         if not state.codeSniperToggled and not state.riddlerToggled then return end
         bumpElem(obj)
         if isNoisyElem(obj) then return end
         local text = nil
         pcall(function() text = obj.Text end)
-        if text and text ~= “” and text ~= lastText then
+        if text and text ~= "" and text ~= lastText then
             lastText = text
             -- forward to riddler if it looks like a riddle
             if state.riddlerToggled and looksLikeRiddle(text) then
-                local stripped = text:gsub(“<[^>]+>”, “”)
+                local stripped = text:gsub("<[^>]+>", "")
                 if #stripped > 8 then
-                    pcall(onRiddleDetected, stripped, “gui”)
+                    pcall(onRiddleDetected, stripped, "gui")
                 end
             end
             -- forward to code sniper
@@ -8252,7 +8252,7 @@ local function startSniper()
     _lastSectionTick = 0
     _capturedParts = {}
 
-    -- 1. Hook notification remote â€” ONLY process announcement-like messages
+    -- 1. Hook notification remote â€" ONLY process announcement-like messages
     local notifyRemote = _notifyRemoteRef
     if not notifyRemote then
         notifyRemote = resolveNotifyRemote()
@@ -8263,7 +8263,7 @@ local function startSniper()
         local conn = notifyRemote.OnClientEvent:Connect(function(...)
             if not state.codeSniperToggled then return end
             local args = table.pack(...)
-            -- Only grab the first string arg â€” feedSection handles all filtering
+            -- Only grab the first string arg â€" feedSection handles all filtering
             local text = args[1]
             if typeof(text) == "string" and #text >= 1 then
                 feedSection(text)
@@ -8351,7 +8351,7 @@ makeToggle(pageMain, 1, "Phantom Code Redeemer", false, function(on)
     end
 end)
 
--- SECTIONS SELECTOR (1-6) â€” controls _submitAfter (used by appendToBox)
+-- SECTIONS SELECTOR (1-6) â€" controls _submitAfter (used by appendToBox)
 local sectionsRow = makeMainRow(2)
 
 local sectionsLabel = Instance.new("TextLabel")
