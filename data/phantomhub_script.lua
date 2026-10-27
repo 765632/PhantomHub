@@ -603,6 +603,9 @@ local state = {
 local _autoAccept = true
 local _submitAfter = 3
 local _capturedParts = {}
+local footerDot = nil -- forward-declared, assigned when footer is built
+local _footerLabel = nil -- forward-declared, assigned when footer is built
+local playNotifySound -- forward-declared, defined after trim()
 local _lastBox = nil
 local _redeemCooldown = 0
 
@@ -642,6 +645,68 @@ local function hover(btn, normal, hoverCol)
     end)
 end
 
+-- ======================== TOAST NOTIFICATION SYSTEM ========================
+local _toastQueue = {}
+local _toastActive = false
+local _toastContainer -- assigned after screenGui creation
+
+local function showToast(message, toastColor, duration)
+    table.insert(_toastQueue, { msg = message, col = toastColor or Theme.accent, dur = duration or 2.5 })
+    if _toastActive then return end
+    _toastActive = true
+    task.spawn(function()
+        while #_toastQueue > 0 do
+            local info = table.remove(_toastQueue, 1)
+            if not _toastContainer or not _toastContainer.Parent then break end
+            local toast = Instance.new("Frame")
+            toast.Size = UDim2.new(0, 220, 0, 36)
+            toast.Position = UDim2.new(0.5, -110, 0, -40)
+            toast.AnchorPoint = Vector2.new(0, 0)
+            toast.BackgroundColor3 = Color3.fromRGB(14, 14, 22)
+            toast.BorderSizePixel = 0
+            toast.ZIndex = 50
+            toast.Parent = _toastContainer
+            corner(toast, 8)
+            stroke(toast, info.col, 1)
+
+            local toastAccent = Instance.new("Frame")
+            toastAccent.Size = UDim2.new(0, 3, 0.6, 0)
+            toastAccent.Position = UDim2.new(0, 0, 0.2, 0)
+            toastAccent.BackgroundColor3 = info.col
+            toastAccent.BorderSizePixel = 0
+            toastAccent.ZIndex = 51
+            toastAccent.Parent = toast
+            corner(toastAccent, 2)
+
+            local toastLabel = Instance.new("TextLabel")
+            toastLabel.Size = UDim2.new(1, -20, 1, 0)
+            toastLabel.Position = UDim2.new(0, 12, 0, 0)
+            toastLabel.BackgroundTransparency = 1
+            toastLabel.Font = Enum.Font.GothamBold
+            toastLabel.TextSize = 11
+            toastLabel.TextColor3 = Color3.fromRGB(230, 230, 240)
+            toastLabel.TextXAlignment = Enum.TextXAlignment.Left
+            toastLabel.TextTruncate = Enum.TextTruncate.AtEnd
+            toastLabel.Text = info.msg
+            toastLabel.ZIndex = 51
+            toastLabel.Parent = toast
+
+            -- slide in
+            TweenService:Create(toast, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                Position = UDim2.new(0.5, -110, 0, 8),
+            }):Play()
+            task.wait(info.dur)
+            -- slide out
+            TweenService:Create(toast, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
+                Position = UDim2.new(0.5, -110, 0, -40),
+            }):Play()
+            task.wait(0.3)
+            toast:Destroy()
+        end
+        _toastActive = false
+    end)
+end
+
 -- ======================== CLEANUP OLD GUI ========================
 for _, g in ipairs(PlayerGui:GetChildren()) do
     if g.Name == "PhantomHubGui" then g:Destroy() end
@@ -654,6 +719,7 @@ screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.IgnoreGuiInset = true
 screenGui.Parent = PlayerGui
+_toastContainer = screenGui -- toast system renders directly on screenGui
 
 -- ======================== PLATFORM DETECTION ========================
 local _isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
@@ -673,6 +739,26 @@ main.Active = true
 main.Parent = screenGui
 corner(main, 14)
 stroke(main, Theme.stroke, 1.5)
+
+-- subtle inner gradient overlay (top-to-bottom accent fade)
+local gradientOverlay = Instance.new("Frame")
+gradientOverlay.Size = UDim2.new(1, 0, 0, 80)
+gradientOverlay.Position = UDim2.new(0, 0, 0, 0)
+gradientOverlay.BackgroundColor3 = Theme.accent
+gradientOverlay.BackgroundTransparency = 0.95
+gradientOverlay.BorderSizePixel = 0
+gradientOverlay.ZIndex = 0
+gradientOverlay.Parent = main
+corner(gradientOverlay, 14)
+
+local gradient = Instance.new("UIGradient")
+gradient.Transparency = NumberSequence.new({
+    NumberSequenceKeypoint.new(0, 0),
+    NumberSequenceKeypoint.new(0.6, 0.8),
+    NumberSequenceKeypoint.new(1, 1),
+})
+gradient.Rotation = 90
+gradient.Parent = gradientOverlay
 
 -- mobile scaling for main frame
 if _isMobile then
@@ -721,6 +807,27 @@ titleLogo.ZIndex = 4
 titleLogo.Parent = titleBar
 corner(titleLogo, 8)
 
+-- glow ring behind logo
+local logoGlow = Instance.new("Frame")
+logoGlow.Size = UDim2.fromOffset(34, 34)
+logoGlow.Position = UDim2.new(0, 8, 0.5, -17)
+logoGlow.BackgroundColor3 = Theme.accent
+logoGlow.BackgroundTransparency = 0.85
+logoGlow.BorderSizePixel = 0
+logoGlow.ZIndex = 3
+logoGlow.Parent = titleBar
+corner(logoGlow, 10)
+
+-- pulse the logo glow
+task.spawn(function()
+    while logoGlow and logoGlow.Parent do
+        TweenService:Create(logoGlow, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { BackgroundTransparency = 0.92 }):Play()
+        task.wait(1.5)
+        TweenService:Create(logoGlow, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), { BackgroundTransparency = 0.75 }):Play()
+        task.wait(1.5)
+    end
+end)
+
 local titleLogoText = Instance.new("TextLabel")
 titleLogoText.Size = UDim2.new(1, 0, 1, 0)
 titleLogoText.BackgroundTransparency = 1
@@ -752,7 +859,7 @@ versionTag.BackgroundTransparency = 0.3
 versionTag.Font = Enum.Font.GothamBold
 versionTag.TextSize = 9
 versionTag.TextColor3 = Theme.accent
-versionTag.Text = "v2.0"
+versionTag.Text = "v2.1"
 versionTag.ZIndex = 4
 versionTag.Parent = titleBar
 corner(versionTag, 4)
@@ -894,8 +1001,22 @@ local function setTab(name)
             TweenService:Create(tabIndicators[n], TweenFast, { BackgroundTransparency = 1 }):Play()
         end
     end
+    -- animated page transitions (fade + slide)
     for n, page in pairs(pages) do
-        page.Visible = (n == name)
+        if n == name then
+            page.Visible = true
+            page.BackgroundTransparency = 1
+            if page:IsA("GuiObject") then
+                page.Position = UDim2.new(0.03, 0, 0, 0)
+                pcall(function()
+                    TweenService:Create(page, TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+                        Position = UDim2.new(0, 0, 0, 0),
+                    }):Play()
+                end)
+            end
+        else
+            page.Visible = false
+        end
     end
 end
 
@@ -1275,6 +1396,7 @@ local function appendToBox(text)
                     pushLog("> REDEEMED: " .. combinedCode, Color3.fromRGB(75, 210, 130))
                     playNotifySound("success")
                     state._redeemCount = (state._redeemCount or 0) + 1
+                    showToast("✓ Code redeemed: " .. combinedCode, Theme.success, 3)
                 else
                     pushLog("> failed: " .. tostring(statusMsg), Color3.fromRGB(255, 90, 90))
                 end
@@ -1309,7 +1431,7 @@ local function trim(s)
 end
 
 -- Sound notification helper
-local function playNotifySound(soundType)
+playNotifySound = function(soundType)
     if not state.soundNotify then return end
     pcall(function()
         local sound = Instance.new("Sound")
@@ -5120,6 +5242,110 @@ local SAB_DB = {
     ["fastest way to level"] = "ROLLS",
     ["best way to get xp"] = "ROLLS",
     ["what gives the most xp"] = "ROLLS",
+
+    -- v2.1 additions: deeper SAB trivia coverage
+    ["what is the first brainrot ever added"] = "SKIBIDITOILET",
+    ["first brainrot added"] = "SKIBIDITOILET",
+    ["original brainrot"] = "SKIBIDITOILET",
+    ["first brainrot in the game"] = "SKIBIDITOILET",
+    ["what was the first brainrot"] = "SKIBIDITOILET",
+    ["what is the tallest brainrot"] = "TITAN",
+    ["tallest brainrot"] = "TITAN",
+    ["which brainrot is the tallest"] = "TITAN",
+    ["biggest brainrot"] = "TITAN",
+    ["what is the smallest brainrot"] = "BABY",
+    ["smallest brainrot in sab"] = "BABY",
+    ["which brainrot is the smallest"] = "BABY",
+    ["tiniest brainrot"] = "BABY",
+    ["how many maps are in sab"] = "6",
+    ["total maps"] = "6",
+    ["number of maps"] = "6",
+    ["how many worlds are there"] = "6",
+    ["total worlds"] = "6",
+    ["what map has the best rolls"] = "VOID",
+    ["best map for rolling"] = "VOID",
+    ["which map gives the best brainrots"] = "VOID",
+    ["what is the void map"] = "ENDGAME",
+    ["what world is the last one"] = "VOID",
+    ["final world"] = "VOID",
+    ["last world in sab"] = "VOID",
+    ["what is the max streak"] = "100",
+    ["max roll streak"] = "100",
+    ["highest streak possible"] = "100",
+    ["how many free rolls per day"] = "25",
+    ["daily free rolls"] = "25",
+    ["free rolls limit"] = "25",
+    ["how many rolls do you get free"] = "25",
+    ["what does 2x luck do"] = "DOUBLECHANCE",
+    ["2x luck effect"] = "DOUBLECHANCE",
+    ["what does double luck do"] = "DOUBLECHANCE",
+    ["what is the trade limit"] = "4",
+    ["trade limit"] = "4",
+    ["how many items can you trade"] = "4",
+    ["max items per trade"] = "4",
+    ["how many items in a trade"] = "4",
+    ["what is the best free aura"] = "STARDUST",
+    ["best free aura"] = "STARDUST",
+    ["best aura you can get for free"] = "STARDUST",
+    ["what does the auto clicker gamepass do"] = "AUTOROLLS",
+    ["auto clicker gamepass"] = "AUTOROLLS",
+    ["what is auto clicker for"] = "AUTOROLLS",
+    ["auto roll gamepass"] = "AUTOROLLS",
+    ["what is the rarest free brainrot"] = "VOID",
+    ["rarest brainrot you can roll"] = "VOID",
+    ["what is the hardest brainrot to get"] = "VOID",
+    ["what does the lucky egg do"] = "BONUSLUCK",
+    ["lucky egg effect"] = "BONUSLUCK",
+    ["what is lucky egg for"] = "BONUSLUCK",
+    ["what does super luck do"] = "5XLUCK",
+    ["super luck gamepass"] = "5XLUCK",
+    ["super luck effect"] = "5XLUCK",
+    ["what is the fastest aura"] = "LIGHTNING",
+    ["fastest aura in sab"] = "LIGHTNING",
+    ["which aura is the fastest"] = "LIGHTNING",
+    ["what aura has the best speed"] = "LIGHTNING",
+    ["how many pets can you equip"] = "3",
+    ["max equipped pets"] = "3",
+    ["how many pets equipped at once"] = "3",
+    ["pet equip limit"] = "3",
+    ["what does enchant do"] = "BOOSTSTATS",
+    ["enchant effect"] = "BOOSTSTATS",
+    ["what is enchanting for"] = "BOOSTSTATS",
+    ["what is sammys favorite color"] = "PURPLE",
+    ["sammys favorite color"] = "PURPLE",
+    ["sammy fav color"] = "PURPLE",
+    ["what color does sammy like"] = "PURPLE",
+    ["what is the code for 100 rolls"] = "RELEASE",
+    ["100 rolls code"] = "RELEASE",
+    ["what does mega luck do"] = "10XLUCK",
+    ["mega luck gamepass effect"] = "10XLUCK",
+    ["mega luck gamepass"] = "10XLUCK",
+    ["what is the newest update"] = "SUMMER",
+    ["latest update"] = "SUMMER",
+    ["newest update in sab"] = "SUMMER",
+    ["most recent update"] = "SUMMER",
+    ["how many secret brainrots are there"] = "7",
+    ["total secret brainrots"] = "7",
+    ["number of secret brainrots"] = "7",
+    ["how many secrets exist"] = "7",
+    ["what does the magnet do"] = "AUTOCOLLECT",
+    ["magnet gamepass"] = "AUTOCOLLECT",
+    ["what is the magnet for"] = "AUTOCOLLECT",
+    ["what does the time skip do"] = "SKIPNIGHT",
+    ["time skip effect"] = "SKIPNIGHT",
+    ["how to skip nighttime"] = "TIMESKIP",
+    ["what language is sab coded in"] = "LUAU",
+    ["what language is the game in"] = "LUAU",
+    ["sab programming language"] = "LUAU",
+    ["what code is sab written in"] = "LUAU",
+    ["how to get coins fast"] = "SELL",
+    ["fastest way to get coins"] = "SELL",
+    ["best way to get coins"] = "SELL",
+    ["how do you get coins quickly"] = "SELL",
+    ["what is the highest damage brainrot"] = "GODLY",
+    ["strongest brainrot"] = "GODLY",
+    ["most powerful brainrot"] = "GODLY",
+    ["highest damage brainrot"] = "GODLY",
 }
 
 local SAB_MULTI = {
@@ -5591,6 +5817,76 @@ local function predictAnswer(message)
         if word then
             local resolved = predictLookup(word)
             if resolved then return resolved, "spell" end
+        end
+    end
+
+    -- 5d. FIRST/LAST LETTER: "first letter of my name", "last letter of country"
+    if norm:find("first letter") or norm:find("last letter") then
+        local isLast = norm:find("last letter") ~= nil
+        local subject = norm:gsub("first letter[s]? of",""):gsub("last letter[s]? of","")
+            :gsub("what is",""):gsub("the",""):match("^%s*(.-)%s*$") or ""
+        local resolved = predictLookup(subject)
+        if resolved and #resolved >= 1 then
+            local letter = isLast and resolved:sub(#resolved, #resolved) or resolved:sub(1, 1)
+            return letter, "firstletter"
+        end
+    end
+
+    -- 5e. VOWEL/CONSONANT COUNT: "how many vowels in X"
+    if norm:find("vowel") or norm:find("consonant") then
+        local isVowel = norm:find("vowel") ~= nil
+        local subject = norm:gsub("how many vowels? in",""):gsub("how many consonants? in","")
+            :gsub("count vowels? in",""):gsub("count consonants? in","")
+            :match("^%s*(.-)%s*$") or ""
+        local resolved = predictLookup(subject)
+        if resolved then
+            local count = 0
+            for i = 1, #resolved do
+                local ch = resolved:sub(i,i):lower()
+                local isV = (ch=="a" or ch=="e" or ch=="i" or ch=="o" or ch=="u")
+                if (isVowel and isV) or (not isVowel and not isV and ch:match("%a")) then
+                    count = count + 1
+                end
+            end
+            return tostring(count), "vowelcount"
+        end
+    end
+
+    -- 5f. TRUE/FALSE: "true or false: sammy is from brazil"
+    if norm:find("true or false") or norm:find("true false") then
+        local statement = norm:gsub("true or false%s*:?%s*",""):gsub("true false%s*:?%s*","")
+        -- check common facts
+        local knownTrue = {
+            "sammy is from brazil", "sammy lives in brazil", "sammy was born in algeria",
+            "sab stands for steal a brainrot", "rainbow is the rarest mutation",
+            "eclipse is the best mutation", "sammy is 24", "sammy is the creator",
+            "the max level is 100", "there are 6 biomes", "loki is sammys dog",
+        }
+        local knownFalse = {
+            "sammy is from america", "sammy is 25", "sammy is 23", "gold is the rarest mutation",
+            "the max level is 50", "there are 5 biomes", "sammy lives in algeria",
+        }
+        for _, t in ipairs(knownTrue) do
+            if statement:find(t:gsub("%-", "%%-"), 1, true) then return "TRUE", "truefalse" end
+        end
+        for _, f in ipairs(knownFalse) do
+            if statement:find(f:gsub("%-", "%%-"), 1, true) then return "FALSE", "truefalse" end
+        end
+    end
+
+    -- 5g. UNSCRAMBLE: "unscramble YZZIP" → PIZZA
+    if norm:find("unscramble") or norm:find("scrambled") then
+        local scrambled = norm:match("unscramble%s+(%S+)") or norm:match("scrambled%s+word%s+is%s+(%S+)")
+        if scrambled then
+            scrambled = scrambled:upper():gsub("[^%a]","")
+            -- sort letters and compare against known answers
+            local function sortStr(s) local t={}; for i=1,#s do t[i]=s:sub(i,i) end; table.sort(t); return table.concat(t) end
+            local sorted = sortStr(scrambled)
+            for _, v in pairs(PREDICT_FACTS) do
+                if type(v) == "string" and #v == #scrambled then
+                    if sortStr(v) == sorted then return v, "unscramble" end
+                end
+            end
         end
     end
 
@@ -7250,6 +7546,7 @@ local function onRiddleDetected(text, source)
             pushLog("> answer: " .. primary, COL_ON)
             playNotifySound("success")
             state._riddleCount = (state._riddleCount or 0) + 1
+            showToast("🧠 Riddle solved: " .. primary:sub(1, 25), Theme.accent, 3)
 
             -- update riddler panel
             if _riddlerALabel then
@@ -7503,6 +7800,49 @@ local mainPad = Instance.new("UIPadding")
 mainPad.PaddingBottom = UDim.new(0, 12)
 mainPad.PaddingRight = UDim.new(0, 4)
 mainPad.Parent = pageMain
+
+local function makeSectionHeader(parent, order, text)
+    local header = Instance.new("Frame")
+    header.Size = UDim2.new(1, -4, 0, 22)
+    header.BackgroundTransparency = 1
+    header.LayoutOrder = order
+    header.ZIndex = 3
+    header.Parent = parent
+
+    local headerAccent = Instance.new("Frame")
+    headerAccent.Size = UDim2.new(0, 3, 0, 12)
+    headerAccent.Position = UDim2.new(0, 2, 0.5, -6)
+    headerAccent.BackgroundColor3 = Theme.accent
+    headerAccent.BackgroundTransparency = 0.3
+    headerAccent.BorderSizePixel = 0
+    headerAccent.ZIndex = 4
+    headerAccent.Parent = header
+    corner(headerAccent, 2)
+
+    local headerLabel = Instance.new("TextLabel")
+    headerLabel.Size = UDim2.new(1, -16, 1, 0)
+    headerLabel.Position = UDim2.new(0, 12, 0, 0)
+    headerLabel.BackgroundTransparency = 1
+    headerLabel.Font = Enum.Font.GothamBold
+    headerLabel.TextSize = 9
+    headerLabel.TextColor3 = Theme.accent
+    headerLabel.TextXAlignment = Enum.TextXAlignment.Left
+    headerLabel.Text = text:upper()
+    headerLabel.TextTransparency = 0.3
+    headerLabel.ZIndex = 4
+    headerLabel.Parent = header
+
+    local headerLine = Instance.new("Frame")
+    headerLine.Size = UDim2.new(0.6, 0, 0, 1)
+    headerLine.Position = UDim2.new(0.38, 0, 0.5, 0)
+    headerLine.BackgroundColor3 = Theme.stroke
+    headerLine.BackgroundTransparency = 0.4
+    headerLine.BorderSizePixel = 0
+    headerLine.ZIndex = 4
+    headerLine.Parent = header
+
+    return header
+end
 
 local function makeMainRow(order)
     local row = Instance.new("Frame")
@@ -7869,11 +8209,15 @@ local function stopSniper()
     _capturedParts = {}
 end
 
+-- ═══ SECTION: CODE SNIPER ═══
+makeSectionHeader(pageMain, 0, "Code Sniper")
+
 -- PHANTOM CODE REDEEMER TOGGLE
 makeToggle(pageMain, 1, "Phantom Code Redeemer", false, function(on)
     state.codeSniperToggled = on
     if on then
         startSniper()
+        showToast("⚡ Code Sniper active", Theme.success, 2)
     else
         stopSniper()
         pushLog("> phantom OFF", Color3.fromRGB(140, 140, 150))
@@ -7960,12 +8304,16 @@ end)
 state.autoSubmitToggled = true
 _autoAccept = true
 
+-- ═══ SECTION: RIDDLER ═══
+makeSectionHeader(pageMain, 3.5, "Riddler")
+
 -- AUTO RIDDLER
 makeToggle(pageMain, 4, "Auto Riddler", false, function(on)
     state.riddlerToggled = on
     if on then
         startRiddler()
         pushLog("> riddler ON", COL_ON)
+        showToast("🧠 Riddler active", Theme.success, 2)
     else
         stopRiddler()
         pushLog("> riddler OFF", Color3.fromRGB(140, 140, 150))
@@ -7984,6 +8332,9 @@ makeToggle(pageMain, 6, "Auto Type", true, function(on)
     pushLog("> auto type: " .. (on and "ON" or "OFF"), on and COL_ON or Color3.fromRGB(140, 140, 150))
 end)
 state.autoType = true
+
+-- ═══ SECTION: PROTECTION ═══
+makeSectionHeader(pageMain, 6.5, "Protection")
 
 -- ANTI KICK
 makeToggle(pageMain, 7, "Anti Kick", false, function(on)
@@ -8013,6 +8364,9 @@ makeToggle(pageMain, 8, "Block Events", false, function(on)
     state.blockEvents = on
     pushLog("> block events: " .. (on and "ON" or "OFF"), on and COL_ON or Color3.fromRGB(140, 140, 150))
 end)
+
+-- ═══ SECTION: TOOLS ═══
+makeSectionHeader(pageMain, 8.5, "Tools")
 
 -- ═══ MANUAL REDEEM ═══
 local manualRow = makeMainRow(9)
@@ -8373,6 +8727,9 @@ local function makeUtilisToggle(order, labelText, default, onToggle)
     return row
 end
 
+-- ═══ SECTION: PERFORMANCE ═══
+makeSectionHeader(utilisScroll, 0, "Performance")
+
 -- ANTI LAG
 makeUtilisToggle(1, "Anti Lag", false, function(on)
     state.antiLagToggled = on
@@ -8497,6 +8854,9 @@ makeUtilisToggle(3, "Anti Ragdoll", false, function(on)
     end
 end)
 
+-- ═══ SECTION: PLAYER ═══
+makeSectionHeader(utilisScroll, 3.5, "Player")
+
 -- ANCHORED
 makeUtilisToggle(4, "Anchored", false, function(on)
     local char = LocalPlayer.Character
@@ -8525,6 +8885,76 @@ RunService.Stepped:Connect(function(_, dt)
                 prompt:InputHoldEnd()
             end)
         end
+    end
+end)
+
+-- ═══ SECTION: MOVEMENT ═══
+makeSectionHeader(utilisScroll, 5.5, "Movement")
+
+-- SPEED BOOST
+local _speedConn = nil
+makeUtilisToggle(6, "Speed Boost", false, function(on)
+    if on then
+        _speedConn = RunService.Heartbeat:Connect(function()
+            local char = LocalPlayer.Character
+            if not char then return end
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then hum.WalkSpeed = 50 end
+        end)
+        pushLog("> speed boost: ON (50)", COL_ON)
+    else
+        if _speedConn then _speedConn:Disconnect(); _speedConn = nil end
+        local char = LocalPlayer.Character
+        if char then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then hum.WalkSpeed = 16 end
+        end
+        pushLog("> speed boost: OFF", Color3.fromRGB(140, 140, 150))
+    end
+end)
+
+-- INFINITE JUMP
+local _infJumpConn = nil
+makeUtilisToggle(7, "Infinite Jump", false, function(on)
+    if on then
+        _infJumpConn = UserInputService.JumpRequest:Connect(function()
+            local char = LocalPlayer.Character
+            if not char then return end
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+        end)
+        pushLog("> infinite jump: ON", COL_ON)
+    else
+        if _infJumpConn then _infJumpConn:Disconnect(); _infJumpConn = nil end
+        pushLog("> infinite jump: OFF", Color3.fromRGB(140, 140, 150))
+    end
+end)
+
+-- NO CLIP
+local _noClipConn = nil
+makeUtilisToggle(8, "No Clip", false, function(on)
+    if on then
+        _noClipConn = RunService.Stepped:Connect(function()
+            local char = LocalPlayer.Character
+            if not char then return end
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end)
+        pushLog("> no clip: ON", COL_ON)
+    else
+        if _noClipConn then _noClipConn:Disconnect(); _noClipConn = nil end
+        local char = LocalPlayer.Character
+        if char then
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") and (part.Name == "HumanoidRootPart" or part.Name == "Head" or part.Name:find("Torso")) then
+                    part.CanCollide = true
+                end
+            end
+        end
+        pushLog("> no clip: OFF", Color3.fromRGB(140, 140, 150))
     end
 end)
 
@@ -8786,7 +9216,7 @@ creditsLbl.Font = Enum.Font.GothamMedium
 creditsLbl.TextSize = 10
 creditsLbl.TextColor3 = Theme.textMuted
 creditsLbl.TextXAlignment = Enum.TextXAlignment.Left
-creditsLbl.Text = '<font color="rgb(130,80,255)">PhantomHub</font> v2.0 · made with 💜'
+creditsLbl.Text = '<font color="rgb(130,80,255)">PhantomHub</font> v2.1 · made with 💜'
 creditsLbl.ZIndex = 4
 creditsLbl.Parent = creditsRow
 
@@ -8810,7 +9240,7 @@ footerLine.ZIndex = 3
 footerLine.Parent = footer
 
 -- status dot
-local footerDot = Instance.new("Frame")
+footerDot = Instance.new("Frame")
 footerDot.Size = UDim2.fromOffset(7, 7)
 footerDot.Position = UDim2.new(0, 14, 0.5, -3)
 footerDot.BackgroundColor3 = Theme.success
@@ -8820,7 +9250,7 @@ footerDot.Parent = footer
 corner(footerDot, 4)
 
 -- footer status text
-local _footerLabel = Instance.new("TextLabel")
+_footerLabel = Instance.new("TextLabel")
 _footerLabel.Size = UDim2.new(1, -50, 1, 0)
 _footerLabel.Position = UDim2.new(0, 26, 0, 0)
 _footerLabel.BackgroundTransparency = 1
@@ -8841,7 +9271,7 @@ footerVer.Font = Enum.Font.Code
 footerVer.TextSize = 9
 footerVer.TextColor3 = Color3.fromRGB(60, 60, 80)
 footerVer.TextXAlignment = Enum.TextXAlignment.Right
-footerVer.Text = "v2.0"
+footerVer.Text = "v2.1"
 footerVer.ZIndex = 3
 footerVer.Parent = footer
 
@@ -8899,7 +9329,15 @@ minBtn.MouseButton1Click:Connect(function()
             tabBar.Visible = true
             footer.Visible = true
         end)
-        minBtn.Text = "-"
+        minBtn.Text = "—"
+    end
+end)
+
+-- ======================== KEYBIND TOGGLE (RightShift to show/hide) ========================
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        main.Visible = not main.Visible
     end
 end)
 
@@ -9017,52 +9455,33 @@ RunService.RenderStepped:Connect(function(dt)
     end
 end)
 
--- ======================== TEXT WAVE (CONTINUOUS SMOOTH) ========================
-local function stripFontTags(s)
-    if type(s) ~= "string" then return tostring(s) end
-    return s:gsub("<font[^>]*>", ""):gsub("</font>", "")
-end
-
+-- ======================== TITLE WAVE (TARGETED — only animates title label) ========================
+local function lerpNum(a, b, t) return a + (b - a) * t end
 local function rgbStr3(r, g, b)
     return "rgb(" .. math.floor(r) .. "," .. math.floor(g) .. "," .. math.floor(b) .. ")"
 end
 
-local function lerpNum(a, b, t) return a + (b - a) * t end
-
-local function splitColorText(text, colLeft, colRight)
-    if not text or text == "" then return "" end
-    local mid = math.ceil(#text / 2)
-    local left = text:sub(1, mid)
-    local right = text:sub(mid + 1)
-    if right == "" then
-        return '<font color="' .. colLeft .. '">' .. left .. '</font>'
-    end
-    return '<font color="' .. colLeft .. '">' .. left .. '</font><font color="' .. colRight .. '">' .. right .. '</font>'
-end
-
 task.spawn(function()
     local WAVE_SPEED = 0.8
-    -- wave between bright accent and soft white
-    local AR, AG, AB = 130, 80, 255 -- accent purple
-    local WR, WG, WB = 220, 220, 240 -- soft cool white
+    local AR, AG, AB = 130, 80, 255
+    local WR, WG, WB = 220, 220, 240
+    local TITLE_RAW = "PHANTOMHUB"
     while screenGui and screenGui.Parent do
         local wave = (math.sin(tick() * WAVE_SPEED) + 1) / 2
-        local colLeft = rgbStr3(lerpNum(WR, AR, wave), lerpNum(WG, AG, wave), lerpNum(WB, AB, wave))
-        local colRight = rgbStr3(lerpNum(AR, WR, wave), lerpNum(AG, WG, wave), lerpNum(AB, WB, wave))
-
-        for _, obj in ipairs(screenGui:GetDescendants()) do
-            pcall(function()
-                if not (obj:IsA("TextLabel") or obj:IsA("TextButton")) then return end
-                if obj == LogLabel then return end
-                obj.RichText = true
-                local raw = stripFontTags(obj.Text)
-                if raw ~= "" then
-                    obj.Text = splitColorText(raw, colLeft, colRight)
-                end
-            end)
+        local built = {}
+        for ci = 1, #TITLE_RAW do
+            local charOffset = (ci - 1) / #TITLE_RAW
+            local t = (math.sin(tick() * WAVE_SPEED + charOffset * math.pi * 2) + 1) / 2
+            local r = math.floor(lerpNum(WR, AR, t))
+            local g = math.floor(lerpNum(WG, AG, t))
+            local b = math.floor(lerpNum(WB, AB, t))
+            built[ci] = '<font color="rgb(' .. r .. ',' .. g .. ',' .. b .. ')">' .. TITLE_RAW:sub(ci, ci) .. '</font>'
         end
-
-        task.wait(0.06)
+        pcall(function()
+            titleLabel.RichText = true
+            titleLabel.Text = table.concat(built)
+        end)
+        task.wait(0.05)
     end
 end)
 
@@ -9174,5 +9593,6 @@ end
 
 -- ======================== INIT ========================
 setTab("Main")
-pushLog("> PhantomHub v2.0 loaded", COL_ON)
-print("PhantomHub v2.0 loaded")
+pushLog("> PhantomHub v2.1 loaded", COL_ON)
+showToast("PhantomHub v2.1 loaded", Theme.accent, 3)
+print("PhantomHub v2.1 loaded")
