@@ -1272,7 +1272,8 @@ local function appendToBox(text)
             task.spawn(function()
                 local ok, statusMsg = typeAndSubmitCode(combinedCode)
                 if ok then
-                    pushLog("> REDEEMED: " .. combinedCode, Color3.fromRGB(120, 255, 160))
+                    pushLog("> REDEEMED: " .. combinedCode, Color3.fromRGB(75, 210, 130))
+                    playNotifySound("success")
                     state._redeemCount = (state._redeemCount or 0) + 1
                 else
                     pushLog("> failed: " .. tostring(statusMsg), Color3.fromRGB(255, 90, 90))
@@ -1305,6 +1306,27 @@ end
 
 local function trim(s)
     return (s or ""):gsub("^%s+", ""):gsub("%s+$", "")
+end
+
+-- Sound notification helper
+local function playNotifySound(soundType)
+    if not state.soundNotify then return end
+    pcall(function()
+        local sound = Instance.new("Sound")
+        sound.Parent = game:GetService("SoundService")
+        if soundType == "success" then
+            sound.SoundId = "rbxasset://sounds/electronicpingshort.wav"
+            sound.Volume = 0.5
+        elseif soundType == "detect" then
+            sound.SoundId = "rbxasset://sounds/uuhhh.mp3"
+            sound.Volume = 0.3
+        elseif soundType == "error" then
+            sound.SoundId = "rbxasset://sounds/bass.mp3"
+            sound.Volume = 0.4
+        end
+        sound:Play()
+        game:GetService("Debris"):AddItem(sound, 3)
+    end)
 end
 
 -- SAB knowledge base
@@ -6748,7 +6770,7 @@ local function buildRiddlerPanel()
     statusLbl.Position = UDim2.fromOffset(10, ry)
     statusLbl.BackgroundTransparency = 1
     statusLbl.RichText = true
-    statusLbl.Text = '<font color="rgb(245,245,245)">●</font> ready - listening...'
+    statusLbl.Text = '<font color="rgb(130,80,255)">●</font> ready — listening...'
     statusLbl.TextColor3 = Color3.fromRGB(160, 160, 160)
     statusLbl.Font = Enum.Font.GothamMedium
     statusLbl.TextSize = 12
@@ -6888,7 +6910,7 @@ local function buildRiddlerPanel()
     makeBtn(88, 84, "CLEAR", Color3.fromRGB(22,22,35), false, function()
         if _riddlerALabel then _riddlerALabel.Text = "" end
         if _riddlerQLabel then _riddlerQLabel.Text = "waiting..."; _riddlerQLabel.TextColor3 = Color3.fromRGB(120,120,120) end
-        if _riddlerStatusLabel then _riddlerStatusLabel.Text = '<font color="rgb(245,245,245)">●</font> ready - listening...' end
+        if _riddlerStatusLabel then _riddlerStatusLabel.Text = '<font color="rgb(130,80,255)">●</font> ready — listening...' end
     end)
     makeBtn(176, 120, "REDEEM", Color3.fromRGB(130, 80, 255), true, function()
         if _riddlerALabel and _riddlerALabel.Text ~= "" then pcall(riddlerSubmitAnswer, _riddlerALabel.Text) end
@@ -7162,6 +7184,7 @@ local function onRiddleDetected(text, source)
     local src = source or "?"
     pushLog("> [" .. src .. "] " .. cleaned:sub(1, 50), Color3.fromRGB(200, 180, 100))
     pushLog("> solving...", COL_ON)
+    playNotifySound("detect")
 
     -- update riddler panel question
     if _riddlerQLabel then
@@ -7173,7 +7196,7 @@ local function onRiddleDetected(text, source)
         _riddlerALabel.TextColor3 = Color3.fromRGB(255, 200, 80)
     end
     if _riddlerStatusLabel then
-        _riddlerStatusLabel.Text = '<font color="rgb(255,200,80)">●</font> solving...'
+        _riddlerStatusLabel.Text = '<font color="rgb(130,80,255)">●</font> solving...'
     end
 
     local ts = os.date("%H:%M:%S")
@@ -7192,6 +7215,7 @@ local function onRiddleDetected(text, source)
         if answers and #answers > 0 then
             local primary = answers[1]
             pushLog("> answer: " .. primary, COL_ON)
+            playNotifySound("success")
             state._riddleCount = (state._riddleCount or 0) + 1
 
             -- update riddler panel
@@ -7200,7 +7224,7 @@ local function onRiddleDetected(text, source)
                 _riddlerALabel.TextColor3 = COL_WHITE
             end
             if _riddlerStatusLabel then
-                _riddlerStatusLabel.Text = '<font color="rgb(245,245,245)">●</font> sent: ' .. primary
+                _riddlerStatusLabel.Text = '<font color="rgb(75,210,130)">●</font> sent: ' .. primary
             end
             _riddlerSolvedCount = _riddlerSolvedCount + 1
             if _riddlerCountLabel then
@@ -7646,6 +7670,15 @@ local function feedSection(text)
     _lastSectionTick = now
 
     pushLog("> section: " .. cleaned, COL_ON)
+    -- flash footer dot green briefly for activity
+    if footerDot then
+        TweenService:Create(footerDot, TweenFast, { BackgroundColor3 = Theme.success }):Play()
+        task.delay(2, function()
+            if footerDot and footerDot.Parent then
+                TweenService:Create(footerDot, TweenFast, { BackgroundColor3 = Theme.success }):Play()
+            end
+        end)
+    end
 
     -- Use the existing appendToBox which handles accumulation + box display + submission
     appendToBox(cleaned)
