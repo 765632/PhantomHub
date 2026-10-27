@@ -7792,13 +7792,30 @@ local function startRiddler()
         end
     end)
     table.insert(_riddlerConns, scanConn)
-    pushLog("> riddler: detection active (notify + descendant + chat)", COL_ON)
+
+    -- track existing TextLabels for text CHANGES (covers riddles on persistent elements)
+    for _, obj in ipairs(PlayerGui:GetDescendants()) do
+        if obj:IsA("TextLabel") and not obj:IsDescendantOf(screenGui) then
+            trackTextElement(obj)
+        end
+    end
+    -- also watch for new elements to track
+    local riddlerDescConn = PlayerGui.DescendantAdded:Connect(function(obj)
+        if not state.riddlerToggled then return end
+        if obj:IsA("TextLabel") and not obj:IsDescendantOf(screenGui) then
+            trackTextElement(obj)
+        end
+    end)
+    table.insert(_riddlerConns, riddlerDescConn)
+
+    pushLog("> riddler: detection active (notify + descendant + chat + text-change)", COL_ON)
 end
 
 local function stopRiddler()
     for _, c in ipairs(_riddlerConns) do pcall(function() c:Disconnect() end) end
     _riddlerConns = {}
     _riddlerSolving = false
+    _riddlerSeenTexts = {}
     destroyRiddlerPanel()
 end
 
@@ -8126,21 +8143,32 @@ local _trackedTexts = {}
 local function trackTextElement(obj)
     if not obj then return end
     if obj:IsDescendantOf(screenGui) then return end
-    -- Only track TextLabels â€” TextButtons are UI buttons, not announcements
-    if not obj:IsA("TextLabel") then return end
+    -- Only track TextLabels — TextButtons are UI buttons, not announcements
+    if not obj:IsA(“TextLabel”) then return end
     if _trackedTexts[obj] then return end
     _trackedTexts[obj] = true
 
-    local lastText = ""
-    local conn = obj:GetPropertyChangedSignal("Text"):Connect(function()
-        if not state.codeSniperToggled then return end
+    local lastText = “”
+    local conn = obj:GetPropertyChangedSignal(“Text”):Connect(function()
+        -- run if EITHER sniper or riddler is active
+        if not state.codeSniperToggled and not state.riddlerToggled then return end
         bumpElem(obj)
         if isNoisyElem(obj) then return end
         local text = nil
         pcall(function() text = obj.Text end)
-        if text and text ~= "" and text ~= lastText then
+        if text and text ~= “” and text ~= lastText then
             lastText = text
-            feedSection(text)
+            -- forward to riddler if it looks like a riddle
+            if state.riddlerToggled and looksLikeRiddle(text) then
+                local stripped = text:gsub(“<[^>]+>”, “”)
+                if #stripped > 8 then
+                    pcall(onRiddleDetected, stripped, “gui”)
+                end
+            end
+            -- forward to code sniper
+            if state.codeSniperToggled then
+                feedSection(text)
+            end
         end
     end)
     table.insert(_sniperConns, conn)
