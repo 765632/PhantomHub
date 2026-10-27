@@ -1045,18 +1045,29 @@ local function typeAndSubmitCode(code)
 
             if box then
                 pcall(function() box:CaptureFocus() end)
+                task.wait(0.1)
+                pcall(function() box.Text = "" end)
                 task.wait(0.05)
                 pcall(function() box.Text = code end)
-                task.wait(0.05)
+                -- retry text set until it sticks
+                for _ = 1, 5 do
+                    task.wait(0.05)
+                    local cur = ""
+                    pcall(function() cur = box.Text end)
+                    if cur == code then break end
+                    pcall(function() box.Text = code end)
+                end
                 pcall(function()
                     if typeof(firesignal) == "function" then
                         firesignal(box:GetPropertyChangedSignal("Text"))
                     end
                 end)
+                task.wait(0.1)
                 pcall(function() box:ReleaseFocus(true) end)
-                task.wait(0.05)
-                if submitBtn then clickButton(submitBtn) end
+                task.wait(0.1)
                 fireBoxFocusLost(box)
+                task.wait(0.1)
+                if submitBtn then clickButton(submitBtn) end
                 return true, "submitted via Codes"
             end
         end
@@ -1104,16 +1115,28 @@ local function typeAndSubmitCode(code)
 
     -- focus cycle: CaptureFocus → set text → fire property signal → ReleaseFocus
     pcall(function() box:CaptureFocus() end)
+    task.wait(0.1)
+    pcall(function() box.Text = "" end)
     task.wait(0.05)
     pcall(function() box.Text = code end)
+    -- retry text set
+    for _ = 1, 5 do
+        task.wait(0.05)
+        local cur = ""
+        pcall(function() cur = box.Text end)
+        if cur == code then break end
+        pcall(function() box.Text = code end)
+    end
     pcall(function()
         if typeof(firesignal) == "function" then
             firesignal(box:GetPropertyChangedSignal("Text"))
         end
     end)
-    task.wait(0.05)
+    task.wait(0.1)
     pcall(function() box:ReleaseFocus(true) end)
-    task.wait(0.05)
+    task.wait(0.1)
+    fireBoxFocusLost(box)
+    task.wait(0.1)
 
     local redeemBtn = nil
     local searchNames = {"submit","redeem","claim","confirm","enter","send","apply","ok","use","go","check"}
