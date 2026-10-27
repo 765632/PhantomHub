@@ -6288,6 +6288,45 @@ local function reverseStr(s)
     return r
 end
 
+-- large pool of known brainrot/mutation/trait names for unscramble + reverse solving
+local KNOWN_NAMES = {
+    -- mutations
+    "GOLD","DIAMOND","BLOODROT","RAINBOW","CANDY","LAVA","GALAXY","YINYANG",
+    "RADIOACTIVE","CURSED","DIVINE","CYBER","PHANTOM","CRYSTAL","ECLIPSE",
+    -- biomes
+    "GRASSLANDS","DESERT","SNOW","OCEAN","VOLCANO","SPACE",
+    -- traits
+    "LIGHTNING","FIRE","ICE","POISON","WIND","EARTH","WATER","DARK","LIGHT",
+    "ELECTRIC","PSYCHIC","GHOST","DRAGON","STEEL","FAIRY","SHADOW","COSMIC",
+    "NATURE","CHAOS","VOID","ASTRAL","ABYSS",
+    -- events
+    "HALLOWEEN","CHRISTMAS","NEWYEARS","VALENTINES","EASTER","SUMMER",
+    -- OGs
+    "STRAWBERRYELEPHANT","MEOWL","SKIBIDITOILET","JOHNPORK","SPYDERELEPHANT",
+    -- popular brainrots
+    "NOOBINIPIZZANINI","FLAMINGOPANDA","DRAGONCATINI","PHOENIXINI","POLAROIDINI",
+    "GIGABRAININI","CAYLUSINI","PHOENIX","RACCOONINI","PENGUININI","SHARKINI",
+    "FROSTINI","ALIENINI","ROCKETINI","CAMELINI","SNOWMANINI","SCORPIONINI",
+    -- fuse drops
+    "PENGUINOPUMPKINO","FROSTINOVAMPIRO","VAMPIRIBBITINI","MUMMELOBANDELLO",
+    "MORTARUGA","LOSTREATERS","FANGAROLUPINO","ONIONIPANDA","SAMMYNISPOOKYNI",
+    "PLANTBROS","FESTIVE67","ROSEYANDTEDDY","GRIFFINDRAGONINI","DRAGONAQUANINI",
+    "ROCKETINIFROSTINI","CELESTIALPEGASUS","SPAGHETTITUALETTI","ESPRESSOSIGNORA",
+    -- lucky block drops
+    "CANDICORNI","GRIMCHEESE","ZOMBIEBOWL","BANANITOSKELITO","BATINTHEBOX",
+    "BOOBOOROCKET","FLYINGDUTCHMAN","DRAGONSKELETONINI","CARLOO","ALESSIO",
+    "LOSBOMBINITOS","CRABBOLIMONETTA","BLACKHOLEGOAT","GUERRIRODIGITALE",
+    "SAMMYINIFATTINI","TIGROLIGREFRUTONNI","ORCALEROORCALA",
+    -- common game terms
+    "SAMMY","STEAK","CAYLUS","CRUZ","LOKI","BRAZIL","ALGERIA","TACOS","CHEESE",
+    "TUESDAY","SATURDAY","DEMAND","COINS","AUTOROLL","MAGNET","TIMESKIP",
+    -- machines
+    "HAUNTEDFUSE","WITCHFUSE","SANTASFUSE","CUPIDSMACHINE","DIVINEFUSE",
+    "CYBERCRAFTMACHINE","SUMMERFUSE","RNGMACHINE","EGGINCUBATOR",
+    -- additional
+    "KRYSTAL","DISCO","TITAN","FEATHER","SPIDER","RACOONINIJANDELINI",
+}
+
 local function predictAnswer(message)
     if not message or message == "" then return nil end
     local norm = message:lower():gsub("[^%w%s]"," "):gsub("%s+"," "):match("^%s*(.-)%s*$") or ""
@@ -6315,6 +6354,13 @@ local function predictAnswer(message)
             end
         end
         if resolved then return reverseStr(resolved), "reverse" end
+        -- also check if the subject IS a reversed known name
+        if subject and #subject > 2 then
+            local reversed = reverseStr(subject:upper():gsub("[^%a]",""))
+            for _, name in ipairs(KNOWN_NAMES) do
+                if name == reversed then return name, "reverse" end
+            end
+        end
     end
 
     -- 2. LETTER COUNT: "how many letters in X"
@@ -6532,6 +6578,10 @@ local function predictAnswer(message)
                     local uv = v:upper():gsub("[^%a]","")
                     if #uv == #scrambled and sortStr(uv) == sorted then return v, "unscramble" end
                 end
+            end
+            -- also check KNOWN_NAMES pool
+            for _, name in ipairs(KNOWN_NAMES) do
+                if #name == #scrambled and sortStr(name) == sorted then return name, "unscramble" end
             end
         end
     end
