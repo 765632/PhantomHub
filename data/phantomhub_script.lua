@@ -4966,6 +4966,25 @@ local PREDICT_FACTS = {
     releaseyear="2025", releaseday="FRIDAY", releasemonth="MAY",
     totalrebirths="19", totaltraits="22",
     group="BRAZILIANSPYDER", shortfor="SAM",
+    -- admin abuse
+    steakage="25", steakbrother="CRUZ", cruzhates="CHEESE",
+    mostaura="CAYLUS", besttraitfarmer="RUSTYNICKLE40",
+    adminschedule="TUESDAY", tacotuesday="TUESDAY",
+    adminday="TUESDAY", admintime="6PM",
+    boringgame="KEYBOARDESCAPE", worstowner="SECRETLOKII",
+    adminwarspawn="RACOONINIJANDELINI",
+    -- halloween / eclipse
+    eclipsemutation="ECLIPSE", eclipsemultiplier="14",
+    halloweenmutation="ECLIPSE", halloweenfuse="HAUNTEDFUSE",
+    bestdrop="PLANTBROS", bestfusedrop="PLANTBROS",
+    phoenix="PHOENIX", eclipsephoenix="ECLIPSE",
+    skullblock="DRAGONSKELETONINI", bestskull="DRAGONSKELETONINI",
+    -- extras
+    favoritebrainrot="MEOWL", favbrainrot="MEOWL",
+    bestog="SPYDERELEPHANT", bestfoodduo="PIZZAANDRANCH",
+    onchain="SPIDER", onlefteye="SPIDER",
+    fortnitegame="ROBABANK", startedmaking="2013",
+    scrappedmutation="DISCO",
 }
 
 local PREDICT_ORDINALS = {
@@ -5164,7 +5183,7 @@ local AI_SYSTEM = table.concat({
     "Max server size: EIGHT | Total rebirths: 19",
     "First trait: LIGHTNING | Lightning strike trait: MATEO",
     "Lead programmer: HASTED | Discord: BLOSSOM",
-    "Total mutations: 15 (FIFTEEN) | Total machines: 20 (TWENTY) | Total rarities: SIX",
+    "Total mutations: 15 (FIFTEEN) | Total machines: 20 (TWENTY) | Total rarities: NINE (9)",
     "Active code: BESTBRAINROTEVER (gives LAVACCASATURNOSATURNITA)",
     "",
     "=== RARITIES ===",
@@ -6888,6 +6907,10 @@ local function startRiddler()
                 or lower:find("letter") or lower:find("times")
                 or lower:find("twice") or lower:find("plus")
                 or lower:find("minus") or lower:find("add")
+                or lower:find("admin") or lower:find("steak")
+                or lower:find("caylus") or lower:find("taco")
+                or lower:find("trait") or lower:find("fuse")
+                or lower:find("code") or lower:find("riddle")
             if isRiddle then
                 onRiddleDetected(text)
             end
@@ -6899,7 +6922,7 @@ local function startRiddler()
     -- Screen TextLabels are game-created (announcements), so broad keywords are safe here
     -- (unlike chat, which comes from players and needs strict filtering)
     local scanConn = RunService.Heartbeat:Connect(function()
-        if not state.riddlerToggled or _riddlerSolving then return end
+        if not state.riddlerToggled then return end
         local now = os.clock()
         if now - _riddlerLastScan < RIDDLER_SCAN_INTERVAL then return end
         _riddlerLastScan = now
@@ -6915,7 +6938,7 @@ local function startRiddler()
                         pcall(function() text = d.Text end)
                         if text and #text > 8 then
                             local lower = text:lower()
-                            -- broad keyword match (same as brxxks) — screen labels are trusted
+                            -- broad keyword match — screen labels are trusted game content
                             local isRiddle = lower:find("what") or lower:find("who")
                                 or lower:find("how") or lower:find("where")
                                 or lower:find("which") or lower:find("name")
@@ -6928,6 +6951,10 @@ local function startRiddler()
                                 or lower:find("letter") or lower:find("times")
                                 or lower:find("twice") or lower:find("plus")
                                 or lower:find("minus") or lower:find("add")
+                                or lower:find("admin") or lower:find("steak")
+                                or lower:find("caylus") or lower:find("taco")
+                                or lower:find("trait") or lower:find("fuse")
+                                or lower:find("code") or lower:find("riddle")
                             if isRiddle then
                                 pcall(onRiddleDetected, text)
                             end
