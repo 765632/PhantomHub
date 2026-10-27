@@ -1050,8 +1050,8 @@ content.BackgroundTransparency = 1
 content.ZIndex = 2
 content.Parent = main
 
--- ======================== ENGINE (do-end to free locals) ========================
-do
+-- ======================== ENGINE (IIFE for own 200-local scope) ========================
+;(function()
 -- ======================== LOG SYSTEM ========================
 logEntries = {}
 local MAX_LOG_LINES = 80
@@ -7885,7 +7885,7 @@ stopRiddler = function()
     _riddlerSeenTexts = {}
     destroyRiddlerPanel()
 end
-end -- do (Engine)
+end)()
 
 -- ======================== MAIN PAGE ========================
 local pageMain = Instance.new("ScrollingFrame")
