@@ -6363,6 +6363,21 @@ local PREDICT_FACTS = {
     phoenix="PHOENIX", dragon="DRAGONCATINI",
     flamingo="FLAMINGOPANDA", panda="FLAMINGOPANDA",
     spider="SPYDERELEPHANT", spyder="SPYDERELEPHANT",
+    -- OG trait multipliers
+    strawberrytrait="8X", meowltrait="7X", johnporktrait="6.5X", skibiditrait="6X",
+    besttrait="STRAWBERRY", highesttrait="STRAWBERRY",
+    worsttrait="SLEEPY", negativetrait="SLEEPY", sleepytrait="0.5X",
+    -- ritual traits
+    painttrait="5X", tietrait="3.75X", spidertrait="3.5X",
+    matteohat="3.5X", galactictrait="GALACTIC",
+    -- admin abuse traits
+    firetrait="5X", rosetrait="5X", fireworkstrait="5X",
+    nyantrait="5X", lightningtrait="5X", discotrait="4X",
+    -- country traits
+    braziltrait="5X", indonesiatrait="4X", sombrerotrait="4X",
+    -- seasonal trait multipliers
+    rainbowballoontrait="6.5X", pinkeggtrait="6.5X",
+    oneyeartrait="5.5X", grannytrait="5.5X",
     -- multipliers
     goldmultiplier="2X", diamondmultiplier="4X", bloodrotmultiplier="6X",
     rainbowmultiplier="8X", candymultiplier="10X", lavamultiplier="10X",
