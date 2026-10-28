@@ -5787,6 +5787,125 @@ local SAB_DB = {
     ["what was the second rarest mutation"] = "CRYSTAL",
     ["second rarest mutation"] = "CRYSTAL",
     ["2nd rarest mutation"] = "CRYSTAL",
+
+    -- ==================== V4.0 TRICKY QUESTION PATTERNS ====================
+    -- "what ___" phrasings
+    ["what does sab stand for"] = "STEALABRAINROT",
+    ["what does steal a brainrot mean"] = "STEALABRAINROT",
+    ["what is sab short for"] = "STEALABRAINROT",
+    ["what game is this"] = "STEALABRAINROT",
+    ["what roblox game is this"] = "STEALABRAINROT",
+    ["what does og stand for"] = "ORIGINAL",
+    ["what does og mean"] = "ORIGINAL",
+    ["what is an og"] = "ORIGINAL",
+    ["what does rng stand for"] = "RANDOMNUMBERGENERATOR",
+    ["what does rng mean"] = "RANDOMNUMBERGENERATOR",
+    ["what does npc stand for"] = "NONPLAYERCHARACTER",
+
+    -- "who ___" phrasings
+    ["who made sab"] = "SAMMY",
+    ["who made this game"] = "SAMMY",
+    ["who made steal a brainrot"] = "SAMMY",
+    ["who created this game"] = "SAMMY",
+    ["who owns sab"] = "SAMMY",
+    ["who owns this game"] = "SAMMY",
+    ["who is the best player"] = "CAYLUS",
+    ["who has the most brainrots"] = "CAYLUS",
+    ["who is the lead programmer"] = "HASTED",
+    ["who coded sab"] = "HASTED",
+    ["who programmed sab"] = "HASTED",
+    ["who is hasted"] = "PROGRAMMER",
+    ["who is blossom"] = "DISCORDMOD",
+    ["who runs the discord"] = "BLOSSOM",
+
+    -- "when ___" phrasings
+    ["when was sab released"] = "MAY2025",
+    ["when did sab come out"] = "MAY2025",
+    ["when was steal a brainrot released"] = "MAY2025",
+    ["sab release date"] = "MAY162025",
+    ["when was sab made"] = "2025",
+    ["what year was sab made"] = "2025",
+    ["what month was sab released"] = "MAY",
+    ["when is the next update"] = "SOON",
+    ["when is the next event"] = "SOON",
+
+    -- "where ___" phrasings
+    ["where is sammy from"] = "BRAZIL",
+    ["where does sammy live"] = "BRAZIL",
+    ["where was sab made"] = "BRAZIL",
+    ["where can i play sab"] = "ROBLOX",
+    ["where to find codes"] = "DISCORD",
+    ["where are codes posted"] = "DISCORD",
+    ["where to get codes"] = "DISCORD",
+    ["where to find sammy"] = "ROBLOX",
+
+    -- "how ___" phrasings
+    ["how old is sammy"] = "25",
+    ["how old is steak"] = "25",
+    ["how old is sab"] = "1YEAR",
+    ["how do you get mutations"] = "ROLLS",
+    ["how to get mutations"] = "ROLLS",
+    ["how do you get traits"] = "RITUALORRANDOM",
+    ["how to trade"] = "TRADEMACHINE",
+    ["how to fuse"] = "FUSEMACHINE",
+    ["how do you rebirth"] = "REBIRTHBUTTON",
+    ["how to rebirth"] = "REBIRTHBUTTON",
+    ["how many brainrots are in sab"] = "ALOT",
+    ["how many brainrots exist"] = "ALOT",
+
+    -- "is ___" yes/no phrasings
+    ["is sab free"] = "YES",
+    ["is sab on mobile"] = "YES",
+    ["is sab on pc"] = "YES",
+    ["is sab on xbox"] = "YES",
+    ["is sab on playstation"] = "YES",
+    ["is sab dead"] = "NO",
+    ["is sab dying"] = "NO",
+    ["is sab good"] = "YES",
+    ["is sammy nice"] = "YES",
+    ["is sammy rich"] = "YES",
+    ["is trading free"] = "YES",
+
+    -- riddle-style trick questions
+    ["what has 4 letters sometimes 9 and never 5"] = "CORRECT",
+    ["what has four letters sometimes nine and never five"] = "CORRECT",
+    ["whats the answer to life"] = "42",
+    ["answer to life the universe and everything"] = "42",
+    ["what comes after 69"] = "70",
+    ["what comes after 420"] = "421",
+    ["what is 2 plus 2"] = "4",
+    ["what is 1 plus 1"] = "2",
+    ["what is 69 plus 420"] = "489",
+
+    -- brainrot name questions
+    ["what is the full name of noo my candy"] = "NOOMYCANDY",
+    ["noo my candy full name"] = "NOOMYCANDY",
+    ["what is the full name of plant bros"] = "PLANTBROS",
+    ["plant bros full name"] = "PLANTBROS",
+    ["what is the full name of rosey and teddy"] = "ROSEYANDTEDDY",
+    ["what is eclipse phoenix"] = "ECLIPSEPHOENIX",
+    ["eclipse phoenix income"] = "5.7B",
+
+    -- income/value questions
+    ["what is the best income brainrot"] = "ECLIPSEPHOENIX",
+    ["highest income brainrot"] = "ECLIPSEPHOENIX",
+    ["what brainrot makes the most money"] = "ECLIPSEPHOENIX",
+    ["best money maker"] = "ECLIPSEPHOENIX",
+    ["phoenix income"] = "425M",
+    ["plant bros income"] = "300M",
+    ["dragon skeleton income"] = "325M",
+    ["noo my candy income"] = "5M",
+    ["headless horseman income"] = "UNKNOWN",
+
+    -- spelling variants
+    ["favourite brainrot"] = "MEOWL",
+    ["favourite color"] = "BLUE",
+    ["favourite food"] = "PIZZA",
+    ["favourite sport"] = "FOOTBALL",
+    ["favourite animal"] = "SPIDER",
+    ["favourite number"] = "SEVEN",
+    ["favourite movie"] = "SPIDERMAN",
+    ["favourite game"] = "STEALABRAINROT",
 }
 
 local SAB_MULTI = {
@@ -6718,6 +6837,71 @@ local function predictAnswer(message)
                     if optC and optC:lower() == answer then return "C", "multichoice" end
                 end
             end
+        end
+    end
+
+    -- 5o. OPPOSITE OF: "opposite of hot", "opposite of dark"
+    if norm:find("opposite") then
+        local OPPOSITES = {
+            hot="COLD", cold="HOT", big="SMALL", small="BIG",
+            fast="SLOW", slow="FAST", up="DOWN", down="UP",
+            left="RIGHT", right="LEFT", good="BAD", bad="GOOD",
+            light="DARK", dark="LIGHT", new="OLD", old="NEW",
+            high="LOW", low="HIGH", easy="HARD", hard="EASY",
+            strong="WEAK", weak="STRONG", happy="SAD", sad="HAPPY",
+            rich="POOR", poor="RICH", open="CLOSED", closed="OPEN",
+            common="RARE", rare="COMMON", true_="FALSE", false_="TRUE",
+            yes="NO", no="YES", first="LAST", last="FIRST",
+            day="NIGHT", night="DAY", summer="WINTER", winter="SUMMER",
+        }
+        for word in norm:gmatch("%w+") do
+            if OPPOSITES[word] then return OPPOSITES[word], "opposite" end
+        end
+    end
+
+    -- 5p. ANAGRAM/DECODE: "decode YZZIP", "anagram of YZZIP"
+    if norm:find("anagram") or norm:find("decode") or norm:find("decipher") then
+        local target = norm:match("anagram%s+of%s+(%S+)") or norm:match("decode%s+(%S+)") or norm:match("decipher%s+(%S+)")
+        if target then
+            target = target:upper():gsub("[^%a]","")
+            local function sortStr(s) local t={}; for i=1,#s do t[i]=s:sub(i,i) end; table.sort(t); return table.concat(t) end
+            local sorted = sortStr(target)
+            for _, name in ipairs(KNOWN_NAMES) do
+                if #name == #target and sortStr(name) == sorted then return name, "anagram" end
+            end
+            for _, v in pairs(PREDICT_FACTS) do
+                if type(v) == "string" and #v == #target then
+                    if sortStr(v) == sorted then return v, "anagram" end
+                end
+            end
+        end
+    end
+
+    -- 5q. REPEAT/SAY/TYPE with numbers: "type 12345", "say the number 42069"
+    if norm:find("type%s+%d") or norm:find("say%s+%d") or norm:find("the number%s+%d") then
+        local num = norm:match("(%d+)")
+        if num then return num, "repeat" end
+    end
+
+    -- 5r. EMOJI RIDDLE: "what brainrot is 🍓🐘" → strawberry elephant
+    -- (emojis get stripped to text in most chat, but handle keyword combos)
+    if norm:find("strawberry") and norm:find("elephant") then return "STRAWBERRYELEPHANT", "emojicombine" end
+    if norm:find("spider") and norm:find("elephant") then return "SPYDERELEPHANT", "emojicombine" end
+    if norm:find("skibidi") and norm:find("toilet") then return "SKIBIDITOILET", "emojicombine" end
+    if norm:find("john") and norm:find("pork") then return "JOHNPORK", "emojicombine" end
+    if norm:find("flamingo") and norm:find("panda") then return "FLAMINGOPANDA", "emojicombine" end
+    if norm:find("dragon") and norm:find("cat") then return "DRAGONCATINI", "emojicombine" end
+    if norm:find("noobini") and norm:find("pizza") then return "NOOBINIPIZZANINI", "emojicombine" end
+
+    -- 5s. "SAY ___": literally repeat what's asked
+    if norm:find("^say ") or norm:find("^type ") or norm:find("^repeat ") then
+        local word = norm:match("^%w+%s+(.+)")
+        if word then
+            -- check if it maps to something in PREDICT_FACTS
+            local resolved = predictLookup(word)
+            if resolved then return resolved, "say" end
+            -- otherwise just return the literal word uppercase
+            return word:upper():gsub("[^%w]",""), "say"
         end
     end
 
@@ -8901,6 +9085,47 @@ local KNOWN_CODES_SET = {}
 for _, code in ipairs(KNOWN_CODES) do
     KNOWN_CODES_SET[code] = true
     KNOWN_CODES_SET[code:lower()] = true
+end
+
+-- DYNAMIC CODE GENERATOR: generates likely code patterns based on current year/events
+-- These get added to the known codes set dynamically
+do
+    local year = os.date and os.date("%Y") or "2026"
+    local month = os.date and os.date("%m") or "10"
+    local monthNames = {"JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"}
+    local mn = monthNames[tonumber(month)] or "OCTOBER"
+    -- generate year-based codes
+    local dynamicCodes = {
+        -- year variants
+        "SAB" .. year, "STEALABRAINROT" .. year, "HAPPYNEWYEAR" .. year,
+        "MERRYCHRISTMAS" .. year, "HAPPYHALLOWEEN" .. year,
+        "HAPPYEASTER" .. year, "SUMMER" .. year, "WINTER" .. year,
+        "SPRING" .. year, "FALL" .. year,
+        -- month variants
+        mn, mn .. year, mn .. "CODE",
+        -- milestone patterns (likes)
+        "100MLIKES", "200MLIKES", "500MLIKES", "1BLIKES",
+        -- milestone patterns (visits)
+        "1BVISITS", "2BVISITS", "5BVISITS", "10BVISITS",
+        -- update patterns for next updates
+        "UPDATE13", "UPDATE14", "UPDATE15", "UPDATE16", "UPDATE17",
+        "UPDATE18", "UPDATE19", "UPDATE20",
+        -- common SAB code formats
+        "NEWCODE", "FREECODE", "SECRETCODE", "HIDDENCODE",
+        "THANKYOU" .. year, "SORRY" .. year, "BUGFIX" .. year,
+        "FREEMUTATION", "FREETRAIT", "FREEREBIRTH", "FREEBRAINROT",
+        "MEGALUCK", "SUPERLUCK", "ULTRALUCK",
+        "SUB2SAMMY" .. year, "SPYDER" .. year,
+        -- anniversary
+        "1YEAR", "2YEAR", "1YEARANNIVERSARY", "2YEARANNIVERSARY",
+        "BIRTHDAY", "SABBIRTHDAY", "HAPPYBIRTHDAY",
+        -- popular code words
+        "GG", "HYPE", "LAUNCH", "COMEBACK", "LETSGOO", "EPIC",
+    }
+    for _, code in ipairs(dynamicCodes) do
+        KNOWN_CODES_SET[code] = true
+        KNOWN_CODES_SET[code:lower()] = true
+    end
 end
 
 -- Check if text contains any known code (instant match, no heuristics needed)
