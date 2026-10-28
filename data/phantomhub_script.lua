@@ -8986,6 +8986,18 @@ end
 -- Detection: notification remote (filtered) + screen TextLabels.
 
 local _sniperConns = {}
+local _sniperHistory = {} -- session history of all detected codes {code=true, ...}
+local _sniperHistoryList = {} -- ordered list for display
+
+-- Track a detected code in session history
+local function sniperTrackCode(code)
+    if not code or code == "" then return false end
+    local upper = code:upper()
+    if _sniperHistory[upper] then return false end -- already seen
+    _sniperHistory[upper] = tick()
+    _sniperHistoryList[#_sniperHistoryList + 1] = { code = upper, time = os.date("%H:%M:%S") }
+    return true -- new code
+end
 
 local function sniperStrip(s)
     if type(s) ~= "string" then return tostring(s or "") end
@@ -9030,6 +9042,19 @@ local UI_NOISE = {
     ["normal"] = true, ["hard"] = true, ["easy"] = true, ["extreme"] = true,
     ["aura"] = true, ["mutation"] = true, ["craft"] = true, ["fuse"] = true,
     ["roll"] = true, ["reroll"] = true, ["auto"] = true, ["manual"] = true,
+    -- SAB specific UI noise
+    ["steal"] = true, ["brainrot"] = true, ["rebirth"] = true, ["trait"] = true,
+    ["biome"] = true, ["demand"] = true, ["income"] = true, ["dps"] = true,
+    ["multiplier"] = true, ["equipped"] = true, ["locked"] = true, ["unlocked"] = true,
+    ["owned"] = true, ["empty"] = true, ["full"] = true, ["slots"] = true,
+    ["slot"] = true, ["page"] = true, ["filter"] = true, ["sort"] = true,
+    ["search"] = true, ["refresh"] = true, ["loading"] = true, ["connecting"] = true,
+    ["waiting"] = true, ["finding"] = true, ["searching"] = true, ["checking"] = true,
+    ["server"] = true, ["player"] = true, ["players"] = true, ["online"] = true,
+    ["offline"] = true, ["status"] = true, ["active"] = true, ["inactive"] = true,
+    ["cooldown"] = true, ["duration"] = true, ["remaining"] = true, ["total"] = true,
+    ["price"] = true, ["cost"] = true, ["value"] = true, ["amount"] = true,
+    ["quantity"] = true, ["limit"] = true, ["max"] = true, ["min"] = true,
 }
 
 -- Check if a standalone token looks like a redeemable code
@@ -9267,8 +9292,11 @@ local function feedSection(text)
         if knownHit == _lastSectionText and (now - _lastSectionTick) < 1.5 then return end
         _lastSectionText = knownHit
         _lastSectionTick = now
-        pushLog("> KNOWN CODE: " .. knownHit, Color3.fromRGB(100, 255, 100))
-        appendToBox(knownHit)
+        local isNew = sniperTrackCode(knownHit)
+        pushLog("> KNOWN CODE: " .. knownHit .. (isNew and " (NEW)" or " (seen)"), Color3.fromRGB(100, 255, 100))
+        if isNew then
+            appendToBox(knownHit)
+        end
         return
     end
 
@@ -9466,8 +9494,11 @@ local function startSniper()
                             local known = matchKnownCode(text)
                             if known and not _deepScanCache[known] then
                                 _deepScanCache[known] = true
-                                pushLog("> deep scan: " .. known, Color3.fromRGB(100, 220, 255))
-                                appendToBox(known)
+                                local isNew = sniperTrackCode(known)
+                                if isNew then
+                                    pushLog("> deep scan: " .. known .. " (NEW)", Color3.fromRGB(100, 220, 255))
+                                    appendToBox(known)
+                                end
                             end
                             -- also try extractCode for unknown codes
                             if not known then
@@ -9500,6 +9531,7 @@ local function stopSniper()
     _elemHits = {}
     _elemBlocked = {}
     _capturedParts = {}
+    -- don't clear _sniperHistory / _sniperHistoryList — keep session history across restarts
 end
 
 -- ═══ MAIN PAGE CONTROLS ═══
