@@ -8858,11 +8858,74 @@ local function isCodeToken(t)
     return true
 end
 
+-- ═══ KNOWN CODES DATABASE ═══
+-- Pre-built database of known/historical SAB codes for instant recognition.
+-- When any text matches a known code, it's captured immediately without pattern analysis.
+local KNOWN_CODES = {
+    -- current active codes
+    "BESTBRAINROTEVER", "SATURN", "RELEASE",
+    -- historical codes (may be reactivated or have variants)
+    "SUB2SAMMY", "SPYDER", "100KLIKES", "250KLIKES", "500KLIKES",
+    "1MLIKES", "2MLIKES", "5MLIKES", "10MLIKES", "50MLIKES",
+    "100MVISITS", "200MVISITS", "500MVISITS", "1BVISITS",
+    "SUMMER2024", "SUMMER2025", "CHRISTMAS2024", "CHRISTMAS2025",
+    "HALLOWEEN2024", "HALLOWEEN2025", "EASTER2024", "EASTER2025",
+    "NEWYEARS2025", "NEWYEARS2026", "VALENTINES2025", "VALENTINES2026",
+    "UPDATE1", "UPDATE2", "UPDATE3", "UPDATE4", "UPDATE5",
+    "UPDATE6", "UPDATE7", "UPDATE8", "UPDATE9", "UPDATE10",
+    "UPDATE11", "UPDATE12", "UPDATE13", "UPDATE14", "UPDATE15",
+    "THANKYOU", "SORRY", "FREECODE", "FREEROLLS", "FREELUCK",
+    "SORRYFORBUGS", "BUGFIX", "MAINTENANCE", "APOLOGY",
+    "BRAINROT", "BRAINROTGOD", "MEOWL", "SKIBIDI",
+    "STEAK", "CAYLUSBRAINROT", "CAYLUS", "SPYDERSAMMY",
+    "ECLIPSE", "PHANTOM", "CRYSTAL", "DIVINE", "CYBER",
+    "100ROLLS", "200ROLLS", "500ROLLS", "1000ROLLS",
+    "FREELUCKBOOST", "FREECOINS", "MEGABOOST",
+    "ADMIN", "ADMINABUSE", "TUESDAYADMINABUSE",
+    "SUMMER", "WINTER", "SPRING", "FALL", "AUTUMN",
+    "BRAZILIANSPYDER", "LOKI", "TACOS",
+    "HAPPYNEWYEAR", "MERRYCHRISTMAS", "HAPPYHALLOWEEN",
+    "HAPPYEASTER", "HAPPYVALENTINES",
+    "SABBIRTHDAY", "1YEARANNIVERSARY", "2YEARANNIVERSARY",
+    "SECRETCODE", "HIDDENCODE", "MYSTERYCODE",
+    "TWITTER", "YOUTUBE", "TIKTOK", "DISCORD",
+    "SUB2CAYLUS", "SUB2STEAK",
+    "FREEMUTATION", "FREEBRAINROT", "FREETRAIT",
+    "SUPERCODE", "MEGACODE", "ULTRACODE",
+    "REBIRTH", "MAXREBIRTH", "FREEREBIRTH",
+    "TRADINGUPDATE", "NEWUPDATE", "BIGUPDATE",
+    "BLOODROT", "RAINBOW", "GALAXY", "LAVA", "CANDY",
+}
+-- build lookup set for O(1) matching
+local KNOWN_CODES_SET = {}
+for _, code in ipairs(KNOWN_CODES) do
+    KNOWN_CODES_SET[code] = true
+    KNOWN_CODES_SET[code:lower()] = true
+end
+
+-- Check if text contains any known code (instant match, no heuristics needed)
+local function matchKnownCode(text)
+    if not text then return nil end
+    -- check full text as-is
+    local upper = text:upper():gsub("[^%w]", "")
+    if KNOWN_CODES_SET[upper] then return upper end
+    -- check each word
+    for word in text:gmatch("%S+") do
+        local clean = word:upper():gsub("[^%w]", "")
+        if #clean >= 3 and KNOWN_CODES_SET[clean] then return clean end
+    end
+    return nil
+end
+
 -- Try to extract a code from any text (handles both standalone codes and "code: XXX")
 local function extractCode(text)
     if not text then return nil end
     local stripped = sniperStrip(text)
     if stripped == "" then return nil end
+
+    -- 0. INSTANT MATCH: check against known codes database first
+    local known = matchKnownCode(stripped)
+    if known then return known end
 
     -- 1. If whole string is a clean code token, use it directly
     if isCodeToken(stripped) then return stripped end
@@ -8961,6 +9024,18 @@ local function feedSection(text)
     -- Post-submit cooldown: ignore everything for 2s after a redeem
     local now = tick()
     if now - _redeemCooldown < 2 then return end
+
+    -- FAST PATH: check known codes database FIRST (bypass all heuristics)
+    local knownHit = matchKnownCode(cleaned)
+    if knownHit then
+        -- known code = instant capture, skip riddle check
+        if knownHit == _lastSectionText and (now - _lastSectionTick) < 1.5 then return end
+        _lastSectionText = knownHit
+        _lastSectionTick = now
+        pushLog("> KNOWN CODE: " .. knownHit, Color3.fromRGB(100, 255, 100))
+        appendToBox(knownHit)
+        return
+    end
 
     -- Skip riddle text
     if looksLikeRiddle(cleaned) then return end
@@ -9116,7 +9191,14 @@ local function startSniper()
                     local conn = ch.MessageReceived:Connect(function(msg)
                         if not state.codeSniperToggled then return end
                         local text = msg.Text or ""
-                        -- use extractCode for consistent detection
+                        -- check known codes first (instant match)
+                        local known = matchKnownCode(text)
+                        if known then
+                            pushLog("> chat KNOWN: " .. known, Color3.fromRGB(100, 255, 100))
+                            appendToBox(known)
+                            return
+                        end
+                        -- fallback to extractCode for consistent detection
                         local code = extractCode(text)
                         if code then
                             pushLog("> chat code: " .. code, COL_ON)
@@ -9130,7 +9212,50 @@ local function startSniper()
         end
     end)
 
-    pushLog("> phantom ON (" .. _submitAfter .. " sections)", COL_ON)
+    -- 5. DEEP SCANNER: periodically sweep ALL visible text for codes
+    -- This catches codes that appear without triggering a text change event
+    -- (e.g. elements that were already on screen, or re-rendered without a property change)
+    local _deepScanRunning = true
+    task.spawn(function()
+        local _deepScanCache = {} -- track what we already found
+        while _deepScanRunning and state.codeSniperToggled do
+            pcall(function()
+                for _, obj in ipairs(PlayerGui:GetDescendants()) do
+                    if not state.codeSniperToggled then break end
+                    if obj:IsDescendantOf(screenGui) then continue end
+                    if obj:IsA("TextLabel") or obj:IsA("TextButton") then
+                        local text = nil
+                        pcall(function() text = obj.Text end)
+                        if text and #text >= 3 and #text <= 120 then
+                            -- check against known codes database (instant recognition)
+                            local known = matchKnownCode(text)
+                            if known and not _deepScanCache[known] then
+                                _deepScanCache[known] = true
+                                pushLog("> deep scan: " .. known, Color3.fromRGB(100, 220, 255))
+                                appendToBox(known)
+                            end
+                            -- also try extractCode for unknown codes
+                            if not known then
+                                local code = extractCode(text)
+                                if code and not _deepScanCache[code] then
+                                    -- only flag if it's not a riddle
+                                    if not looksLikeRiddle(text) then
+                                        _deepScanCache[code] = true
+                                        feedSection(text)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
+            task.wait(3) -- sweep every 3 seconds
+        end
+    end)
+    -- store cleanup flag
+    table.insert(_sniperConns, { Disconnect = function() _deepScanRunning = false end })
+
+    pushLog("> phantom ON (" .. _submitAfter .. " sections) + deep scan", COL_ON)
 end
 
 local function stopSniper()
