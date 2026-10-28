@@ -9563,7 +9563,39 @@ local function startSniper()
     -- store cleanup flag
     table.insert(_sniperConns, { Disconnect = function() _deepScanRunning = false end })
 
-    pushLog("> phantom ON (" .. _submitAfter .. " sections) + deep scan", COL_ON)
+    -- 6. WORKSPACE TEXT SCANNER: watch SurfaceGuis and BillboardGuis in 3D world
+    -- Codes sometimes appear on signs, boards, or floating text in the game world
+    pcall(function()
+        local function scanWorkspaceText(obj)
+            if not state.codeSniperToggled then return end
+            if (obj:IsA("TextLabel") or obj:IsA("TextButton")) and not obj:IsDescendantOf(screenGui) then
+                local text = nil
+                pcall(function() text = obj.Text end)
+                if text and #text >= 3 and #text <= 100 then
+                    local known = matchKnownCode(text)
+                    if known then
+                        local isNew = sniperTrackCode(known)
+                        if isNew then
+                            pushLog("> world text: " .. known, Color3.fromRGB(255, 200, 100))
+                            appendToBox(known)
+                        end
+                    end
+                end
+            end
+        end
+        -- scan existing workspace GUIs
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            pcall(scanWorkspaceText, obj)
+        end
+        -- watch for new ones
+        local wsConn = workspace.DescendantAdded:Connect(function(obj)
+            task.defer(function() pcall(scanWorkspaceText, obj) end)
+        end)
+        table.insert(_sniperConns, wsConn)
+        pushLog("> phantom: workspace scanner active", COL_ON)
+    end)
+
+    pushLog("> phantom ON (" .. _submitAfter .. " sections) + deep scan + remote sniff + world scan", COL_ON)
 end
 
 local function stopSniper()
