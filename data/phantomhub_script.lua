@@ -8461,12 +8461,22 @@ local function buildRiddlerPanel()
     riddlerToggleRow(setPage, sy, "OPEN FEED ON HIT", true); sy = sy + 42
 
     local setInfo = Instance.new("TextLabel")
-    setInfo.Size = UDim2.new(1, -20, 0, 40)
+    setInfo.Size = UDim2.new(1, -20, 0, 80)
     setInfo.Position = UDim2.fromOffset(10, sy)
     setInfo.BackgroundTransparency = 1
+    setInfo.RichText = true
     local _dbCount = 0; for _ in pairs(SAB_DB) do _dbCount = _dbCount + 1 end
-    setInfo.Text = "PhantomHub Riddler\nAI + Local DB (" .. tostring(_dbCount) .. " entries)"
-    setInfo.TextColor3 = Color3.fromRGB(80, 80, 80)
+    local _multiCount = 0; for _ in pairs(SAB_MULTI) do _multiCount = _multiCount + 1 end
+    local _factCount = 0; for _ in pairs(PREDICT_FACTS) do _factCount = _factCount + 1 end
+    local _codeCount = 0; for _ in pairs(KNOWN_CODES_SET) do _codeCount = _codeCount + 1 end
+    _codeCount = math.floor(_codeCount / 2) -- each code is stored twice (upper + lower)
+    setInfo.Text = '<font color="rgb(130,80,255)">PhantomHub Riddler v4.0</font>\n'
+        .. 'SAB_DB: <font color="rgb(75,210,130)">' .. tostring(_dbCount) .. '</font> answers\n'
+        .. 'Multi-DB: <font color="rgb(75,210,130)">' .. tostring(_multiCount) .. '</font> entries\n'
+        .. 'Predict: <font color="rgb(75,210,130)">' .. tostring(_factCount) .. '</font> facts  |  '
+        .. 'Codes: <font color="rgb(100,220,255)">' .. tostring(_codeCount) .. '</font> known\n'
+        .. '19 solve engines + 3 AI providers'
+    setInfo.TextColor3 = Color3.fromRGB(100, 100, 100)
     setInfo.Font = Enum.Font.GothamMedium
     setInfo.TextSize = 10
     setInfo.TextXAlignment = Enum.TextXAlignment.Left
