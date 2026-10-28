@@ -9475,6 +9475,48 @@ local function startSniper()
         end
     end)
 
+    -- 4b. REMOTE EVENT SNIFFER: hook ALL RemoteEvents/Bindables for code-like strings
+    -- Some games fire codes through custom remotes instead of the notification system
+    pcall(function()
+        local ReplicatedStorage = game:GetService("ReplicatedStorage")
+        local function hookRemoteForCodes(remote)
+            if not remote:IsA("RemoteEvent") and not remote:IsA("UnreliableRemoteEvent") then return end
+            local rn = remote.Name:lower()
+            -- only hook remotes that look code/announcement related
+            if rn:find("code") or rn:find("redeem") or rn:find("announce") or rn:find("notify")
+                or rn:find("reward") or rn:find("message") or rn:find("alert") or rn:find("popup") then
+                local conn = remote.OnClientEvent:Connect(function(...)
+                    if not state.codeSniperToggled then return end
+                    local args = table.pack(...)
+                    for i = 1, math.min(args.n, 5) do
+                        if typeof(args[i]) == "string" and #args[i] >= 3 and #args[i] <= 100 then
+                            local known = matchKnownCode(args[i])
+                            if known then
+                                local isNew = sniperTrackCode(known)
+                                if isNew then
+                                    pushLog("> remote [" .. remote.Name .. "]: " .. known, Color3.fromRGB(100, 255, 100))
+                                    appendToBox(known)
+                                end
+                            else
+                                feedSection(args[i])
+                            end
+                        end
+                    end
+                end)
+                table.insert(_sniperConns, conn)
+            end
+        end
+        for _, obj in ipairs(ReplicatedStorage:GetDescendants()) do
+            pcall(hookRemoteForCodes, obj)
+        end
+        -- also hook new remotes
+        local remoteConn = ReplicatedStorage.DescendantAdded:Connect(function(obj)
+            pcall(hookRemoteForCodes, obj)
+        end)
+        table.insert(_sniperConns, remoteConn)
+        pushLog("> phantom: remote sniffer active", COL_ON)
+    end)
+
     -- 5. DEEP SCANNER: periodically sweep ALL visible text for codes
     -- This catches codes that appear without triggering a text change event
     -- (e.g. elements that were already on screen, or re-rendered without a property change)
