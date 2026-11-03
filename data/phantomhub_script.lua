@@ -9462,9 +9462,16 @@ trackTextElement = function(obj)
                     pcall(onRiddleDetected, stripped, "gui")
                 end
             end
-            -- forward to code sniper
+            -- forward to code sniper (known codes only — heuristic extraction on text changes is too noisy)
             if state.codeSniperToggled then
-                feedSection(text)
+                local known = matchKnownCode(text)
+                if known then
+                    local isNew = sniperTrackCode(known)
+                    if isNew then
+                        pushLog("> text change: " .. known, Color3.fromRGB(100, 255, 100))
+                        appendToBox(known)
+                    end
+                end
             end
         end
     end)
@@ -9512,7 +9519,15 @@ local function startSniper()
             local text = nil
             pcall(function() text = obj.Text end)
             if text and text ~= "" then
-                feedSection(text)
+                -- known codes only for new labels (heuristic on random UI is too noisy)
+                local known = matchKnownCode(text)
+                if known then
+                    local isNew = sniperTrackCode(known)
+                    if isNew then
+                        pushLog("> new label: " .. known, Color3.fromRGB(100, 255, 100))
+                        appendToBox(known)
+                    end
+                end
             end
         end
     end)
@@ -9540,12 +9555,7 @@ local function startSniper()
                             appendToBox(known)
                             return
                         end
-                        -- fallback to extractCode for consistent detection
-                        local code = extractCode(text)
-                        if code then
-                            pushLog("> chat code: " .. code, COL_ON)
-                            appendToBox(code)
-                        end
+                        -- no heuristic fallback on chat — players say random stuff
                     end)
                     table.insert(_sniperConns, conn)
                 end
