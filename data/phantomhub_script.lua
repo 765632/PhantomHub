@@ -9104,13 +9104,33 @@ local UI_NOISE = {
     ["cooldown"] = true, ["duration"] = true, ["remaining"] = true, ["total"] = true,
     ["price"] = true, ["cost"] = true, ["value"] = true, ["amount"] = true,
     ["quantity"] = true, ["limit"] = true, ["max"] = true, ["min"] = true,
+    -- common game words that trigger false positives
+    ["completed"] = true, ["collected"] = true, ["defeated"] = true, ["failed"] = true,
+    ["success"] = true, ["error"] = true, ["warning"] = true, ["notice"] = true,
+    ["welcome"] = true, ["goodbye"] = true, ["congrats"] = true, ["amazing"] = true,
+    ["awesome"] = true, ["incredible"] = true, ["legendary"] = true, ["mythic"] = true,
+    ["common"] = true, ["uncommon"] = true, ["rare"] = true, ["epic"] = true,
+    ["earned"] = true, ["received"] = true, ["obtained"] = true, ["found"] = true,
+    ["purchased"] = true, ["sold"] = true, ["traded"] = true, ["crafted"] = true,
+    ["hatched"] = true, ["evolved"] = true, ["mutated"] = true, ["fused"] = true,
+    ["reward"] = true, ["rewards"] = true, ["bonus"] = true, ["boost"] = true,
+    ["level"] = true, ["round"] = true, ["stage"] = true, ["wave"] = true,
+    ["damage"] = true, ["health"] = true, ["speed"] = true, ["power"] = true,
+    ["coins"] = true, ["gems"] = true, ["tokens"] = true, ["points"] = true,
+    ["timer"] = true, ["time"] = true, ["minutes"] = true, ["seconds"] = true,
+    ["announce"] = true, ["alert"] = true, ["notification"] = true, ["message"] = true,
+    ["teleport"] = true, ["teleporting"] = true, ["spawning"] = true, ["respawn"] = true,
+    ["premium"] = true, ["gamepass"] = true, ["robux"] = true, ["vip"] = true,
+    ["private"] = true, ["public"] = true, ["friends"] = true, ["friend"] = true,
+    ["profile"] = true, ["leaderboard"] = true, ["rank"] = true, ["score"] = true,
+    ["hype"] = true, ["launch"] = true, ["comeback"] = true, ["letsgoo"] = true,
 }
 
 -- Check if a standalone token looks like a redeemable code
 local function isCodeToken(t)
-    if not t or #t < 3 or #t > 35 then return false end
+    if not t or #t < 4 or #t > 35 then return false end
     t = t:gsub("[%.!,;:%(%)%[%]\"']+$", ""):gsub("^[%.!,;:%(%)%[%]\"']+", "")
-    if #t < 3 then return false end
+    if #t < 4 then return false end
     if not t:match("^[A-Za-z0-9%-_]+$") then return false end
     local u = t:upper()
     -- Filter stat noise (5HP, 200MS, etc.)
@@ -9121,8 +9141,15 @@ local function isCodeToken(t)
         return false
     end
     if UI_NOISE[t:lower()] then return false end
-    -- Pure numbers OK if 5+ digits (likely a code), reject short pure numbers (stats)
-    if not t:match("[A-Za-z]") and #t < 5 then return false end
+    -- Pure numbers: only accept if 6+ digits
+    if not t:match("[A-Za-z]") and #t < 6 then return false end
+    -- Single common English words are NOT codes — require mixed alpha+numeric,
+    -- a dash/underscore, or match known code patterns for short pure-alpha tokens
+    if #t <= 10 and t:match("^%a+$") then
+        -- pure alphabetic and short: very likely a game word, not a code
+        -- only allow if it's ALL CAPS and 8+ chars (SAB codes tend to be long uppercase)
+        if #t < 8 or t ~= u then return false end
+    end
     return true
 end
 
@@ -9203,8 +9230,6 @@ do
         -- anniversary
         "1YEAR", "2YEAR", "1YEARANNIVERSARY", "2YEARANNIVERSARY",
         "BIRTHDAY", "SABBIRTHDAY", "HAPPYBIRTHDAY",
-        -- popular code words
-        "GG", "HYPE", "LAUNCH", "COMEBACK", "LETSGOO", "EPIC",
     }
     for _, code in ipairs(dynamicCodes) do
         KNOWN_CODES_SET[code] = true
@@ -9253,12 +9278,17 @@ local function extractCode(text)
         if isCodeToken(code) then return code end
     end
 
-    -- 3. Scan words for anything that looks code-like (mixed alphanumeric, dashes, 4+ chars)
+    -- 3. Scan words for anything that looks code-like
+    -- STRICT: must have both letters AND numbers, or contain a dash/underscore
+    -- Pure alphabetic words are almost always game text, not codes
     for word in stripped:gmatch("%S+") do
         local clean = word:gsub("[%.!,;:%(%)%[%]\"']+$", ""):gsub("^[%.!,;:%(%)%[%]\"']+", "")
-        if #clean >= 4 and isCodeToken(clean) then
-            -- Must have both letters+numbers, or contain a dash, or be 6+ chars
-            if (clean:match("%d") and clean:match("%a")) or clean:find("%-") or #clean >= 6 then
+        if #clean >= 5 and isCodeToken(clean) then
+            local hasDigit = clean:match("%d") ~= nil
+            local hasAlpha = clean:match("%a") ~= nil
+            local hasDash = clean:find("%-") or clean:find("_")
+            -- require mixed alphanumeric OR dash/underscore separator
+            if (hasDigit and hasAlpha) or hasDash then
                 return clean
             end
         end
@@ -9546,9 +9576,8 @@ local function startSniper()
                                     pushLog("> remote [" .. remote.Name .. "]: " .. known, Color3.fromRGB(100, 255, 100))
                                     appendToBox(known)
                                 end
-                            else
-                                feedSection(args[i])
                             end
+                            -- skip heuristic feedSection for remote events — too noisy
                         end
                     end
                 end)
@@ -9591,17 +9620,8 @@ local function startSniper()
                                     appendToBox(known)
                                 end
                             end
-                            -- also try extractCode for unknown codes
-                            if not known then
-                                local code = extractCode(text)
-                                if code and not _deepScanCache[code] then
-                                    -- only flag if it's not a riddle
-                                    if not looksLikeRiddle(text) then
-                                        _deepScanCache[code] = true
-                                        feedSection(text)
-                                    end
-                                end
-                            end
+                            -- deep scan: only match known codes, no heuristic extraction
+                            -- (heuristic extraction on ALL screen text causes too many false positives)
                         end
                     end
                 end
