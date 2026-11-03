@@ -619,6 +619,7 @@ local pages, setTab
 local logEntries, _logScroll, _logList
 local pushLog, typeAndSubmitCode, appendToBox
 local startRiddler, stopRiddler, onRiddleDetected
+local stopSniper
 local resolveNotifyRemote, _notifyRemoteRef
 local logToDiscord, httpRequest
 local trackTextElement
@@ -9646,7 +9647,7 @@ local function startSniper()
     pushLog("> phantom ON (" .. _submitAfter .. " sections) + deep scan + remote sniff + world scan", COL_ON)
 end
 
-local function stopSniper()
+stopSniper = function()
     for _, c in ipairs(_sniperConns) do pcall(function() c:Disconnect() end) end
     _sniperConns = {}
     _trackedTexts = {}
