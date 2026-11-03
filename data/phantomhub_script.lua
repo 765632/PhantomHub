@@ -9382,28 +9382,33 @@ local function feedSection(text)
     -- Skip riddle text
     if looksLikeRiddle(cleaned) then return end
 
-    -- Try to extract a code from the text (handles full codes AND "code: XXX" patterns)
-    local code = extractCode(cleaned)
-    if not code then return end
+    -- STRICT code section check: must be short, clean, alphanumeric only
+    -- This is what SAB code sections actually look like — short fragments, no spaces, no punctuation
+    local trimmed = cleaned:match("^%s*(.-)%s*$") or ""
+    if #trimmed < 2 or #trimmed > 30 then return end
+    if not trimmed:match("^[A-Za-z0-9]+$") then return end
+    -- filter stat noise
+    local u = trimmed:upper()
+    if u:match("^%d+MS$") or u:match("^%d+FPS$") or u:match("^%d+HP$")
+        or u:match("^%d+XP$") or u:match("^%d+[KM]$") or u:match("^LV%d+$")
+        or u:match("^X%d+$") or u:match("^%d+S$") or u:match("^%d+%%$")
+        or u:match("^%d+MIN$") or u:match("^%d+SEC$") then
+        return
+    end
+    -- filter UI noise
+    if UI_NOISE[trimmed:lower()] then return end
+    -- pure numbers under 5 chars = stats, not codes
+    if not trimmed:match("[A-Za-z]") and #trimmed < 5 then return end
 
     -- Dedup within 1.5 seconds
-    if code == _lastSectionText and (now - _lastSectionTick) < 1.5 then return end
-    _lastSectionText = code
+    if trimmed == _lastSectionText and (now - _lastSectionTick) < 1.5 then return end
+    _lastSectionText = trimmed
     _lastSectionTick = now
 
-    pushLog("> code found: " .. code, COL_ON)
-    -- flash footer dot green briefly for activity
-    if footerDot then
-        TweenService:Create(footerDot, TweenFast, { BackgroundColor3 = Theme.success }):Play()
-        task.delay(2, function()
-            if footerDot and footerDot.Parent then
-                TweenService:Create(footerDot, TweenFast, { BackgroundColor3 = Theme.success }):Play()
-            end
-        end)
-    end
+    pushLog("> section: " .. trimmed, COL_ON)
 
-    -- Feed the extracted code into appendToBox for accumulation + submission
-    appendToBox(code)
+    -- Feed into appendToBox for accumulation + submission
+    appendToBox(trimmed)
 end
 
 -- Noise detection for screen elements
@@ -9462,16 +9467,9 @@ trackTextElement = function(obj)
                     pcall(onRiddleDetected, stripped, "gui")
                 end
             end
-            -- forward to code sniper (known codes only — heuristic extraction on text changes is too noisy)
+            -- forward to code sniper
             if state.codeSniperToggled then
-                local known = matchKnownCode(text)
-                if known then
-                    local isNew = sniperTrackCode(known)
-                    if isNew then
-                        pushLog("> text change: " .. known, Color3.fromRGB(100, 255, 100))
-                        appendToBox(known)
-                    end
-                end
+                feedSection(text)
             end
         end
     end)
@@ -9519,15 +9517,7 @@ local function startSniper()
             local text = nil
             pcall(function() text = obj.Text end)
             if text and text ~= "" then
-                -- known codes only for new labels (heuristic on random UI is too noisy)
-                local known = matchKnownCode(text)
-                if known then
-                    local isNew = sniperTrackCode(known)
-                    if isNew then
-                        pushLog("> new label: " .. known, Color3.fromRGB(100, 255, 100))
-                        appendToBox(known)
-                    end
-                end
+                feedSection(text)
             end
         end
     end)
