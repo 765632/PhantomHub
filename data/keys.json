@@ -222,5 +222,16 @@
     "expiresAt": "never",
     "expired": false,
     "hwid": null
+  },
+  "PH-ENYWQ-87NU0-BNCZI": {
+    "duration": "lifetime",
+    "label": "Lifetime",
+    "createdAt": 1793744494510,
+    "createdBy": "system",
+    "redeemedBy": "system",
+    "redeemedAt": 1793744494510,
+    "expiresAt": "never",
+    "expired": false,
+    "hwid": null
   }
 }
